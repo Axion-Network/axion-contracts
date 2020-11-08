@@ -9,3 +9,6 @@ dist
 
 # Webstorm config
 .idea
+
+.env
+venv/
