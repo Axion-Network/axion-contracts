@@ -259,6 +259,15 @@ contract Staking is IStaking, AccessControl {
                 shares
             );
 
+            ISubBalances(subBalances).callOutcomeStakerTrigger(
+                msg.sender,
+                sessionId,
+                sessionDataOf[msg.sender][sessionId].start,
+                sessionDataOf[msg.sender][sessionId].end,
+                shares
+            );
+
+
             return;
         }
 
