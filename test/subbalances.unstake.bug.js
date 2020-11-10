@@ -55,35 +55,36 @@ contract(
 
     it("subBalances.callOutcomeStakerTrigger bug", async () => {
       let afterInitTime = new BN(await getBlockchainTimestamp());
-      let stakeId = new BN(1);
+      let firstAccountStakeId = new BN(1);
       let stakeStartTime = afterInitTime;
-      let stakeEndTime = stakeStartTime.add(
+      let firstAccountStakeEndTime = stakeStartTime.add(
         new BN(DAY * STAKE_PERIOD * 2 + DAY)
       );
-      let stakeShares = new BN(1_000_000);
+      let firstAccountStakeShares = new BN(1_000_000);
 
       /** ------------------------- callIncomeStakerTrigger ------------------------- */
 
       // Account 1 deposit 1M to subbalance 1 and 2
       await subBalances.callIncomeStakerTrigger(
         account1,
-        stakeId,
+        firstAccountStakeId,
         stakeStartTime,
-        stakeEndTime,
-        stakeShares,
+        firstAccountStakeEndTime,
+        firstAccountStakeShares,
         { from: stakingAddress }
       );
 
       // Account 2 deposit 5M to subalance 1, 2, 3, 4 and 5
-      stakeEndTime = stakeStartTime.add(new BN(DAY * STAKE_PERIOD * 5 + DAY));
-      stakeShares = new BN(5_000_000);
+      let secondAccountStakeId = new BN(2);
+      let secondAccountStakeEndTime = stakeStartTime.add(new BN(DAY * STAKE_PERIOD * 5 + DAY));
+      let secondAccountStakeShares = new BN(5_000_000);
 
       await subBalances.callIncomeStakerTrigger(
         account2,
-        stakeId,
+        secondAccountStakeId,
         stakeStartTime,
-        stakeEndTime,
-        stakeShares,
+        secondAccountStakeEndTime,
+        secondAccountStakeShares,
         { from: stakingAddress }
       );
 
@@ -117,10 +118,10 @@ contract(
       // Account 1 withdraw 1M to subbalance 1 and 2
       await subBalances.callOutcomeStakerTrigger(
         account1,
-        stakeId,
+        firstAccountStakeId,
         stakeStartTime,
-        stakeEndTime,
-        stakeShares,
+        firstAccountStakeEndTime,
+        firstAccountStakeShares,
         { from: stakingAddress }
       );
 
@@ -144,9 +145,13 @@ contract(
 
       // The is in correct: it should reduce the amount only in subbalance 1 and 2
       // but now subbalance 3,4 ,5 amount also get decreased
-      expect(subBalance3.totalShares.toString()).to.eq("4000000"); // correct value should be "5000000"
-      expect(subBalance4.totalShares.toString()).to.eq("4000000"); // correct value should be "5000000"
-      expect(subBalance5.totalShares.toString()).to.eq("4000000"); // correct value should be "5000000"
+      // expect(subBalance3.totalShares.toString()).to.eq("4000000"); // correct value should be "5000000"
+      // expect(subBalance4.totalShares.toString()).to.eq("4000000"); // correct value should be "5000000"
+      // expect(subBalance5.totalShares.toString()).to.eq("4000000"); // correct value should be "5000000"
+
+      expect(subBalance3.totalShares.toString()).to.eq("5000000"); // correct value should be "5000000"
+      expect(subBalance4.totalShares.toString()).to.eq("5000000"); // correct value should be "5000000"
+      expect(subBalance5.totalShares.toString()).to.eq("5000000"); // correct value should be "5000000"
     });
   }
 );

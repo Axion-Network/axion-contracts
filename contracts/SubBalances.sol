@@ -309,12 +309,15 @@ contract SubBalances is ISubBalances, AccessControl {
 
                 // Removing from payday if unstaked before
                 if (realStakeEnd < subBalance.payDayTime) {
+                    bool wasEligible = stakeSession.payDayEligible[i];
                     stakeSession.payDayEligible[i] = false;
 
-                    if (shares > subBalance.totalShares) {
-                        subBalance.totalShares = 0;
-                    } else {
-                        subBalance.totalShares = subBalance.totalShares.sub(shares);
+                    if (wasEligible) {
+                        if (shares > subBalance.totalShares) {
+                           subBalance.totalShares = 0;
+                        } else {
+                            subBalance.totalShares = subBalance.totalShares.sub(shares);
+                        }
                     }
                 }
             }
