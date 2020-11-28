@@ -29,6 +29,7 @@ contract Auction is IAuction, AccessControl {
 
     event AuctionIsOver(uint256 eth, uint256 token, uint256 indexed auctionId);
 
+    uint256 public constant BURN_PERCENTAGE = 15;
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant CALLER_ROLE = keccak256("CALLER_ROLE");
 
@@ -225,9 +226,17 @@ contract Auction is IAuction, AccessControl {
         if (payout > uniswapPayoutWithPercent) {
             uint256 nextWeeklyAuction = calculateNearestWeeklyAuction();
 
+            uint256 rollAmount = payout.sub(uniswapPayoutWithPercent);
+
+            uint256 burnAmount = rollAmount
+                .mul(BURN_PERCENTAGE)
+                .div(100);
+
             reservesOf[nextWeeklyAuction].token = reservesOf[nextWeeklyAuction]
                 .token
-                .add(payout.sub(uniswapPayoutWithPercent));
+                .add(rollAmount.sub(burnAmount));
+
+            IToken(mainToken).burn(address(this), burnAmount);
 
             payout = uniswapPayoutWithPercent;
         }
