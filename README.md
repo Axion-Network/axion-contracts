@@ -7,6 +7,7 @@
 4. run `npm install` in axion-contracts directory
 5. run `truffle compile` - this compiles the smart contracts and exports artifacts to a build folder
 6. run the unit tests
+  * `npm run build` - compile the contracts and generate the types
   * `npx truffle test` - runs all unit tests
   * `npx truffle test TEST_PATH` - run a specific test located at TEST_PATH
 
@@ -17,4 +18,3 @@
 ## Additional resources
  * [Guide for debugging smart contracts with truffle develop](https://www.trufflesuite.com/tutorials/debugging-a-smart-contract)
  * [More info for unit testing with truffle](https://www.trufflesuite.com/docs/truffle/testing/testing-your-contracts)
-
