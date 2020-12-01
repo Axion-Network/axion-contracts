@@ -1,5 +1,5 @@
 const HDWalletProvider = require('@truffle/hdwallet-provider');
-require('dotenv').config({ path: '.env' })
+require('dotenv').config({ path: '.env' });
 
 const {
   ETHERSCAN_API_KEY,
@@ -7,7 +7,7 @@ const {
   INFURA_PROJECT_SECRET,
   SETTER_PRIV,
   DEPLOY_GAS_LIMIT,
-  DEPLOY_GAS_PRICE
+  DEPLOY_GAS_PRICE,
 } = process.env;
 
 const ganache = require('ganache-core');
@@ -64,11 +64,14 @@ module.exports = {
       provider: () =>
         new HDWalletProvider(
           SETTER_PRIV.toString(),
-          'wss://:' + INFURA_PROJECT_SECRET + '@ropsten.infura.io/ws/v3/' + INFURA_PROJECT_ID,
+          'wss://:' +
+            INFURA_PROJECT_SECRET +
+            '@ropsten.infura.io/ws/v3/' +
+            INFURA_PROJECT_ID
         ),
       network_id: 3, // Ropsten's id
       gas: DEPLOY_GAS_LIMIT, // Ropsten has a lower block limit than mainnet
-      gasPrice: DEPLOY_GAS_PRICE * 1000000000,  
+      gasPrice: DEPLOY_GAS_PRICE * 1000000000,
       //confirmations: 2, // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
@@ -77,11 +80,15 @@ module.exports = {
       provider: () =>
         new HDWalletProvider(
           SETTER_PRIV.toString(),
-          'wss://:' + INFURA_PROJECT_SECRET + '@' + 'kovan.infura.io/ws/v3/' + INFURA_PROJECT_ID,
+          'wss://:' +
+            INFURA_PROJECT_SECRET +
+            '@' +
+            'kovan.infura.io/ws/v3/' +
+            INFURA_PROJECT_ID
         ),
       network_id: 42, // Kovan's id
       gas: DEPLOY_GAS_LIMIT, // Ropsten has a lower block limit than mainnet
-      gasPrice: DEPLOY_GAS_PRICE * 1000000000,  // 20 gwei (in wei) (default: 100 gwei)
+      gasPrice: DEPLOY_GAS_PRICE * 1000000000, // 20 gwei (in wei) (default: 100 gwei)
       confirmations: 2, // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
@@ -90,11 +97,15 @@ module.exports = {
       provider: () =>
         new HDWalletProvider(
           SETTER_PRIV.toString(),
-          'wss://:' + INFURA_PROJECT_SECRET + '@' + 'rinkeby.infura.io/ws/v3/' + INFURA_PROJECT_ID,
+          'wss://:' +
+            INFURA_PROJECT_SECRET +
+            '@' +
+            'rinkeby.infura.io/ws/v3/' +
+            INFURA_PROJECT_ID
         ),
       network_id: 4, // Rinkeby's id
       gas: DEPLOY_GAS_LIMIT, // Ropsten has a lower block limit than mainnet
-      gasPrice: DEPLOY_GAS_PRICE * 1000000000,  // 20 gwei (in wei) (default: 100 gwei)
+      gasPrice: DEPLOY_GAS_PRICE * 1000000000, // 20 gwei (in wei) (default: 100 gwei)
       confirmations: 2, // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
@@ -103,11 +114,15 @@ module.exports = {
       provider: () =>
         new HDWalletProvider(
           SETTER_PRIV.toString(),
-          'wss://:' + INFURA_PROJECT_SECRET + '@' + 'mainnet.infura.io/ws/v3/' + INFURA_PROJECT_ID,
+          'wss://:' +
+            INFURA_PROJECT_SECRET +
+            '@' +
+            'mainnet.infura.io/ws/v3/' +
+            INFURA_PROJECT_ID
         ),
       network_id: 1, // Mainnet's id
       gas: DEPLOY_GAS_LIMIT, // gas block limit
-      gasPrice: DEPLOY_GAS_PRICE * 1000000000,  // 20 gwei (in wei) (default: 100 gwei)
+      gasPrice: DEPLOY_GAS_PRICE * 1000000000, // 20 gwei (in wei) (default: 100 gwei)
       confirmations: 2, // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 1000, // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: false, // Skip dry run before migrations? (default: false for public nets )
@@ -115,13 +130,13 @@ module.exports = {
     ganache: {
       network_id: '*', // eslint-disable-line camelcase
       provider: ganache.provider({
-          total_accounts: 15, // eslint-disable-line camelcase
-          default_balance_ether: new BN(1e+5), // eslint-disable-line camelcase
-          mnemonic: 'ganache',
-          time: new Date('2020-04-21T12:00:00Z'),
-          debug: false,
-    gasLimit: 9000000,
-          // ,logger: console
+        total_accounts: 15, // eslint-disable-line camelcase
+        default_balance_ether: new BN(1e5), // eslint-disable-line camelcase
+        mnemonic: 'ganache',
+        time: new Date('2020-04-21T12:00:00Z'),
+        debug: false,
+        gasLimit: 9000000,
+        // ,logger: console
       }),
       gas: 8500000, // gas block limit
     },
@@ -143,7 +158,8 @@ module.exports = {
     solc: {
       version: '0.6.6', // Fetch exact version from solc-bin (default: truffle's version)
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
-      settings: {          // See the solidity docs for advice about optimization and evmVersion
+      settings: {
+        // See the solidity docs for advice about optimization and evmVersion
         optimizer: {
           enabled: true,
           runs: 0,
@@ -153,11 +169,8 @@ module.exports = {
       // }
     },
   },
-  plugins: [
-    'solidity-coverage',
-    'truffle-plugin-verify'
-  ],
+  plugins: ['solidity-coverage', 'truffle-plugin-verify'],
   api_keys: {
-    etherscan: ETHERSCAN_API_KEY
-  }
+    etherscan: ETHERSCAN_API_KEY,
+  },
 };

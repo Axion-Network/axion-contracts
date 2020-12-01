@@ -1,23 +1,23 @@
-const BN = require("bn.js");
-const chai = require("chai");
-chai.use(require("chai-bn")(BN));
+const BN = require('bn.js');
+const chai = require('chai');
+chai.use(require('chai-bn')(BN));
 
-const TERC20 = artifacts.require("TERC20");
-const Token = artifacts.require("Token");
-const NativeSwap = artifacts.require("NativeSwap");
-const Auction = artifacts.require("Auction");
-const SubBalances = artifacts.require("SubBalances");
-const StakingMock = artifacts.require("StakingMock");
-const ForeignSwap = artifacts.require("ForeignSwap");
-const BPD = artifacts.require("BPD");
+const TERC20 = artifacts.require('TERC20');
+const Token = artifacts.require('Token');
+const NativeSwap = artifacts.require('NativeSwap');
+const Auction = artifacts.require('Auction');
+const SubBalances = artifacts.require('SubBalances');
+const StakingMock = artifacts.require('StakingMock');
+const ForeignSwap = artifacts.require('ForeignSwap');
+const BPD = artifacts.require('BPD');
 
-const UniswapV2Router02Mock = artifacts.require("UniswapV2Router02Mock");
+const UniswapV2Router02Mock = artifacts.require('UniswapV2Router02Mock');
 
 const DAY = 86400;
 const STAKE_PERIOD = 350;
 
 const testSigner = web3.utils.toChecksumAddress(
-  "0xCC64d26Dab6c7B971d26846A4B2132985fe8C358"
+  '0xCC64d26Dab6c7B971d26846A4B2132985fe8C358'
 );
 
 const MAX_CLAIM_AMOUNT = new BN(10 ** 7);
@@ -30,17 +30,17 @@ async function initTestSmartContracts(setter, recipient, stakingAddress) {
   const bpd = await BPD.new(setter);
 
   const swaptoken = await TERC20.new(
-    "2T Token",
-    "2T",
-    web3.utils.toWei("10000000000"),
+    '2T Token',
+    '2T',
+    web3.utils.toWei('10000000000'),
     setter
   );
 
   const foreignswap = await ForeignSwap.new(setter);
 
   const token = await Token.new(
-    "2X Token",
-    "2X",
+    '2X Token',
+    '2X',
     swaptoken.address,
     nativeswap.address,
     setter

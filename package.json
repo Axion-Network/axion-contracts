@@ -31,5 +31,8 @@
     "truffle": "^5.1.40",
     "truffle-plugin-verify": "^0.5.0",
     "truffle-verify": "^1.0.8"
+  },
+  "devDependencies": {
+    "prettier": "^2.2.1"
   }
 }

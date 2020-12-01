@@ -1,19 +1,19 @@
-const { expect } = require("chai");
-const BN = require("bn.js");
+const { expect } = require('chai');
+const BN = require('bn.js');
 
-const helper = require("./utils/utils.js");
-const initTestSmartContracts = require("./utils/initTestSmartContracts.js");
+const helper = require('./utils/utils.js');
+const initTestSmartContracts = require('./utils/initTestSmartContracts.js');
 
 const DAY = 86400;
 const STAKE_PERIOD = 350;
 
 const getBlockchainTimestamp = async () => {
-  const latestBlock = await web3.eth.getBlock("latest");
+  const latestBlock = await web3.eth.getBlock('latest');
   return latestBlock.timestamp;
 };
 
 contract(
-  "Auction",
+  'Auction',
   ([
     setter,
     foreignSwapAddress,
@@ -53,7 +53,7 @@ contract(
       bpd = contracts.bpd;
     });
 
-    it("subBalances.callOutcomeStakerTrigger bug", async () => {
+    it('subBalances.callOutcomeStakerTrigger bug', async () => {
       let afterInitTime = new BN(await getBlockchainTimestamp());
       let firstAccountStakeId = new BN(1);
       let stakeStartTime = afterInitTime;
@@ -76,7 +76,9 @@ contract(
 
       // Account 2 deposit 5M to subalance 1, 2, 3, 4 and 5
       let secondAccountStakeId = new BN(2);
-      let secondAccountStakeEndTime = stakeStartTime.add(new BN(DAY * STAKE_PERIOD * 5 + DAY));
+      let secondAccountStakeEndTime = stakeStartTime.add(
+        new BN(DAY * STAKE_PERIOD * 5 + DAY)
+      );
       let secondAccountStakeShares = new BN(5_000_000);
 
       await subBalances.callIncomeStakerTrigger(
@@ -105,11 +107,11 @@ contract(
       // Account 1 deposit 1M to subbalance 1 and 2
       // Account 2 deposit 5M to subalance 1, 2, 3, 4 and 5
       // This is correct
-      expect(subBalance1.totalShares.toString()).to.eq("6000000");
-      expect(subBalance2.totalShares.toString()).to.eq("6000000");
-      expect(subBalance3.totalShares.toString()).to.eq("5000000");
-      expect(subBalance4.totalShares.toString()).to.eq("5000000");
-      expect(subBalance5.totalShares.toString()).to.eq("5000000");
+      expect(subBalance1.totalShares.toString()).to.eq('6000000');
+      expect(subBalance2.totalShares.toString()).to.eq('6000000');
+      expect(subBalance3.totalShares.toString()).to.eq('5000000');
+      expect(subBalance4.totalShares.toString()).to.eq('5000000');
+      expect(subBalance5.totalShares.toString()).to.eq('5000000');
 
       /** ------------------------- callOutcomeStakerTrigger ------------------------- */
 
@@ -140,8 +142,8 @@ contract(
       ]);
 
       // Account 1 withdraw 1M to subbalance 1 and 2
-      expect(subBalance1.totalShares.toString()).to.eq("5000000");
-      expect(subBalance2.totalShares.toString()).to.eq("5000000");
+      expect(subBalance1.totalShares.toString()).to.eq('5000000');
+      expect(subBalance2.totalShares.toString()).to.eq('5000000');
 
       // The is in correct: it should reduce the amount only in subbalance 1 and 2
       // but now subbalance 3,4 ,5 amount also get decreased
@@ -149,9 +151,9 @@ contract(
       // expect(subBalance4.totalShares.toString()).to.eq("4000000"); // correct value should be "5000000"
       // expect(subBalance5.totalShares.toString()).to.eq("4000000"); // correct value should be "5000000"
 
-      expect(subBalance3.totalShares.toString()).to.eq("5000000"); // correct value should be "5000000"
-      expect(subBalance4.totalShares.toString()).to.eq("5000000"); // correct value should be "5000000"
-      expect(subBalance5.totalShares.toString()).to.eq("5000000"); // correct value should be "5000000"
+      expect(subBalance3.totalShares.toString()).to.eq('5000000'); // correct value should be "5000000"
+      expect(subBalance4.totalShares.toString()).to.eq('5000000'); // correct value should be "5000000"
+      expect(subBalance5.totalShares.toString()).to.eq('5000000'); // correct value should be "5000000"
     });
   }
 );

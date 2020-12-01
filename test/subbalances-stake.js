@@ -1,17 +1,17 @@
-const { expect } = require("chai");
-const BN = require("bn.js");
+const { expect } = require('chai');
+const BN = require('bn.js');
 
-const initTestSmartContracts = require("./utils/initTestSmartContracts.js");
+const initTestSmartContracts = require('./utils/initTestSmartContracts.js');
 
 const DAY = 86400;
 
 const getBlockchainTimestamp = async () => {
-  const latestBlock = await web3.eth.getBlock("latest");
+  const latestBlock = await web3.eth.getBlock('latest');
   return latestBlock.timestamp;
 };
 
 contract(
-  "Auction",
+  'Auction',
   ([
     setter,
     foreignSwapAddress,
@@ -51,8 +51,8 @@ contract(
       bpd = contracts.bpd;
     });
 
-    describe("subBalances.callIncomeStakerTrigger", () => {
-      it("should not put shares in any bpd pool if stake until day 350", async () => {
+    describe('subBalances.callIncomeStakerTrigger', () => {
+      it('should not put shares in any bpd pool if stake until day 350', async () => {
         let afterInitTime = new BN(await getBlockchainTimestamp());
         let stakeId = new BN(1);
         let stakeStartTime = afterInitTime;
@@ -89,7 +89,7 @@ contract(
         expect(subBalance5.totalShares.toString()).to.eq(String(0));
       });
 
-      it("should put shares in bpd pool 1 if stake until day 351", async () => {
+      it('should put shares in bpd pool 1 if stake until day 351', async () => {
         let afterInitTime = new BN(await getBlockchainTimestamp());
         let stakeId = new BN(1);
         let stakeStartTime = afterInitTime;
@@ -126,7 +126,7 @@ contract(
         expect(subBalance5.totalShares.toString()).to.eq(String(0));
       });
 
-      it("should put shares in bpd pool 1 and 2 if stake until day 701", async () => {
+      it('should put shares in bpd pool 1 and 2 if stake until day 701', async () => {
         let afterInitTime = new BN(await getBlockchainTimestamp());
         let stakeId = new BN(1);
         let stakeStartTime = afterInitTime;
@@ -163,7 +163,7 @@ contract(
         expect(subBalance5.totalShares.toString()).to.eq(String(0));
       });
 
-      it("should put shares in bpd pool 1, 2 and 3 if stake until day 1051", async () => {
+      it('should put shares in bpd pool 1, 2 and 3 if stake until day 1051', async () => {
         let afterInitTime = new BN(await getBlockchainTimestamp());
         let stakeId = new BN(1);
         let stakeStartTime = afterInitTime;
@@ -200,7 +200,7 @@ contract(
         expect(subBalance5.totalShares.toString()).to.eq(String(0));
       });
 
-      it("should put shares in bpd pool 1, 2, 3 and 4 if stake until day 1401", async () => {
+      it('should put shares in bpd pool 1, 2, 3 and 4 if stake until day 1401', async () => {
         let afterInitTime = new BN(await getBlockchainTimestamp());
         let stakeId = new BN(1);
         let stakeStartTime = afterInitTime;
@@ -237,7 +237,7 @@ contract(
         expect(subBalance5.totalShares.toString()).to.eq(String(0));
       });
 
-      it("should put shares in bpd pool 1, 2, 3, 4 and 5 if stake until day 1751", async () => {
+      it('should put shares in bpd pool 1, 2, 3, 4 and 5 if stake until day 1751', async () => {
         let afterInitTime = new BN(await getBlockchainTimestamp());
         let stakeId = new BN(1);
         let stakeStartTime = afterInitTime;
