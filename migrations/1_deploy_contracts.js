@@ -1,12 +1,12 @@
-require('dotenv').config({ path: '../.env' });
+require("dotenv").config({ path: "../.env" });
 
-const Auction = artifacts.require('./Auction.sol');
-const NativeSwap = artifacts.require('./NativeSwap.sol');
-const Staking = artifacts.require('./Staking.sol');
-const ForeignSwap = artifacts.require('./ForeignSwap.sol');
-const BPD = artifacts.require('./BPD.sol');
-const SubBalances = artifacts.require('./SubBalances.sol');
-const Token = artifacts.require('./Token.sol');
+const Auction = artifacts.require("./Auction.sol");
+const NativeSwap = artifacts.require("./NativeSwap.sol");
+const Staking = artifacts.require("./Staking.sol");
+const ForeignSwap = artifacts.require("./ForeignSwap.sol");
+const BPD = artifacts.require("./BPD.sol");
+const SubBalances = artifacts.require("./SubBalances.sol");
+const Token = artifacts.require("./Token.sol");
 
 module.exports = async function (deployer, network, accounts) {
   return deployer.then(async () => {

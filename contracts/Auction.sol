@@ -52,7 +52,14 @@ contract Auction is IAuction, AccessControl {
     uint256 public lastAuctionEventId;
     uint256 public start;
     uint256 public stepTimestamp;
-    uint256 public uniswapPercent;
+    uint256 public discountPercent;
+    uint256 public premiumPercent;
+
+    uint256 public autoStakeDays;
+    uint256 public referrerPercent;
+    uint256 public referredPercent;
+    bool public referralsOn;
+
     address public mainToken;
     address public staking;
     address payable public uniswap;
@@ -96,9 +103,18 @@ contract Auction is IAuction, AccessControl {
         _setupRole(CALLER_ROLE, _foreignSwap);
         _setupRole(CALLER_ROLE, _staking);
         _setupRole(CALLER_ROLE, _subbalances);
+        // Timer
+        autoStakeDays = 14;
         start = now;
         stepTimestamp = _stepTimestamp;
-        uniswapPercent = 20;
+        // Auction discounts and premium
+        discountPercent = 20;
+        premiumPercent = 0;
+        // Referral Bonuses
+        referrerPercent = 20;
+        referredPercent = 10;
+        referralsOn = true;
+        // Addresses
         mainToken = _mainToken;
         staking = _staking;
         uniswap = _uniswap;
@@ -106,16 +122,35 @@ contract Auction is IAuction, AccessControl {
         init_ = true;
     }
 
+    /** Public Setter Functions */
+    function setReferrerPercentage(uint256 percent) external onlyManager {
+        referrerPercent = percent;
+    }
+    function setReferredPercentage(uint256 percent) external onlyManager {
+        referredPercent = percent;
+    }
+    function setReferralsOn(bool _referralsOn) external onlyManager {
+        referralsOn = _referralsOn;
+    }
+    function setAutoStakeDays(uint256 _autoStakeDays) external onlyManager {
+        autoStakeDays = _autoStakeDays;
+    }
+
+    function setDiscountPercent(uint256 percent) external onlyManager {
+        discountPercent = percent;
+    }
+
+    function setPremiumPercent(uint256 percent) external onlyManager {
+        premiumPercent = percent;
+    }
+
+    /** Public Getter functions */
     function auctionsOf_(address account)
         public
         view
         returns (uint256[] memory)
     {
         return auctionsOf[account];
-    }
-
-    function setUniswapPercent(uint256 percent) external onlyManager {
-        uniswapPercent = percent;
     }
 
     function getUniswapLastPrice() public view returns (uint256) {
@@ -154,6 +189,8 @@ contract Auction is IAuction, AccessControl {
         else return sum.div(points);
     }
 
+    /** Core functionality */
+    /** Internal */
     function _updatePrice() internal {
         uint256 stepsFromStart = calculateStepsFromStart();
 
@@ -163,6 +200,21 @@ contract Auction is IAuction, AccessControl {
             .uniswapMiddlePrice = getUniswapMiddlePriceForSevenDays();
     }
 
+    function _swapEth(uint256 amount, uint256 deadline) private {
+        address[] memory path = new address[](2);
+
+        path[0] = IUniswapV2Router02(uniswap).WETH();
+        path[1] = mainToken;
+
+        IUniswapV2Router02(uniswap).swapExactETHForTokens{value: amount}(
+            0,
+            path,
+            staking,
+            deadline
+        );
+    }
+
+    /** Externals */
     function bet(uint256 deadline, address ref) external payable {
         _saveAuctionData();
         _updatePrice();
@@ -178,7 +230,13 @@ contract Auction is IAuction, AccessControl {
 
         uint256 stepsFromStart = calculateStepsFromStart();
 
-        auctionBetOf[stepsFromStart][_msgSender()].ref = ref;
+        /** If referralsOn is true sallow to set ref */
+        if(referralsOn == true) {
+            auctionBetOf[stepsFromStart][_msgSender()].ref = ref;
+        }
+        else { // Else set ref to 0x0 for this auction bid
+            auctionBetOf[stepsFromStart][_msgSender()].ref = address(0);
+        }
 
         auctionBetOf[stepsFromStart][_msgSender()]
             .eth = auctionBetOf[stepsFromStart][_msgSender()].eth.add(
@@ -232,10 +290,11 @@ contract Auction is IAuction, AccessControl {
             payout = uniswapPayoutWithPercent;
         }
 
+        
         if (address(auctionBetOf[auctionId][_msgSender()].ref) == address(0)) {
             IToken(mainToken).burn(address(this), payout);
 
-            IStaking(staking).externalStake(payout, 14, _msgSender());
+            IStaking(staking).externalStake(payout, autoStakeDays, _msgSender());
 
             emit Withdraval(msg.sender, payout, stepsFromStart, now);
         } else {
@@ -248,18 +307,19 @@ contract Auction is IAuction, AccessControl {
 
             payout = payout.add(toUserMintAmount);
 
-            IStaking(staking).externalStake(payout, 14, _msgSender());
+            IStaking(staking).externalStake(payout, autoStakeDays, _msgSender());
 
             emit Withdraval(msg.sender, payout, stepsFromStart, now);
 
             IStaking(staking).externalStake(
                 toRefMintAmount,
-                14,
+                autoStakeDays,
                 auctionBetOf[auctionId][_msgSender()].ref
             );
         }
     }
 
+    /** External Contract Caller functions */
     function callIncomeDailyTokensTrigger(uint256 amount)
         external
         override
@@ -284,6 +344,7 @@ contract Auction is IAuction, AccessControl {
             .token = reservesOf[nearestWeeklyAuction].token.add(amount);
     }
 
+    /** Calculate functions */
     function calculateNearestWeeklyAuction() public view returns (uint256) {
         uint256 stepsFromStart = calculateStepsFromStart();
         return stepsFromStart.add(uint256(7).sub(stepsFromStart.mod(7)));
@@ -303,9 +364,9 @@ contract Auction is IAuction, AccessControl {
             .mul(amount)
             .div(1e18);
 
-        uint256 uniswapPayoutWithPercent = uniswapPayout.add(
-            uniswapPayout.mul(uniswapPercent).div(100)
-        );
+        uint256 uniswapPayoutWithPercent = uniswapPayout
+            .add(uniswapPayout.mul(discountPercent).div(100))
+            .sub(uniswapPayout.mul(premiumPercent).div(100));
 
         if (payout > uniswapPayoutWithPercent) {
             return uniswapPayoutWithPercent;
@@ -337,29 +398,16 @@ contract Auction is IAuction, AccessControl {
 
     function _calculateRefAndUserAmountsToMint(uint256 amount)
         private
-        pure
+        view
         returns (uint256, uint256)
     {
-        uint256 toRefMintAmount = amount.mul(20).div(100);
-        uint256 toUserMintAmount = amount.mul(10).div(100);
+        uint256 toRefMintAmount = amount.mul(referrerPercent).div(100);
+        uint256 toUserMintAmount = amount.mul(referredPercent).div(100);
 
         return (toRefMintAmount, toUserMintAmount);
     }
 
-    function _swapEth(uint256 amount, uint256 deadline) private {
-        address[] memory path = new address[](2);
-
-        path[0] = IUniswapV2Router02(uniswap).WETH();
-        path[1] = mainToken;
-
-        IUniswapV2Router02(uniswap).swapExactETHForTokens{value: amount}(
-            0,
-            path,
-            staking,
-            deadline
-        );
-    }
-
+    /** Storage Functions */
     function _saveAuctionData() internal {
         uint256 stepsFromStart = calculateStepsFromStart();
         AuctionReserves memory reserves = reservesOf[stepsFromStart];

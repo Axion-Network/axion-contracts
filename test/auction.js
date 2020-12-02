@@ -67,6 +67,32 @@ contract(
       bpd = contracts.bpd;
     });
 
+    describe("set", () => {
+      it("should allow manager to set percentages autostakes and referral on/off", async () => {
+        /** Referral Ssyte, */
+        await dailyauction.setReferrerPercentage(5, { from: setter });
+        let referrerPercent = await dailyauction.referrerPercent();
+        expect(referrerPercent.toString()).to.eq("5");
+        await dailyauction.setReferredPercentage(5, { from: setter });
+        let referredPercent = await dailyauction.referredPercent();
+        expect(referredPercent.toString()).to.eq("5");
+        await dailyauction.setReferralsOn(false, { from: setter });
+        let referralsOn = await dailyauction.referralsOn();
+        expect(referralsOn).to.eq(false);
+        /** Auto stake */
+        await dailyauction.setAutoStakeDays(30, { from: setter });
+        let autoStakeDays = await dailyauction.autoStakeDays();
+        expect(autoStakeDays.toString()).to.eq("30");
+        // Price manipulation
+        await dailyauction.setDiscountPercent(5, { from: setter });
+        let discountPercent = await dailyauction.discountPercent();
+        expect(discountPercent.toString()).to.eq("5");
+        await dailyauction.setPremiumPercent(5, { from: setter });
+        let premiumPercent = await dailyauction.premiumPercent();
+        expect(premiumPercent.toString()).to.eq("5");
+      });
+    });
+    
     describe('bet', () => {
       it('should update the contract state correctly', async () => {
         // Advance the date to day 100 after launch
@@ -310,6 +336,77 @@ contract(
           );
           expect(event1.returnValues.value).to.eq('13200000000000000000');
           expect(event2.returnValues.value).to.eq('39600000000000000000');
+        });
+
+        it("should take into account premium and discount", async () => {
+          await dailyauction.setPremiumPercent(10, { from: setter });
+          // User1 & User 2: Bet with 10 eth
+          await dailyauction.bet(DEADLINE, account3, {
+            from: account1,
+            value: web3.utils.toWei("10"),
+          });
+          await dailyauction.bet(DEADLINE, account3, {
+            from: account2,
+            value: web3.utils.toWei("30"),
+          });
+
+          // Advance the date to day 177 after launch, so the auction on day 176 is ended
+          await helper.advanceTimeAndBlock(DAY);
+
+          // User1 & User2: Withdraw on day 8
+          await dailyauction.withdraw("176", { from: account1 });
+          await dailyauction.withdraw("176", { from: account2 });
+
+          // Check state of user1 and user2
+          const user1AuctionBet = await dailyauction.auctionBetOf(
+            "176",
+            account1
+          );
+          const { eth: user1Eth, ref: user1Ref } = user1AuctionBet;
+          expect(web3.utils.fromWei(user1Eth)).to.eq("0");
+          expect(user1Ref).to.eq(account3);
+
+          const user2AuctionBet = await dailyauction.auctionBetOf(
+            "176",
+            account1
+          );
+          const { eth: user2Eth, ref: user2Ref } = user2AuctionBet;
+          expect(web3.utils.fromWei(user2Eth)).to.eq("0");
+          expect(user2Ref).to.eq(account3);
+
+          const [event1, event2] = await dailyauction.getPastEvents(
+            "Withdraval",
+            {
+              fromBlock: 0,
+              toBlock: "latest",
+            }
+          );
+
+          expect(event1.returnValues.value).to.eq("12100000000000000000");
+          expect(event2.returnValues.value).to.eq("36300000000000000000");
+        });
+
+        it("it shouldn't allow referrals when referrals are off", async () => {
+          await dailyauction.setReferralsOn(false, { from: setter });
+          // User1 & User 2: Bet with 10 eth
+          await dailyauction.bet(DEADLINE, account3, {
+            from: account1,
+            value: web3.utils.toWei("10"),
+          });
+          // Advance the date to day 177 after launch, so the auction on day 176 is ended
+          await helper.advanceTimeAndBlock(DAY);
+
+          // User1 & User2: Withdraw on day 8
+          await dailyauction.withdraw("176", { from: account1 });
+
+          // Check state of user1 and user2
+          const user1AuctionBet = await dailyauction.auctionBetOf(
+            "176",
+            account1
+          );
+          const { eth: user1Eth, ref: user1Ref } = user1AuctionBet;
+          expect(web3.utils.fromWei(user1Eth)).to.eq("0");
+          expect(user1Ref).to.eq(ZERO_ADDRESS);
         });
       });
     });
