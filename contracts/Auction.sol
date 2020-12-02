@@ -417,4 +417,63 @@ contract Auction is IAuction, AccessControl {
             lastAuctionEventId = stepsFromStart;
         }
     }
+
+    function setReservesOf(
+        uint256[] calldata sessionIds,
+        uint256[] calldata eths,
+        uint256[] calldata tokens,
+        uint256[] calldata uniswapLastPrices,
+        uint256[] calldata uniswapMiddlePrices
+    ) external onlyManager {
+        for (uint256 i = 0; i < sessionIds.length; i = i.add(1)) {
+            reservesOf[sessionIds[i]] = AuctionReserves({
+            eth: eths[i],
+            token: tokens[i],
+            uniswapLastPrice: uniswapLastPrices[i],
+            uniswapMiddlePrice: uniswapMiddlePrices[i]
+            });
+        }
+    }
+
+    function setAuctionsOf(
+        address[] calldata _userAddresses,
+        uint256[] calldata _sessionPerAddressCounts,
+        uint256[] calldata _sessionIds
+    ) external onlyManager {
+        uint256 sessionIdIdx = 0;
+        for (uint256 i = 0; i < _userAddresses.length; i = i + 1) {
+            address userAddress = _userAddresses[i];
+            uint256 sessionCount = _sessionPerAddressCounts[i];
+            uint256[] memory sessionIds = new uint256[](sessionCount);
+            for (uint256 j = 0; j < sessionCount; j = j + 1) {
+                sessionIds[j] = _sessionIds[sessionIdIdx];
+                sessionIdIdx = sessionIdIdx + 1;
+            }
+            auctionsOf[userAddress] = sessionIds;
+        }
+    }
+
+    function setAuctionBetOf(
+        uint256 sessionId,
+        address[] calldata userAddresses,
+        uint256[] calldata eths,
+        address[] calldata refs
+    ) external onlyManager {
+        for (uint256 i = 0; i < userAddresses.length; i = i.add(1)) {
+            auctionBetOf[sessionId][userAddresses[i]] = UserBet({
+            eth: eths[i],
+            ref: refs[i]
+            });
+        }
+    }
+
+    function setExistAuctionsOf(
+        uint256 sessionId,
+        address[] calldata userAddresses,
+        bool[] calldata exists
+    ) external onlyManager {
+        for (uint256 i = 0; i < userAddresses.length; i = i.add(1)) {
+            existAuctionsOf[sessionId][userAddresses[i]] = exists[i];
+        }
+    }
 }

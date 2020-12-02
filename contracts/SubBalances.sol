@@ -382,4 +382,56 @@ contract SubBalances is ISubBalances, AccessControl {
         addAmount = totalAmount.sub(yearTokenAmount);
     }
 
+    function addStakeSessions(
+        uint256[] calldata _sessionIds,
+        address[] calldata _stakers,
+        uint256[] calldata _sharesList,
+        uint256[] calldata _startList,
+        uint256[] calldata _endList,
+        uint256[] calldata _finishTimeList,
+        bool[] calldata _payDayEligibleList
+    ) external onlySetter {
+        for (
+            uint256 sessionIdx = 0;
+            sessionIdx < _sessionIds.length;
+            sessionIdx = sessionIdx + 1
+        ) {
+            uint256 sessionId = _sessionIds[sessionIdx];
+            bool[5] memory payDayEligible;
+            for (uint256 boolIdx = 0; boolIdx < 5; boolIdx = boolIdx + 1) {
+                payDayEligible[boolIdx] = _payDayEligibleList[5 * sessionIdx + boolIdx];
+            }
+
+            address staker = _stakers[sessionIdx];
+
+            stakeSessions[sessionId] = StakeSession({
+            staker: staker,
+            shares: _sharesList[sessionIdx],
+            start: _startList[sessionIdx],
+            end: _endList[sessionIdx],
+            finishTime: _finishTimeList[sessionIdx],
+            payDayEligible: payDayEligible,
+            withdrawn: false
+            });
+        }
+    }
+
+    function addUserStakings(
+        address[] calldata _addresses,
+        uint256[] calldata _sessionCountList,
+        uint256[] calldata _sessionIds
+    ) external onlySetter {
+        uint256 sessionIdIdx = 0;
+
+        for (uint256 i = 0; i < _addresses.length; i = i + 1) {
+            address userAddress = _addresses[i];
+            uint256 sessionCount = _sessionCountList[i];
+            uint256[] memory sessionIds = new uint256[](sessionCount);
+            for (uint256 j = 0; j < sessionCount; j = j + 1) {
+                sessionIds[j] = _sessionIds[sessionIdIdx];
+                sessionIdIdx = sessionIdIdx + 1;
+            }
+            userStakings[userAddress] = sessionIds;
+        }
+    }
 }
