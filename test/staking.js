@@ -94,8 +94,21 @@ contract('Staking', ([bank, foreignSwap, subBalances, staker1, staker2]) => {
     );
   });
 
-  it('should unstake', async () => {
-    await token.approve(staking.address, web3.utils.toWei('10'), {
+  it("shouldn't allow a stake over 5555 days", async () => {
+    expectRevert(await staking.stake(web3.utils.toWei("10"), 5556, {
+      from: staker1,
+    }));
+    // Edge case
+    await staking.stake(web3.utils.toWei("10"), 5555, {
+        from: staker1,
+    })
+    expectRevert(await staking.stake(web3.utils.toWei("10"), 100000, {
+      from: staker1,
+    }));
+  })
+
+  it("should unstake", async () => {
+    await token.approve(staking.address, web3.utils.toWei("10"), {
       from: staker1,
     });
 

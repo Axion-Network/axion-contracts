@@ -115,7 +115,9 @@ contract Staking is IStaking, AccessControl {
     function stake(uint256 amount, uint256 stakingDays) external {
         if (now >= nextPayoutCall) makePayout();
 
+        // Staking days must be greater then 0 and less then or equal to 5555.
         require(stakingDays > 0, "stakingDays < 1");
+        require(stakingDays <= 5555, "stakingDays > 5555");
 
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
@@ -155,6 +157,7 @@ contract Staking is IStaking, AccessControl {
         if (now >= nextPayoutCall) makePayout();
 
         require(stakingDays > 0, "stakingDays < 1");
+        require(stakingDays <= 5555, "stakingDays > 5555");
 
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
@@ -266,7 +269,6 @@ contract Staking is IStaking, AccessControl {
                 sessionDataOf[msg.sender][sessionId].end,
                 shares
             );
-
 
             return;
         }
