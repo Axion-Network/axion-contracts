@@ -19,6 +19,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "^3.0.1",
     "@truffle/hdwallet-provider": "^1.2.0",
+    "@types/lodash": "^4.14.165",
     "@uniswap/v2-periphery": "^1.1.0-beta.0",
     "ansi-colors": "^4.1.1",
     "bn.js": "^5.1.3",

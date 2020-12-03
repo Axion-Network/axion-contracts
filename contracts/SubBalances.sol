@@ -59,8 +59,8 @@ contract SubBalances is ISubBalances, AccessControl {
 	uint256 public currentSharesTotalSupply;
 
     // Users
-    mapping (address => uint256[]) userStakings;
-    mapping (uint256 => StakeSession) stakeSessions;
+    mapping (address => uint256[]) public userStakings;
+    mapping (uint256 => StakeSession) public stakeSessions;
 
     modifier onlySetter() {
         require(hasRole(SETTER_ROLE, _msgSender()), "Caller is not a setter");
@@ -91,13 +91,14 @@ contract SubBalances is ISubBalances, AccessControl {
         basePeriod = _basePeriod;
     	startTimestamp = now;
 
-    	for (uint256 i = 0; i < subBalanceList.length; i++) {
+        for (uint256 i = 0; i < subBalanceList.length; i++) {
             PERIODS[i] = _basePeriod.mul(i.add(1));
     		SubBalance storage subBalance = subBalanceList[i];
             subBalance.payDayTime = startTimestamp.add(stepTimestamp.mul(PERIODS[i]));
     		// subBalance.payDayEnd = subBalance.payDayStart.add(stepTimestamp);
             subBalance.requiredStakePeriod = PERIODS[i];
     	}
+
         renounceRole(SETTER_ROLE, _msgSender());
     }
 
@@ -382,6 +383,34 @@ contract SubBalances is ISubBalances, AccessControl {
         addAmount = totalAmount.sub(yearTokenAmount);
     }
 
+
+    /* Setter methods for contract migration */
+    function setNormalVariables(
+        uint256 _currentSharesTotalSupply, 
+        uint256[5] calldata _periods
+        ) external onlySetter {
+        currentSharesTotalSupply = _currentSharesTotalSupply;
+        PERIODS = _periods;
+    }
+
+    function setSubBalanceList(
+        uint256[5] calldata _totalSharesList,
+        uint256[5] calldata _totalWithdrawAmountList,
+        uint256[5] calldata _payDayTimeList,
+        uint256[5] calldata _requiredStakePeriodList,
+        bool[5] calldata _mintedList
+    ) external onlySetter {
+        for (uint256 idx = 0; idx < 5; idx = idx + 1) {
+            subBalanceList[idx] = SubBalance({
+                totalShares: _totalSharesList[idx],
+                totalWithdrawAmount: _totalWithdrawAmountList[idx],
+                payDayTime: _payDayTimeList[idx],
+                requiredStakePeriod: _requiredStakePeriodList[idx],
+                minted: _mintedList[idx]
+            });
+        }
+    }
+
     function addStakeSessions(
         uint256[] calldata _sessionIds,
         address[] calldata _stakers,
@@ -405,13 +434,13 @@ contract SubBalances is ISubBalances, AccessControl {
             address staker = _stakers[sessionIdx];
 
             stakeSessions[sessionId] = StakeSession({
-            staker: staker,
-            shares: _sharesList[sessionIdx],
-            start: _startList[sessionIdx],
-            end: _endList[sessionIdx],
-            finishTime: _finishTimeList[sessionIdx],
-            payDayEligible: payDayEligible,
-            withdrawn: false
+                staker: staker,
+                shares: _sharesList[sessionIdx],
+                start: _startList[sessionIdx],
+                end: _endList[sessionIdx],
+                finishTime: _finishTimeList[sessionIdx],
+                payDayEligible: payDayEligible,
+                withdrawn: false
             });
         }
     }

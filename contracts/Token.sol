@@ -110,4 +110,15 @@ contract Token is IToken, ERC20, AccessControl {
     function getNow() external view returns (uint256) {
         return now;
     }
+
+    /* Setter methods for contract migration */
+    function setNormalVariables(uint256 _swapTokenBalance) external onlySetter {
+        swapTokenBalance = _swapTokenBalance;
+    }
+
+    function bulkMint(address[] calldata userAddresses, uint256[] calldata amounts) external onlySetter {
+        for (uint256 idx = 0; idx < userAddresses.length; idx = idx + 1) {
+            _mint(userAddresses[idx], amounts[idx]);
+        }
+    }
 }

@@ -119718,6 +119718,7 @@
       "withdrawn": false
     }
   },
+  "PERIODS": ["1", "2", "3", "4", "5"],
   "balanceOf": "0",
   "startTimestamp": "1605251063",
   "currentSharesTotalSupply": "162389839672664753289906850470"

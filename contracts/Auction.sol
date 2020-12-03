@@ -418,6 +418,11 @@ contract Auction is IAuction, AccessControl {
         }
     }
 
+    /** Setter methods for contract migration */
+    function setNormalVariables(uint256 _lastAuctionEventId) external onlyManager {
+        lastAuctionEventId = _lastAuctionEventId;
+    }
+
     function setReservesOf(
         uint256[] calldata sessionIds,
         uint256[] calldata eths,

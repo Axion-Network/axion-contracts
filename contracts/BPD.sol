@@ -97,4 +97,10 @@ contract BPD is IBPD, AccessControl {
             }
         }
     }
+
+    /* Setter methods for contract migration */
+    function restoreState(bool[5] calldata _poolTransferred, uint256[5] calldata _poolYearAmounts) external onlySetter {
+        poolTransferred = _poolTransferred;
+        poolYearAmounts = _poolYearAmounts;
+    }
 }
