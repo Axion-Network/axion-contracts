@@ -14,7 +14,7 @@ contract('SubBalances - Migration', ([setter, recipient]) => {
   });
 
   describe('setNormalVariables', () => {
-    it.only('should init all normal variables', async () => {
+    it('should init all normal variables', async () => {
       // act
       await subBalances.setNormalVariables(
         subBalancesSnapshot.currentSharesTotalSupply,
