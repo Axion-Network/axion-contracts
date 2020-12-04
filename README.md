@@ -9,7 +9,7 @@ if the task you are working on is not there, please add one.
 2. install [truffle](https://www.trufflesuite.com/truffle)
 3. clone repo
 4. run `npm install` in axion-contracts directory
-5. run `npm run build` 
+5. run `npm run build` (on Windows `npm run build:win`)
     - this compiles the smart contracts and exports artifacts to a build folder
     - generate definition types for TypeScript and put it in a types folder ([typechain](https://github.com/ethereum-ts/TypeChain))
 6. run the unit tests
