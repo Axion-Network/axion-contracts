@@ -243,4 +243,17 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
 
         return (amountOut, delta, deltaAuctionWeekly);
     }
+
+    /* Setter methods for contract migration */
+    function setStateVariables(uint256 _claimedAmount, uint256 _claimedAddresses, uint256 _start) external onlyMigrator {
+        claimedAmount = _claimedAmount;
+        claimedAddresses = _claimedAddresses;
+        start = _start;
+    }
+
+    function setClaimedBalanceOf(address[] calldata userAddresses, uint256[] calldata amounts) external onlyMigrator {
+        for (uint256 idx = 0; idx < userAddresses.length; idx = idx.add(1)) {
+            claimedBalanceOf[userAddresses[idx]] = amounts[idx];
+        }
+    }
 }
