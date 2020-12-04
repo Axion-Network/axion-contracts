@@ -1,3 +1,4 @@
+const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 const BN = require('bn.js');
 const chai = require('chai');
 const { expect } = require('chai');
@@ -31,13 +32,13 @@ contract(
           from: swapper,
         }
       );
-      token = await Token.new(
-        '2X Token',
-        '2X',
-        swaptoken.address,
-        swapper,
-        setter
-      );
+      token = await deployProxy(Token, [setter, 'Axion Token', 'AXN'], {
+        unsafeAllowCustomTypes: true,
+        unsafeAllowLinkedLibraries: true,
+      });
+      await token.initSwapperAndSwapToken(swaptoken.address, swapper, {
+        from: setter,
+      });
     });
 
     it('should initDeposit', async () => {

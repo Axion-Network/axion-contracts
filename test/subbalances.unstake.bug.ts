@@ -47,11 +47,11 @@ contract(
     let bpd: BPDInstance;
 
     beforeEach(async () => {
-      const contracts = await initTestSmartContracts(
+      const contracts = await initTestSmartContracts({
         setter,
         recipient,
-        stakingAddress
-      );
+        stakingAddress,
+      });
       swaptoken = contracts.swaptoken;
       foreignswap = contracts.foreignswap;
       token = contracts.token;

@@ -2,17 +2,14 @@ const BN = require('bn.js');
 const chai = require('chai');
 const { expect } = require('chai');
 const expectRevert = require('./utils/expectRevert.js');
+const initTestSmartContracts = require('./utils/initTestSmartContracts.js');
 const helper = require('./utils/utils.js');
 chai.use(require('chai-bn')(BN));
 
 const TERC20 = artifacts.require('TERC20');
-const Staking = artifacts.require('Staking');
-const SubBalancesMock = artifacts.require('SubBalancesMock');
-const AuctionMock = artifacts.require('AuctionMock');
-
 const DAY = 86400;
 
-contract('Staking', ([bank, foreignSwap, subBalances, staker1, staker2]) => {
+contract('Staking', ([bank, setter, recipient, staker1, staker2]) => {
   let token;
   let staking;
   let subbalances;
@@ -29,20 +26,19 @@ contract('Staking', ([bank, foreignSwap, subBalances, staker1, staker2]) => {
       }
     );
 
-    subbalances = await SubBalancesMock.new();
-    auction = await AuctionMock.new();
+    /** Since we need to mint token, we'll use a seperate token address */
+    const contracts = await initTestSmartContracts({
+      setter,
+      recipient,
+      bank,
+      tokenAddress: token.address,
+    });
+    staking = contracts.staking;
+    subbalances = contracts.subbalances;
+    auction = contracts.auction;
 
     await token.transfer(staker1, web3.utils.toWei('100'), { from: bank });
     await token.transfer(staker2, web3.utils.toWei('100'), { from: bank });
-
-    staking = await Staking.new();
-    await staking.init(
-      token.address,
-      auction.address,
-      subbalances.address,
-      foreignSwap,
-      DAY
-    );
   });
 
   it('should stake', async () => {
@@ -79,13 +75,6 @@ contract('Staking', ([bank, foreignSwap, subBalances, staker1, staker2]) => {
     await helper.advanceTimeAndBlock(DAY * 1);
 
     await staking.makePayout();
-
-    const { payout, sharesTotalSupply } = await staking.payouts(0);
-
-    console.log({
-      payout: payout.toString(),
-      sharesTotalSupply: sharesTotalSupply.toString(),
-    });
 
     const sessionId = await staking.sessionsOf(staker1, 0);
     const sessionData = await staking.sessionDataOf(staker1, sessionId);

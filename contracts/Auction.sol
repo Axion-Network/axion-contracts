@@ -2,17 +2,21 @@
 
 pragma solidity >=0.4.25 <0.7.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+/** OpenZeppelin Dependencies */
+// import "@openzeppelin/contracts-upgradeable/contracts/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+/** Uniswap */
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+/** Local Interfaces */
 import "./interfaces/IToken.sol";
 import "./interfaces/IAuction.sol";
 import "./interfaces/IStaking.sol";
 
-contract Auction is IAuction, AccessControl {
-    using SafeMath for uint256;
+contract Auction is IAuction, Initializable, AccessControlUpgradeable {
+    using SafeMathUpgradeable for uint256;
 
+    /** Events */
     event Bet(
         address indexed account,
         uint256 value,
@@ -29,9 +33,7 @@ contract Auction is IAuction, AccessControl {
 
     event AuctionIsOver(uint256 eth, uint256 token, uint256 indexed auctionId);
 
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
-    bytes32 public constant CALLER_ROLE = keccak256("CALLER_ROLE");
-
+    /** Struct */
     struct AuctionReserves {
         uint256 eth;
         uint256 token;
@@ -44,11 +46,18 @@ contract Auction is IAuction, AccessControl {
         address ref;
     }
 
+    /** Roles */
+    bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    bytes32 public constant CALLER_ROLE = keccak256("CALLER_ROLE");
+
+    /** Mapping */
     mapping(uint256 => AuctionReserves) public reservesOf;
     mapping(address => uint256[]) public auctionsOf;
     mapping(uint256 => mapping(address => UserBet)) public auctionBetOf;
     mapping(uint256 => mapping(address => bool)) public existAuctionsOf;
 
+    /** Simple types */
     uint256 public lastAuctionEventId;
     uint256 public start;
     uint256 public stepTimestamp;
@@ -66,6 +75,7 @@ contract Auction is IAuction, AccessControl {
     address payable public recipient;
     bool public init_;
 
+    /** modifiers */
     modifier onlyCaller() {
         require(
             hasRole(CALLER_ROLE, _msgSender()),
@@ -77,12 +87,24 @@ contract Auction is IAuction, AccessControl {
     modifier onlyManager() {
         require(
             hasRole(MANAGER_ROLE, _msgSender()),
-            "Caller is not a caller role"
+            "Caller is not a manager role"
         );
         _;
     }
 
-    constructor() public {
+    modifier onlyMigrator() {
+        require(
+            hasRole(MIGRATOR_ROLE, _msgSender()),
+            "Caller is not a migrator"
+        );
+        _;
+    }
+
+    function initialize(
+        address _manager
+    ) public initializer {
+        _setupRole(MIGRATOR_ROLE, _manager);
+        _setupRole(MANAGER_ROLE, _manager);
         init_ = false;
     }
 
@@ -96,8 +118,10 @@ contract Auction is IAuction, AccessControl {
         address _nativeSwap,
         address _foreignSwap,
         address _subbalances
-    ) external {
-        require(!init_, "init is active");
+    ) external onlyManager {
+        require(!init_, "Init is active");
+        init_ = true;
+        /** Roles */
         _setupRole(MANAGER_ROLE, _manager);
         _setupRole(CALLER_ROLE, _nativeSwap);
         _setupRole(CALLER_ROLE, _foreignSwap);
@@ -119,19 +143,21 @@ contract Auction is IAuction, AccessControl {
         staking = _staking;
         uniswap = _uniswap;
         recipient = _recipient;
-        init_ = true;
     }
 
     /** Public Setter Functions */
     function setReferrerPercentage(uint256 percent) external onlyManager {
         referrerPercent = percent;
     }
+
     function setReferredPercentage(uint256 percent) external onlyManager {
         referredPercent = percent;
     }
+
     function setReferralsOn(bool _referralsOn) external onlyManager {
         referralsOn = _referralsOn;
     }
+
     function setAutoStakeDays(uint256 _autoStakeDays) external onlyManager {
         autoStakeDays = _autoStakeDays;
     }
@@ -231,10 +257,10 @@ contract Auction is IAuction, AccessControl {
         uint256 stepsFromStart = calculateStepsFromStart();
 
         /** If referralsOn is true sallow to set ref */
-        if(referralsOn == true) {
+        if (referralsOn == true) {
             auctionBetOf[stepsFromStart][_msgSender()].ref = ref;
-        }
-        else { // Else set ref to 0x0 for this auction bid
+        } else {
+            // Else set ref to 0x0 for this auction bid
             auctionBetOf[stepsFromStart][_msgSender()].ref = address(0);
         }
 
@@ -290,11 +316,14 @@ contract Auction is IAuction, AccessControl {
             payout = uniswapPayoutWithPercent;
         }
 
-        
         if (address(auctionBetOf[auctionId][_msgSender()].ref) == address(0)) {
             IToken(mainToken).burn(address(this), payout);
 
-            IStaking(staking).externalStake(payout, autoStakeDays, _msgSender());
+            IStaking(staking).externalStake(
+                payout,
+                autoStakeDays,
+                _msgSender()
+            );
 
             emit Withdraval(msg.sender, payout, stepsFromStart, now);
         } else {
@@ -307,7 +336,11 @@ contract Auction is IAuction, AccessControl {
 
             payout = payout.add(toUserMintAmount);
 
-            IStaking(staking).externalStake(payout, autoStakeDays, _msgSender());
+            IStaking(staking).externalStake(
+                payout,
+                autoStakeDays,
+                _msgSender()
+            );
 
             emit Withdraval(msg.sender, payout, stepsFromStart, now);
 
@@ -419,7 +452,7 @@ contract Auction is IAuction, AccessControl {
     }
 
     /** Setter methods for contract migration */
-    function setNormalVariables(uint256 _lastAuctionEventId) external onlyManager {
+    function setNormalVariables(uint256 _lastAuctionEventId) external onlyMigrator {
         lastAuctionEventId = _lastAuctionEventId;
     }
 
@@ -429,13 +462,13 @@ contract Auction is IAuction, AccessControl {
         uint256[] calldata tokens,
         uint256[] calldata uniswapLastPrices,
         uint256[] calldata uniswapMiddlePrices
-    ) external onlyManager {
+    ) external onlyMigrator {
         for (uint256 i = 0; i < sessionIds.length; i = i.add(1)) {
             reservesOf[sessionIds[i]] = AuctionReserves({
-            eth: eths[i],
-            token: tokens[i],
-            uniswapLastPrice: uniswapLastPrices[i],
-            uniswapMiddlePrice: uniswapMiddlePrices[i]
+                eth: eths[i],
+                token: tokens[i],
+                uniswapLastPrice: uniswapLastPrices[i],
+                uniswapMiddlePrice: uniswapMiddlePrices[i]
             });
         }
     }
@@ -444,7 +477,7 @@ contract Auction is IAuction, AccessControl {
         address[] calldata _userAddresses,
         uint256[] calldata _sessionPerAddressCounts,
         uint256[] calldata _sessionIds
-    ) external onlyManager {
+    ) external onlyMigrator {
         uint256 sessionIdIdx = 0;
         for (uint256 i = 0; i < _userAddresses.length; i = i + 1) {
             address userAddress = _userAddresses[i];
@@ -463,11 +496,11 @@ contract Auction is IAuction, AccessControl {
         address[] calldata userAddresses,
         uint256[] calldata eths,
         address[] calldata refs
-    ) external onlyManager {
+    ) external onlyMigrator {
         for (uint256 i = 0; i < userAddresses.length; i = i.add(1)) {
             auctionBetOf[sessionId][userAddresses[i]] = UserBet({
-            eth: eths[i],
-            ref: refs[i]
+                eth: eths[i],
+                ref: refs[i]
             });
         }
     }
@@ -476,7 +509,7 @@ contract Auction is IAuction, AccessControl {
         uint256 sessionId,
         address[] calldata userAddresses,
         bool[] calldata exists
-    ) external onlyManager {
+    ) external onlyMigrator {
         for (uint256 i = 0; i < userAddresses.length; i = i.add(1)) {
             existAuctionsOf[sessionId][userAddresses[i]] = exists[i];
         }

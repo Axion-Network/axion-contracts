@@ -2,13 +2,18 @@
 
 pragma solidity >=0.4.25 <0.7.0;
 
+/** OpenZeppelin Dependencies Upgradable */
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+/** OpenZeppelin non ugpradable (Needed for the "Swap Token hex3t") */
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+/** Local Interfaces */
 import "./interfaces/IToken.sol";
 import "./interfaces/IAuction.sol";
 
-contract NativeSwap {
-    using SafeMath for uint256;
+contract NativeSwap is Initializable, AccessControlUpgradeable {
+    using SafeMathUpgradeable for uint256;
 
     event TokensSwapped(
         address indexed account,
@@ -17,18 +22,41 @@ contract NativeSwap {
         uint256 penaltyAmount
     );
 
+    /** Role variables */
+    bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    /** Basic variables */
     uint256 public start;
     uint256 public period;
     uint256 public stepTimestamp;
+    /** Contract Variables */
     IERC20 public swapToken;
     IToken public mainToken;
     IAuction public auction;
-
-    bool public init_;
-
+    /** Mappings */
     mapping(address => uint256) public swapTokenBalanceOf;
 
-    constructor() public {
+    /** Booleans */
+    bool public init_;
+
+    /** Variables after initial contract launch must go below here. https://github.com/OpenZeppelin/openzeppelin-sdk/issues/37 */
+    /** End Variables after launch */
+
+    /** Roles */
+    modifier onlyManager() {
+        require(hasRole(MANAGER_ROLE, _msgSender()), "Caller is not a manager");
+        _;
+    }
+    modifier onlyMigrator() {
+        require(hasRole(MIGRATOR_ROLE, _msgSender()), "Caller is not a migrator");
+        _;
+    }
+    /** Init functions */
+    function initialize(
+        address _manager
+    ) public initializer {
+        _setupRole(MANAGER_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _manager);
         init_ = false;
     }
 
@@ -40,14 +68,16 @@ contract NativeSwap {
         address _auction
     ) external {
         require(!init_, "init is active");
+        init_ = true;
+        
         period = _period;
         stepTimestamp = _stepTimestamp;
         swapToken = IERC20(_swapToken);
         mainToken = IToken(_mainToken);
         auction = IAuction(_auction);
         start = now;
-        init_ = true;
     }
+    /** End init functions */
 
     function deposit(uint256 _amount) external {
         require(

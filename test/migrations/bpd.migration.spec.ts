@@ -1,14 +1,16 @@
 import { BPDInstance } from '../../types/truffle-contracts';
 
 const BPD = artifacts.require('BPD');
+const initTestSmartContracts = require('../utils/initTestSmartContracts');
 const bpdSnapshot = require('./mock-bpd-snapshot.json');
 import _ from 'lodash';
 
-contract('BPD - Migration', ([setter]) => {
+contract('BPD - Migration', ([setter, recipient]) => {
   let bpd: BPDInstance;
 
   beforeEach(async () => {
-    bpd = await BPD.new(setter);
+    const contracts = await initTestSmartContracts({ setter, recipient });
+    bpd = contracts.bpd;
   });
 
   describe('restoreState', () => {

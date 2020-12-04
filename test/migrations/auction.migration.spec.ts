@@ -1,28 +1,17 @@
 import { AuctionInstance } from '../../types/truffle-contracts';
 
-const Auction = artifacts.require('Auction');
 const auctionSnapshot = require('./mock-auction-snapshot.json');
+const initTestSmartContracts = require('../utils/initTestSmartContracts');
 import _ from 'lodash';
-import BN from 'bn.js';
 
 const DAY = 86400;
 
-contract('Auction - Migration', ([setter]) => {
+contract('Auction - Migration', ([setter, recipient]) => {
   let auction: AuctionInstance;
 
   beforeEach(async () => {
-    auction = await Auction.new();
-    await auction.init(
-      new BN(DAY.toString(), 10),
-      setter,
-      setter,
-      setter,
-      setter,
-      setter,
-      setter,
-      setter,
-      setter
-    );
+    const contracts = await initTestSmartContracts({ setter, recipient });
+    auction = contracts.auction;
   });
 
   describe('setNormalVariables', () => {

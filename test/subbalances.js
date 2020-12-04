@@ -5,14 +5,19 @@ const helper = require('./utils/utils.js');
 const expectRevert = require('./utils/expectRevert.js');
 chai.use(require('chai-bn')(BN));
 const EthCrypto = require('eth-crypto');
+const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 
 const TERC20 = artifacts.require('TERC20');
 const Token = artifacts.require('Token');
+const Auction = artifacts.require('Auction');
+const SubBalances = artifacts.require('SubBalances');
+const Staking = artifacts.require('Staking');
 const ForeignSwap = artifacts.require('ForeignSwap');
+const BPD = artifacts.require('BPD');
+
+// Mocks
 const AuctionMock = artifacts.require('AuctionMock');
 const StakingMock = artifacts.require('StakingMock');
-const BPD = artifacts.require('BPD');
-const SubBalances = artifacts.require('SubBalances');
 
 const DAY = 900;
 const STAKE_PERIOD = 10;
@@ -43,11 +48,11 @@ contract(
     let token;
     let foreignswap;
     let auction;
-    let stakingContract;
     let bpd;
     let signAmount;
     let testSignature;
     let maxClaimAmount;
+    let stakingContract;
 
     beforeEach(async () => {
       maxClaimAmount = new BN(10 ** 7);
@@ -66,28 +71,39 @@ contract(
         bank,
         { from: bank }
       );
-      token = await Token.new(
-        '2X Token',
-        '2X',
-        swaptoken.address,
-        setter,
-        setter
-      );
+
+      token = await deployProxy(Token, [setter, 'Axion Token', 'AXN'], {
+        unsafeAllowCustomTypes: true,
+        unsafeAllowLinkedLibraries: true,
+      });
 
       auction = await AuctionMock.new();
       stakingContract = await StakingMock.new();
 
       // Deploy foreign swap
-      foreignswap = await ForeignSwap.new(setter);
+
+      foreignswap = await deployProxy(ForeignSwap, [setter], {
+        unsafeAllowCustomTypes: true,
+        unsafeAllowLinkedLibraries: true,
+      });
 
       // Deploy BigPayDay Pool
-      bpd = await BPD.new(setter);
+      bpd = await deployProxy(BPD, [setter], {
+        unsafeAllowCustomTypes: true,
+        unsafeAllowLinkedLibraries: true,
+      });
 
       // Deploy SubBalances Contract
-      subbalances = await SubBalances.new(setter);
+      subbalances = await deployProxy(SubBalances, [setter], {
+        unsafeAllowCustomTypes: true,
+        unsafeAllowLinkedLibraries: true,
+      });
 
+      await token.initSwapperAndSwapToken(swaptoken.address, setter, {
+        from: setter,
+      });
       // Init token
-      token.init(
+      await token.init(
         [
           nativeSwap,
           foreignswap.address,
@@ -99,7 +115,7 @@ contract(
       );
 
       // Init foreign swap
-      foreignswap.init(
+      await foreignswap.init(
         testSigner,
         new BN(DAY.toString(), 10),
         new BN(STAKE_PERIOD.toString(), 10),
@@ -114,12 +130,12 @@ contract(
       );
 
       // Init BPD Pool
-      bpd.init(token.address, foreignswap.address, subbalances.address, {
+      await bpd.init(token.address, foreignswap.address, subbalances.address, {
         from: setter,
       });
 
       // Init SubBalances Contract
-      subbalances.init(
+      await subbalances.init(
         token.address,
         foreignswap.address,
         bpd.address,
@@ -140,12 +156,14 @@ contract(
       const amountBefore = await foreignswap.getUserClaimableAmountFor(
         signAmount
       );
+      console.log('AMOUNT BEFORE', amountBefore.toString());
 
       await helper.advanceTimeAndBlock(DAY * (STAKE_PERIOD / 2));
 
       const amountAfter = await foreignswap.getUserClaimableAmountFor(
         signAmount
       );
+      console.log('AMOUNT AFTER', amountAfter.toString());
 
       expect(amountAfter[0]).to.be.a.bignumber.that.equals(
         amountBefore[0].div(new BN('2'))

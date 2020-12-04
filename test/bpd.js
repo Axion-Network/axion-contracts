@@ -2,21 +2,14 @@ const BN = require('bn.js');
 const chai = require('chai');
 const { expect } = require('chai');
 const helper = require('./utils/utils.js');
-const expectRevert = require('./utils/expectRevert.js');
 chai.use(require('chai-bn')(BN));
 const EthCrypto = require('eth-crypto');
-
-const TERC20 = artifacts.require('TERC20');
-const Token = artifacts.require('Token');
-const ForeignSwap = artifacts.require('ForeignSwap');
-const AuctionMock = artifacts.require('AuctionMock');
-const StakingMock = artifacts.require('StakingMock');
-const BPD = artifacts.require('BPD');
-const totalSnapshotAmount = new BN(10 ** 10);
-const totalSnapshotAddresses = new BN(10);
+const initTestSmartContracts = require('./utils/initTestSmartContracts.js');
 
 const DAY = 86400;
-const STAKE_PERIOD = 350;
+//Mocks
+const AuctionMock = artifacts.require('AuctionMock');
+const StakingMock = artifacts.require('StakingMock');
 
 const testSigner = web3.utils.toChecksumAddress(
   '0xCC64d26Dab6c7B971d26846A4B2132985fe8C358'
@@ -37,13 +30,16 @@ const sign = (address, pkey, messageParamsTypes, messageParams) => {
 
 contract(
   'BigPayDay',
-  ([bank, setter, signer, nativeSwap, subbalances, account1, account2]) => {
+  ([setter, subbalances, account1, account2, recipient]) => {
     let swaptoken;
-    let token;
     let foreignswap;
+    let token;
     let auction;
     let staking;
     let bpd;
+    let nativeswap;
+    let uniswap;
+
     let signAmount;
     let testSignature;
     let maxClaimAmount;
@@ -58,60 +54,21 @@ contract(
         [signAmount.toString(), account1]
       );
 
-      swaptoken = await TERC20.new(
-        '2T Token',
-        '2T',
-        web3.utils.toWei('1000'),
-        bank,
-        { from: bank }
-      );
-      token = await Token.new(
-        '2X Token',
-        '2X',
-        swaptoken.address,
-        setter,
-        setter
-      );
-
       auction = await AuctionMock.new();
       staking = await StakingMock.new();
-
-      // Deploy BigPayDay Pool
-      bpd = await BPD.new(setter);
-
-      // Deploy and init native swap
-      foreignswap = await ForeignSwap.new(setter);
-
-      // Init token
-      token.init(
-        [
-          nativeSwap,
-          foreignswap.address,
-          auction.address,
-          staking.address,
-          subbalances,
-        ],
-        { from: setter }
-      );
-
-      foreignswap.init(
-        testSigner,
-        new BN(DAY.toString(), 10),
-        new BN(STAKE_PERIOD.toString(), 10),
-        maxClaimAmount,
-        token.address,
-        auction.address,
-        staking.address,
-        bpd.address,
-        totalSnapshotAmount,
-        totalSnapshotAddresses,
-        { from: setter }
-      );
-
-      // Init BPD Pool
-      bpd.init(token.address, foreignswap.address, subbalances, {
-        from: setter,
+      const contracts = await initTestSmartContracts({
+        setter,
+        recipient,
+        subbalancesAddress: subbalances,
+        stakingAddress: staking.address,
+        auctionAddress: auction.address,
       });
+      swaptoken = contracts.swaptoken;
+      foreignswap = contracts.foreignswap;
+      token = contracts.token;
+      nativeswap = contracts.nativeswap;
+      uniswap = contracts.uniswap;
+      bpd = contracts.bpd;
     });
 
     it('should not receiving amounts if no penalty', async () => {

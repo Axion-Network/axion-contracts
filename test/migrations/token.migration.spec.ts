@@ -1,15 +1,17 @@
 import { TokenInstance } from '../../types/truffle-contracts';
 
 const Token = artifacts.require('Token');
+const initTestSmartContracts = require('../utils/initTestSmartContracts');
 const tokenSnapshot = require('./mock-token-snapshot.json');
 import _ from 'lodash';
 import BN from 'bn.js';
 
-contract('Token - Migration', ([setter, swapToken, swapper]) => {
+contract('Token - Migration', ([setter, recipient]) => {
   let token: TokenInstance;
 
   beforeEach(async () => {
-    token = await Token.new('name', 'symbol', swapToken, swapper, setter);
+    const contracts = await initTestSmartContracts({ setter, recipient });
+    token = contracts.token;
   });
 
   describe('setNormalVariables', () => {
