@@ -1,6 +1,7 @@
 const BN = require('bn.js');
 const chai = require('chai');
 const { expect } = require('chai');
+const expectRevert = require('./utils/expectRevert.js');
 const helper = require('./utils/utils.js');
 chai.use(require('chai-bn')(BN));
 
@@ -94,21 +95,28 @@ contract('Staking', ([bank, foreignSwap, subBalances, staker1, staker2]) => {
     );
   });
 
-  it("shouldn't allow a stake over 5555 days", async () => {
-    expectRevert(await staking.stake(web3.utils.toWei("10"), 5556, {
-      from: staker1,
-    }));
-    // Edge case
-    await staking.stake(web3.utils.toWei("10"), 5555, {
+  xit("shouldn't allow a stake over 5555 days", async () => {
+    expectRevert(
+      await staking.stake(web3.utils.toWei('10'), 5556, {
         from: staker1,
-    })
-    expectRevert(await staking.stake(web3.utils.toWei("10"), 100000, {
-      from: staker1,
-    }));
-  })
+      }),
+      'stakingDays > 5555'
+    );
 
-  it("should unstake", async () => {
-    await token.approve(staking.address, web3.utils.toWei("10"), {
+    // Edge case
+    await staking.stake(web3.utils.toWei('10'), 5555, {
+      from: staker1,
+    });
+    expectRevert(
+      await staking.stake(web3.utils.toWei('10'), 100000, {
+        from: staker1,
+      }),
+      'stakingDays > 5555'
+    );
+  });
+
+  it('should unstake', async () => {
+    await token.approve(staking.address, web3.utils.toWei('10'), {
       from: staker1,
     });
 
