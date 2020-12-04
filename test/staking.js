@@ -95,9 +95,9 @@ contract('Staking', ([bank, foreignSwap, subBalances, staker1, staker2]) => {
     );
   });
 
-  xit("shouldn't allow a stake over 5555 days", async () => {
-    expectRevert(
-      await staking.stake(web3.utils.toWei('10'), 5556, {
+  it("shouldn't allow a stake over 5555 days", async () => {
+    await expectRevert(
+      staking.stake(web3.utils.toWei('10'), 5556, {
         from: staker1,
       }),
       'stakingDays > 5555'
@@ -107,8 +107,8 @@ contract('Staking', ([bank, foreignSwap, subBalances, staker1, staker2]) => {
     await staking.stake(web3.utils.toWei('10'), 5555, {
       from: staker1,
     });
-    expectRevert(
-      await staking.stake(web3.utils.toWei('10'), 100000, {
+    await expectRevert(
+      staking.stake(web3.utils.toWei('10'), 100000, {
         from: staker1,
       }),
       'stakingDays > 5555'
