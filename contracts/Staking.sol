@@ -2,17 +2,21 @@
 
 pragma solidity >=0.4.25 <0.7.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+/** OpenZeppelin Dependencies */
+// import "@openzeppelin/contracts-upgradeable/contracts/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+/** Local Interfaces */
 import "./interfaces/IToken.sol";
 import "./interfaces/IAuction.sol";
 import "./interfaces/IStaking.sol";
 import "./interfaces/ISubBalances.sol";
 
-contract Staking is IStaking, AccessControl {
-    using SafeMath for uint256;
+contract Staking is IStaking, Initializable, AccessControlUpgradeable {
+    using SafeMathUpgradeable for uint256;
 
+    /** Events */
     event Stake(
         address indexed account,
         uint256 indexed sessionId,
@@ -37,12 +41,7 @@ contract Staking is IStaking, AccessControl {
         uint256 indexed time
     );
 
-    uint256 private _sessionsIds;
-
-    bytes32 public constant EXTERNAL_STAKER_ROLE = keccak256(
-        "EXTERNAL_STAKER_ROLE"
-    );
-
+    /** Structs */
     struct Payout {
         uint256 payout;
         uint256 sharesTotalSupply;
@@ -56,6 +55,15 @@ contract Staking is IStaking, AccessControl {
         uint256 nextPayout;
     }
 
+    /** Private */
+    uint256 private _sessionsIds;
+
+    /** Roles */
+    bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
+    bytes32 public constant EXTERNAL_STAKER_ROLE = keccak256("EXTERNAL_STAKER_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+
+    /** Public Variables */
     address public mainToken;
     address public auction;
     address public subBalances;
@@ -66,12 +74,27 @@ contract Staking is IStaking, AccessControl {
     uint256 public startContract;
     uint256 public globalPayout;
     uint256 public globalPayin;
-    bool public init_;
 
+    /** Mappings / Arrays */
     mapping(address => mapping(uint256 => Session)) public sessionDataOf;
     mapping(address => uint256[]) public sessionsOf;
     Payout[] public payouts;
+    
+    /** Booleans */
+    bool public init_;
 
+    /** Variables after initial contract launch must go below here. https://github.com/OpenZeppelin/openzeppelin-sdk/issues/37 */
+    /** End Variables after launch */
+
+    /** Roles */
+    modifier onlyManager() {
+        require(hasRole(MANAGER_ROLE, _msgSender()), "Caller is not a manager");
+        _;
+    }
+    modifier onlyMigrator() {
+        require(hasRole(MIGRATOR_ROLE, _msgSender()), "Caller is not a migrator");
+        _;
+    }
     modifier onlyExternalStaker() {
         require(
             hasRole(EXTERNAL_STAKER_ROLE, _msgSender()),
@@ -80,10 +103,15 @@ contract Staking is IStaking, AccessControl {
         _;
     }
 
-    constructor() public {
+    /** Init functions */
+    function initialize(
+        address _manager
+    ) public initializer {
+        _setupRole(MANAGER_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _manager);
         init_ = false;
     }
-
+    
     function init(
         address _mainToken,
         address _auction,
@@ -92,6 +120,8 @@ contract Staking is IStaking, AccessControl {
         uint256 _stepTimestamp
     ) external {
         require(!init_, "NativeSwap: init is active");
+        init_ = true;
+        /** Setup */
         _setupRole(EXTERNAL_STAKER_ROLE, _foreignSwap);
         _setupRole(EXTERNAL_STAKER_ROLE, _auction);
         mainToken = _mainToken;
@@ -101,8 +131,8 @@ contract Staking is IStaking, AccessControl {
         stepTimestamp = _stepTimestamp;
         nextPayoutCall = now.add(_stepTimestamp);
         startContract = now;
-        init_ = true;
     }
+    /** End init functions */
 
     function sessionsOf_(address account)
         external
@@ -115,7 +145,9 @@ contract Staking is IStaking, AccessControl {
     function stake(uint256 amount, uint256 stakingDays) external {
         if (now >= nextPayoutCall) makePayout();
 
+        // Staking days must be greater then 0 and less then or equal to 5555.
         require(stakingDays > 0, "stakingDays < 1");
+        require(stakingDays <= 5555, "stakingDays > 5555");
 
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
@@ -155,6 +187,7 @@ contract Staking is IStaking, AccessControl {
         if (now >= nextPayoutCall) makePayout();
 
         require(stakingDays > 0, "stakingDays < 1");
+        require(stakingDays <= 5555, "stakingDays > 5555");
 
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
@@ -266,7 +299,6 @@ contract Staking is IStaking, AccessControl {
                 sessionDataOf[msg.sender][sessionId].end,
                 shares
             );
-
 
             return;
         }
@@ -383,9 +415,9 @@ contract Staking is IStaking, AccessControl {
     }
 
     function readPayout() external view returns (uint256) {
-        uint256 amountTokenInDay = IERC20(mainToken).balanceOf(address(this));
+        uint256 amountTokenInDay = IERC20Upgradeable(mainToken).balanceOf(address(this));
 
-        uint256 currentTokenTotalSupply = (IERC20(mainToken).totalSupply()).add(
+        uint256 currentTokenTotalSupply = (IERC20Upgradeable(mainToken).totalSupply()).add(
             globalPayin
         );
 
@@ -397,7 +429,7 @@ contract Staking is IStaking, AccessControl {
     }
 
     function _getPayout() internal returns (uint256) {
-        uint256 amountTokenInDay = IERC20(mainToken).balanceOf(address(this));
+        uint256 amountTokenInDay = IERC20Upgradeable(mainToken).balanceOf(address(this));
 
         globalPayin = globalPayin.add(amountTokenInDay);
 
@@ -409,7 +441,7 @@ contract Staking is IStaking, AccessControl {
             globalPayout = 0;
         }
 
-        uint256 currentTokenTotalSupply = (IERC20(mainToken).totalSupply()).add(
+        uint256 currentTokenTotalSupply = (IERC20Upgradeable(mainToken).totalSupply()).add(
             globalPayin
         );
 

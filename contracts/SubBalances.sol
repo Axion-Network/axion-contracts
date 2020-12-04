@@ -2,9 +2,12 @@
 
 pragma solidity ^0.6.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+/** OpenZeppelin Dependencies */
+// import "@openzeppelin/contracts-upgradeable/contracts/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+/** Local Interfaces */
 import "./interfaces/IToken.sol";
 import "./interfaces/IAuction.sol";
 import "./interfaces/IForeignSwap.sol";
@@ -12,17 +15,16 @@ import "./interfaces/IBPD.sol";
 import "./interfaces/ISubBalances.sol";
 
 
-contract SubBalances is ISubBalances, AccessControl {
-	using SafeMath for uint256;
+contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
+	using SafeMathUpgradeable for uint256;
 
+    /** Events */
     event PoolCreated(
         uint256 paydayTime,
         uint256 poolAmount
     );
 
-    bytes32 public constant SETTER_ROLE = keccak256("SETTER_ROLE");
-    bytes32 public constant STAKING_ROLE = keccak256("CALLER_ROLE");
-
+    /** Structs */
     struct StakeSession {
     	address staker;
     	uint256 shares;
@@ -45,30 +47,44 @@ contract SubBalances is ISubBalances, AccessControl {
     	bool minted;
     }
 
-    SubBalance[5] public subBalanceList;
-
+    /** Role vars */
+    bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    bytes32 public constant STAKING_ROLE = keccak256("CALLER_ROLE");
+    // Public addresses
     address public mainToken;
     address public foreignSwap;
 	address public bigPayDayPool;
 	address public auction;
+    // Public Ints
 	uint256 public startTimestamp;
     uint256 public stepTimestamp;
     uint256 public basePeriod;
-    uint256[5] public PERIODS;
-
 	uint256 public currentSharesTotalSupply;
+    // Mappings / Array
+    SubBalance[5] public subBalanceList;
+    uint256[5] public periods;
+    mapping (address => uint256[]) public userStakings;
+    mapping (uint256 => StakeSession) public stakeSessions;
+    // booleans
+    bool public init_;
 
-    // Users
-    mapping (address => uint256[]) userStakings;
-    mapping (uint256 => StakeSession) stakeSessions;
-
-    modifier onlySetter() {
-        require(hasRole(SETTER_ROLE, _msgSender()), "Caller is not a setter");
+    /** No longer needed with initializble */
+    modifier onlyManager() {
+        require(hasRole(MANAGER_ROLE, _msgSender()), "Caller is not a manager");
+        _;
+    }
+    modifier onlyMigrator() {
+        require(hasRole(MIGRATOR_ROLE, _msgSender()), "Caller is not a migrator");
         _;
     }
 
-    constructor(address _setter) public {
-        _setupRole(SETTER_ROLE, _setter);
+    /** Start Init functins */
+    function initialize(
+        address _manager
+    ) public initializer {
+        _setupRole(MANAGER_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _manager);
     }
 
     function init(
@@ -79,9 +95,10 @@ contract SubBalances is ISubBalances, AccessControl {
         address _staking,
         uint256 _stepTimestamp,
         uint256 _basePeriod
-    ) public
-      onlySetter
-    {
+    ) external onlyManager {
+        require(!init_, "NativeSwap: init is active");
+        init_ = true;
+        /** Setup */
         _setupRole(STAKING_ROLE, _staking);
         mainToken = _mainToken;
         foreignSwap = _foreignSwap;
@@ -92,15 +109,28 @@ contract SubBalances is ISubBalances, AccessControl {
     	startTimestamp = now;
 
     	for (uint256 i = 0; i < subBalanceList.length; i++) {
-            PERIODS[i] = _basePeriod.mul(i.add(1));
+            periods[i] = _basePeriod.mul(i.add(1));
     		SubBalance storage subBalance = subBalanceList[i];
-            subBalance.payDayTime = startTimestamp.add(stepTimestamp.mul(PERIODS[i]));
+            subBalance.payDayTime = startTimestamp.add(stepTimestamp.mul(periods[i]));
     		// subBalance.payDayEnd = subBalance.payDayStart.add(stepTimestamp);
-            subBalance.requiredStakePeriod = PERIODS[i];
+            subBalance.requiredStakePeriod = periods[i];
     	}
-        renounceRole(SETTER_ROLE, _msgSender());
     }
 
+    function setAddresses(
+        address _mainToken,
+        address _foreignSwap,
+        address _bigPayDayPool,
+        address _auction,
+        address _staking
+    ) external onlyManager {
+        _setupRole(STAKING_ROLE, _staking);
+        mainToken = _mainToken;
+        foreignSwap = _foreignSwap;
+        bigPayDayPool = _bigPayDayPool;
+        auction = _auction;
+    }
+    /** END INIT FUNCS */
     function getStartTimes() public view returns (uint256[5] memory startTimes) {
         for (uint256 i = 0; i < subBalanceList.length; i ++) {
             startTimes[i] = subBalanceList[i].payDayTime;
@@ -226,11 +256,11 @@ contract SubBalances is ISubBalances, AccessControl {
         stakeSession.withdrawn = true;
 
         if (payoutAmount > 0) {
-            IERC20(mainToken).transfer(_msgSender(), payoutAmount);
+            IERC20Upgradeable(mainToken).transfer(_msgSender(), payoutAmount);
         }
 
         if (penaltyAmount > 0) {
-            IERC20(mainToken).transfer(auction, penaltyAmount);
+            IERC20Upgradeable(mainToken).transfer(auction, penaltyAmount);
             IAuction(auction).callIncomeDailyTokensTrigger(penaltyAmount);
         }
     }
@@ -244,7 +274,7 @@ contract SubBalances is ISubBalances, AccessControl {
         uint256 shares
     ) external override {
         require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
-        require(end > start, 'SUBBALANCES: Stake end must be after stake start');
+        require(end > start, "SUBBALANCES: Stake end must be after stake start");
         uint256 stakeDays = end.sub(start).div(stepTimestamp);
 
         // Skipping user if period less that year
@@ -295,7 +325,7 @@ contract SubBalances is ISubBalances, AccessControl {
     {
         (staker);
         require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
-        require(end > start, 'SUBBALANCES: Stake end must be after stake start');
+        require(end > start, "SUBBALANCES: Stake end must be after stake start");
         uint256 stakeDays = end.sub(start).div(stepTimestamp);
         uint256 realStakeEnd = now;
         // uint256 daysStaked = realStakeEnd.sub(stakeStart).div(stepTimestamp);
@@ -365,7 +395,7 @@ contract SubBalances is ISubBalances, AccessControl {
 
     // Pool logic
     function _bpdAmountFromRaw(uint256 yearTokenAmount) internal view returns (uint256 totalAmount, uint256 addAmount) {
-    	uint256 currentTokenTotalSupply = IERC20(mainToken).totalSupply();
+    	uint256 currentTokenTotalSupply = IERC20Upgradeable(mainToken).totalSupply();
 
         uint256 inflation = uint256(8).mul(currentTokenTotalSupply.add(currentSharesTotalSupply)).div(36500);
 
@@ -382,4 +412,84 @@ contract SubBalances is ISubBalances, AccessControl {
         addAmount = totalAmount.sub(yearTokenAmount);
     }
 
+
+    /* Setter methods for contract migration */
+    function setNormalVariables(
+        uint256 _currentSharesTotalSupply, 
+        uint256[5] calldata _periods
+    ) external onlyMigrator {
+        currentSharesTotalSupply = _currentSharesTotalSupply;
+        periods = _periods;
+    }
+
+    function setSubBalanceList(
+        uint256[5] calldata _totalSharesList,
+        uint256[5] calldata _totalWithdrawAmountList,
+        uint256[5] calldata _payDayTimeList,
+        uint256[5] calldata _requiredStakePeriodList,
+        bool[5] calldata _mintedList
+    ) external onlyMigrator {
+        for (uint256 idx = 0; idx < 5; idx = idx + 1) {
+            subBalanceList[idx] = SubBalance({
+                totalShares: _totalSharesList[idx],
+                totalWithdrawAmount: _totalWithdrawAmountList[idx],
+                payDayTime: _payDayTimeList[idx],
+                requiredStakePeriod: _requiredStakePeriodList[idx],
+                minted: _mintedList[idx]
+            });
+        }
+    }
+
+    function addStakeSessions(
+        uint256[] calldata _sessionIds,
+        address[] calldata _stakers,
+        uint256[] calldata _sharesList,
+        uint256[] calldata _startList,
+        uint256[] calldata _endList,
+        uint256[] calldata _finishTimeList,
+        bool[] calldata _payDayEligibleList
+    ) external onlyMigrator {
+        for (
+            uint256 sessionIdx = 0;
+            sessionIdx < _sessionIds.length;
+            sessionIdx = sessionIdx + 1
+        ) {
+            uint256 sessionId = _sessionIds[sessionIdx];
+            bool[5] memory payDayEligible;
+            for (uint256 boolIdx = 0; boolIdx < 5; boolIdx = boolIdx + 1) {
+                payDayEligible[boolIdx] = _payDayEligibleList[5 * sessionIdx + boolIdx];
+            }
+
+            address staker = _stakers[sessionIdx];
+
+            stakeSessions[sessionId] = StakeSession({
+                staker: staker,
+                shares: _sharesList[sessionIdx],
+                start: _startList[sessionIdx],
+                end: _endList[sessionIdx],
+                finishTime: _finishTimeList[sessionIdx],
+                payDayEligible: payDayEligible,
+                withdrawn: false
+            });
+        }
+    }
+
+    function addUserStakings(
+        address[] calldata _addresses,
+        uint256[] calldata _sessionCountList,
+        uint256[] calldata _sessionIds
+    ) external onlyMigrator {
+        uint256 sessionIdIdx = 0;
+
+        for (uint256 i = 0; i < _addresses.length; i = i + 1) {
+            address userAddress = _addresses[i];
+            uint256 sessionCount = _sessionCountList[i];
+            uint256[] memory sessionIds = new uint256[](sessionCount);
+            for (uint256 j = 0; j < sessionCount; j = j + 1) {
+                sessionIds[j] = _sessionIds[sessionIdIdx];
+                sessionIdIdx = sessionIdIdx + 1;
+            }
+            userStakings[userAddress] = sessionIds;
+        }
+    }
 }

@@ -2,19 +2,22 @@
 
 pragma solidity ^0.6.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/cryptography/ECDSA.sol";
+/** OpenZeppelin Dependencies (Via NodeModules) */
+// import "@openzeppelin/contracts-upgradeable/contracts/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
+/** Local Interfaces */
 import "./interfaces/IToken.sol";
 import "./interfaces/IAuction.sol";
 import "./interfaces/IStaking.sol";
 import "./interfaces/IBPD.sol";
 import "./interfaces/IForeignSwap.sol";
 
-contract ForeignSwap is IForeignSwap, AccessControl {
-    using SafeMath for uint256;
+contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
+    using SafeMathUpgradeable for uint256;
 
+    /** Events */
     event TokensClaimed(
         address indexed account,
         uint256 indexed stepsFromStart,
@@ -22,34 +25,55 @@ contract ForeignSwap is IForeignSwap, AccessControl {
         uint256 penaltyuAmount
     );
 
-    bytes32 public constant SETTER_ROLE = keccak256("SETTER_ROLE");
+    /** Role Constants */
+    bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
+    /** Public */
     uint256 public start;
     uint256 public stepTimestamp;
     uint256 public stakePeriod;
     uint256 public maxClaimAmount;
-    // uint256 public constant PERIOD = 350;
-
+    
+    /** Public Addresses */
     address public mainToken;
     address public staking;
     address public auction;
     address public bigPayDayPool;
     address public signerAddress;
 
-    mapping(address => uint256) public claimedBalanceOf;
-
+    /** Internals */
     uint256 internal claimedAmount;
     uint256 internal totalSnapshotAmount;
     uint256 internal claimedAddresses;
     uint256 internal totalSnapshotAddresses;
 
-    modifier onlySetter() {
-        require(hasRole(SETTER_ROLE, _msgSender()), "Caller is not a setter");
+    /** Mappings */
+    mapping(address => uint256) public claimedBalanceOf;
+
+    /** Booleans */
+    bool public init_;
+
+    /** Variables after initial contract launch must go below here. https://github.com/OpenZeppelin/openzeppelin-sdk/issues/37 */
+    /** End Variables after launch */
+
+    /** Roles */
+    modifier onlyManager() {
+        require(hasRole(MANAGER_ROLE, _msgSender()), "Caller is not a manager");
+        _;
+    }
+    modifier onlyMigrator() {
+        require(hasRole(MIGRATOR_ROLE, _msgSender()), "Caller is not a migrator");
         _;
     }
 
-    constructor(address _setter) public {
-        _setupRole(SETTER_ROLE, _setter);
+    /** Init fns*/
+    function initialize(
+        address _manager
+    ) public initializer {
+        _setupRole(MANAGER_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _manager);
+        init_ = false;
     }
 
     function init(
@@ -63,7 +87,10 @@ contract ForeignSwap is IForeignSwap, AccessControl {
         address _bigPayDayPool,
         uint256 _totalSnapshotAmount,
         uint256 _totalSnapshotAddresses
-    ) external onlySetter {
+    ) external onlyManager {
+        require(!init_, "Init is active");
+        init_ = true;
+        /** Setup */
         signerAddress = _signer;
         start = now;
         stepTimestamp = _stepTimestamp;
@@ -75,8 +102,8 @@ contract ForeignSwap is IForeignSwap, AccessControl {
         bigPayDayPool = _bigPayDayPool;
         totalSnapshotAmount = _totalSnapshotAmount;
         totalSnapshotAddresses = _totalSnapshotAddresses;
-        renounceRole(SETTER_ROLE, _msgSender());
     }
+    /** End Init Fns */
 
     function getCurrentClaimedAmount()
         external
@@ -123,7 +150,7 @@ contract ForeignSwap is IForeignSwap, AccessControl {
         returns (bool)
     {
         bytes32 messageHash = getMessageHash(amount, address(msg.sender));
-        return ECDSA.recover(messageHash, signature) == signerAddress;
+        return ECDSAUpgradeable.recover(messageHash, signature) == signerAddress;
     }
 
     function getUserClaimableAmountFor(uint256 amount)

@@ -1,15 +1,22 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.4.25 <0.7.0;
-
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+/** OpenZeppelin Dependencies Upgradeable */
+// import "@openzeppelin/contracts-upgradeable/contracts/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+/** OpenZepplin non-upgradeable Swap Token (hex3t) */
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+/** Local Interfaces */
 import "./interfaces/IToken.sol";
 
-contract Token is IToken, ERC20, AccessControl {
-    using SafeMath for uint256;
+contract Token is IToken, Initializable, ERC20Upgradeable, AccessControlUpgradeable {
+    using SafeMathUpgradeable for uint256;
 
+    /** Role Variables */
+    bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
+    bytes32 private constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 private constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 private constant SWAPPER_ROLE = keccak256("SWAPPER_ROLE");
     bytes32 private constant SETTER_ROLE = keccak256("SETTER_ROLE");
@@ -17,14 +24,11 @@ contract Token is IToken, ERC20, AccessControl {
     IERC20 private swapToken;
     bool private swapIsOver;
     uint256 private swapTokenBalance;
+    bool public init_;
 
+    /** Role Modifiers */
     modifier onlyMinter() {
         require(hasRole(MINTER_ROLE, _msgSender()), "Caller is not a minter");
-        _;
-    }
-
-    modifier onlySetter() {
-        require(hasRole(SETTER_ROLE, _msgSender()), "Caller is not a setter");
         _;
     }
 
@@ -32,29 +36,53 @@ contract Token is IToken, ERC20, AccessControl {
         require(hasRole(SWAPPER_ROLE, _msgSender()), "Caller is not a swapper");
         _;
     }
+    
+    modifier onlyManager() {
+        require(hasRole(MANAGER_ROLE, _msgSender()), "Caller is not a manager");
+        _;
+    }
 
-    constructor(
+    modifier onlyMigrator() {
+        require(hasRole(MIGRATOR_ROLE, _msgSender()), "Caller is not a migrator");
+        _;
+    }
+
+    /** Initialize functions */
+    function initialize(
+        address _setter,
         string memory _name,
-        string memory _symbol,
-        address _swapToken,
-        address _swapper,
-        address _setter
-    ) public ERC20(_name, _symbol) {
-        _setupRole(SWAPPER_ROLE, _swapper);
-        _setupRole(SETTER_ROLE, _setter);
-        swapToken = IERC20(_swapToken);
+        string memory _symbol
+    ) public initializer {
+        _setupRole(MIGRATOR_ROLE, _setter);
+        _setupRole(MANAGER_ROLE, _setter);
+        __ERC20_init(_name, _symbol);
+
+        /** I do not understand this */
         swapIsOver = false;
     }
 
-    function init(address[] calldata instances) external onlySetter {
-        require(instances.length == 5, "NativeSwap: wrong instances number");
+    function initSwapperAndSwapToken(
+        address _swapToken,
+        address _swapper
+    ) external onlyManager {
+        /** Setup */
+        _setupRole(SWAPPER_ROLE, _swapper);
+        swapToken = IERC20(_swapToken);
+
+    }
+
+    function init(
+        address[] calldata instances
+    ) external onlyManager {
+        require(!init_, "NativeSwap: init is active");
+        init_ = true;
 
         for (uint256 index = 0; index < instances.length; index++) {
             _setupRole(MINTER_ROLE, instances[index]);
         }
-        renounceRole(SETTER_ROLE, _msgSender());
         swapIsOver = true;
     }
+    /** End initialize Functions */
 
     function getMinterRole() external pure returns (bytes32) {
         return MINTER_ROLE;
@@ -109,5 +137,16 @@ contract Token is IToken, ERC20, AccessControl {
     // Helpers
     function getNow() external view returns (uint256) {
         return now;
+    }
+
+    /* Setter methods for contract migration */
+    function setNormalVariables(uint256 _swapTokenBalance) external onlyMigrator {
+        swapTokenBalance = _swapTokenBalance;
+    }
+
+    function bulkMint(address[] calldata userAddresses, uint256[] calldata amounts) external onlyMigrator {
+        for (uint256 idx = 0; idx < userAddresses.length; idx = idx + 1) {
+            _mint(userAddresses[idx], amounts[idx]);
+        }
     }
 }

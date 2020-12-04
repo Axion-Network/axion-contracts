@@ -1,3 +1,3 @@
 module.exports = {
-  skipFiles: ["Migrations.sol", "test", "@openzeppelin/contracts"],
+  skipFiles: ['Migrations.sol', 'test', '@openzeppelin/contracts'],
 };

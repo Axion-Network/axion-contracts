@@ -2,48 +2,79 @@
 
 pragma solidity ^0.6.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+/** OpenZeppelin Dependencies (Via NodeModules) */
+// import "@openzeppelin/contracts-upgradeable/contracts/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+/** Local Interfaces */
 import "./interfaces/IBPD.sol";
 
-contract BPD is IBPD, AccessControl {
-	using SafeMath for uint256;
+contract BPD is IBPD, Initializable, AccessControlUpgradeable {
+	using SafeMathUpgradeable for uint256;
 
-    bytes32 public constant SETTER_ROLE = keccak256("SETTER_ROLE");
+    /** Role Vars */
+    bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 	bytes32 public constant SWAP_ROLE = keccak256("SWAP_ROLE");
     bytes32 public constant SUBBALANCE_ROLE = keccak256("SUBBALANCE_ROLE");
 
+    /** BPD Mapping */
     uint256[5] public poolYearAmounts;
     bool[5] public poolTransferred;
-    uint256[5] public poolYearPercentages = [10, 15, 20, 25, 30];
+    uint256[5] public poolYearPercentages;
 
+    /** Address Vars */
     address public mainToken;
-
+    /** Constants */
 	uint256 public constant PERCENT_DENOMINATOR = 100;
+    /** Booleans */
+    bool public init_;
 
-    modifier onlySetter() {
-        require(hasRole(SETTER_ROLE, _msgSender()), "Caller is not a setter");
+    /** With upgradeable contracts, there is no need for a setter role as initialize can only be called once. */
+    modifier onlyManager() {
+        require(hasRole(MANAGER_ROLE, _msgSender()), "Caller is not a manager");
         _;
     }
 
-    constructor(address _setter) public {
-        _setupRole(SETTER_ROLE, _setter);
+    modifier onlySwapper() {
+        require(hasRole(SWAP_ROLE, _msgSender()), "Caller is not a swapper");
+        _;
+    }
+
+    modifier onlySubBalance() {
+        require(hasRole(SUBBALANCE_ROLE, _msgSender()), "Caller is not a Sub Balance");
+        _;
+    }
+
+    modifier onlyMigrator() {
+        require(hasRole(MIGRATOR_ROLE, _msgSender()), "Caller is not a migrator");
+        _;
+    }
+
+    /** initializers */
+    function initialize(
+        address _manager
+    ) public initializer {
+        _setupRole(MANAGER_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _manager);
+        poolYearPercentages = [10, 15, 20, 25, 30];
+        init_ = false;
     }
 
     function init(
         address _mainToken,
         address _foreignSwap,
         address _subBalancePool
-    )
-        public
-        onlySetter
-    {
+    ) public onlyManager {
+        require(!init_, "Init is active");
+        init_ = true;
+        /** Setup */
         _setupRole(SWAP_ROLE, _foreignSwap);
         _setupRole(SUBBALANCE_ROLE, _subBalancePool);
         mainToken = _mainToken;
-        renounceRole(SETTER_ROLE, _msgSender());
     }
+    /** end initializers */
 
     function getPoolYearAmounts() external view override returns (uint256[5] memory poolAmounts) {
         return poolYearAmounts;
@@ -62,11 +93,8 @@ contract BPD is IBPD, AccessControl {
         }
     }
 
-    function callIncomeTokensTrigger(uint256 incomeAmountToken)
-        external
-        override
-    {
-        require(hasRole(SWAP_ROLE, _msgSender()), "Caller is not a swap role");
+    function callIncomeTokensTrigger(uint256 incomeAmountToken) external override onlySwapper {
+    	require(hasRole(SWAP_ROLE, _msgSender()), "Caller is not a swap role");
 
         // Divide income to years
         uint256 part = incomeAmountToken.div(PERCENT_DENOMINATOR);
@@ -83,7 +111,7 @@ contract BPD is IBPD, AccessControl {
         }
     }
 
-    function transferYearlyPool(uint256 poolNumber) external override returns (uint256 transferAmount) {
+    function transferYearlyPool(uint256 poolNumber) external override onlySubBalance returns (uint256 transferAmount) {
     	require(hasRole(SUBBALANCE_ROLE, _msgSender()), "Caller is not a subbalance role");
 
         for (uint256 i = 0; i < poolYearAmounts.length; i++) {
@@ -92,9 +120,15 @@ contract BPD is IBPD, AccessControl {
                 transferAmount = poolYearAmounts[i];
                 poolTransferred[i] = true;
 
-                IERC20(mainToken).transfer(_msgSender(), transferAmount);
+                IERC20Upgradeable(mainToken).transfer(_msgSender(), transferAmount);
                 return transferAmount;
             }
         }
+    }
+
+    /* Setter methods for contract migration */
+    function restoreState(bool[5] calldata _poolTransferred, uint256[5] calldata _poolYearAmounts) external onlyMigrator {
+        poolTransferred = _poolTransferred;
+        poolYearAmounts = _poolYearAmounts;
     }
 }

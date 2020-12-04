@@ -12,3 +12,6 @@ dist
 
 .env
 venv/
+
+# typechain
+types
