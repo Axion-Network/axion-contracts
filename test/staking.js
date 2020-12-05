@@ -129,14 +129,25 @@ contract('Staking', ([bank, setter, recipient, staker1, staker2]) => {
     await staking.makePayout();
 
     const sessionId = await staking.sessionsOf(staker1, 0);
+
+    const preUnstakeSessionData = await staking.sessionDataOf(staker1, sessionId);
+
+    expect(preUnstakeSessionData.withdrawn).equals(false);
+    expect(preUnstakeSessionData.interest).to.be.a.bignumber.that.is.zero;
+    expect(preUnstakeSessionData.penalty).to.be.a.bignumber.that.is.zero;
+
     await staking.unstake(sessionId, {
       from: staker1,
     });
 
-    const sessionData = await staking.sessionDataOf(staker1, sessionId);
+    const afterUnstakeSessionData = await staking.sessionDataOf(staker1, sessionId);
 
-    expect(sessionData.amount).to.be.a.bignumber.that.equals(
+    expect(afterUnstakeSessionData.amount).to.be.a.bignumber.that.equals(
       web3.utils.toWei('10')
     );
+
+    expect(afterUnstakeSessionData.withdrawn).equals(true);
+    expect(afterUnstakeSessionData.interest).to.not.be.a.bignumber.that.is.zero;
+    expect(afterUnstakeSessionData.penalty).to.be.a.bignumber.that.is.zero;
   });
 });

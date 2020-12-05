@@ -53,6 +53,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 end;
         uint256 shares;
         uint256 nextPayout;
+        bool withdrawn;
+        uint256 interest;
+        uint256 penalty;
     }
 
     /** Private */
@@ -163,7 +166,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             start: start,
             end: end,
             shares: shares,
-            nextPayout: payouts.length
+            nextPayout: payouts.length,
+            withdrawn: false,
+            interest: 0,
+            penalty: 0
         });
 
         sessionsOf[msg.sender].push(sessionId);
@@ -202,7 +208,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             start: start,
             end: end,
             shares: shares,
-            nextPayout: payouts.length
+            nextPayout: payouts.length,
+            withdrawn: false,
+            interest: 0,
+            penalty: 0
         });
 
         sessionsOf[staker].push(sessionId);
@@ -268,13 +277,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         if (now >= nextPayoutCall) makePayout();
 
         require(
-            sessionDataOf[msg.sender][sessionId].shares > 0,
-            "NativeSwap: Shares balance is empty"
+            sessionDataOf[msg.sender][sessionId].withdrawn == false,
+            "NativeSwap: Stake withdrawn"
         );
 
         uint256 shares = sessionDataOf[msg.sender][sessionId].shares;
 
-        sessionDataOf[msg.sender][sessionId].shares = 0;
+        sessionDataOf[msg.sender][sessionId].withdrawn = true;
 
         if (sessionDataOf[msg.sender][sessionId].nextPayout >= payouts.length) {
             // To auction
@@ -317,6 +326,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             sessionId,
             stakingInterest
         );
+
+        sessionDataOf[msg.sender][sessionId].interest = amountOut;
+        sessionDataOf[msg.sender][sessionId].penalty = penalty;
 
         // To auction
         _initPayout(auction, penalty);
