@@ -59,7 +59,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     /** Private */
-    uint256 private _sessionsIds;
+    uint256 public _sessionsIds;
 
     /** Roles */
     bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
@@ -151,7 +151,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         // Staking days must be greater then 0 and less then or equal to 5555.
         require(stakingDays > 0, "stakingDays < 1");
         require(stakingDays <= 5555, "stakingDays > 5555");
-
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
 
@@ -463,6 +462,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             .mul(currentTokenTotalSupply.add(sharesTotalSupply))
             .div(36500);
 
+
         globalPayin = globalPayin.add(inflation);
 
         return amountTokenInDay.add(inflation);
@@ -502,4 +502,41 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     function getNow0x() external view returns (uint256) {
         return now;
     }
+
+    // migration functions
+    function setOtherVars(uint256 _shareRate, uint256 _sharesTotalSupply, uint256 _nextPayoutCall,
+            uint256 _globalPayin, uint256 _globalPayout, uint256[] calldata _payouts, uint256[] calldata _sharesTotalSupplyVec, uint256 maxSessionID) external onlyMigrator {
+        shareRate = _shareRate;
+        sharesTotalSupply = _sharesTotalSupply;
+        nextPayoutCall = _nextPayoutCall;
+        globalPayin = _globalPayin;
+        globalPayout = _globalPayout;
+        _sessionsIds = maxSessionID;
+
+        for(uint256 i=0; i<_payouts.length; i++) {
+            payouts.push(
+                Payout({payout: _payouts[i], sharesTotalSupply: _sharesTotalSupplyVec[i]})
+            );
+        }
+    }
+
+    function setSessionID(address _wallet, uint256 _sessionID) external onlyMigrator {
+        sessionsOf[_wallet].push(_sessionID);
+    }
+
+    function setSessionDataOf(address _wallet, uint256 _sessionID, uint256 _amount, uint256 _shares, uint256 _starttime,
+        uint256 _endtime, uint256 _nextPayout) external onlyMigrator {
+
+        sessionDataOf[_wallet][_sessionID] = Session({
+            amount: _amount,
+            start: _starttime,
+            end: _endtime,
+            shares: _shares,
+            nextPayout: _nextPayout,
+            withdrawn: false,
+            interest: 0,
+            penalty: 0
+        });
+    }
+
 }
