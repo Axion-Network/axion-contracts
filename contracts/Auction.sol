@@ -44,6 +44,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     struct UserBet {
         uint256 eth;
         address ref;
+        bool withdrawn;
     }
 
     /** Roles */
@@ -290,13 +291,13 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         uint256 stepsFromStart = calculateStepsFromStart();
 
         require(stepsFromStart > auctionId, "auction is active");
+        require(auctionBetOf[auctionId][_msgSender()].eth > 0, "zero balance in auction");
+        require(auctionBetOf[auctionId][_msgSender()].withdrawn == false, "bet is withdrawn");
 
         uint256 auctionETHUserBalance = auctionBetOf[auctionId][_msgSender()]
             .eth;
 
-        auctionBetOf[auctionId][_msgSender()].eth = 0;
-
-        require(auctionETHUserBalance > 0, "zero balance in auction");
+        auctionBetOf[auctionId][_msgSender()].withdrawn = true;
 
         uint256 payout = _calculatePayout(auctionId, auctionETHUserBalance);
 
@@ -500,7 +501,8 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         for (uint256 i = 0; i < userAddresses.length; i = i.add(1)) {
             auctionBetOf[sessionId][userAddresses[i]] = UserBet({
                 eth: eths[i],
-                ref: refs[i]
+                ref: refs[i],
+                withdrawn: false
             });
         }
     }
