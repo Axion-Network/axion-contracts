@@ -112,7 +112,7 @@ contract('Upgradeability', ([setter, recipient, bank, account1, account2]) => {
       // Advance the date to day 100 after launch
       await helper.advanceTimeAndBlock(DAY * 100);
       // Bet with 10 eth
-      await auction.bet(DEADLINE, account2, {
+      await auction.bet(0, DEADLINE, account2, {
         from: account1,
         value: web3.utils.toWei('10'),
       });

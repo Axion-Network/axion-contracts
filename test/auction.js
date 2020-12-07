@@ -87,7 +87,7 @@ contract('Auction', ([setter, recipient, account1, account2, account3]) => {
       const prevRecipientETHBalance1 = await web3.eth.getBalance(recipient);
 
       // Bet with 10 eth
-      await dailyauction.bet(DEADLINE, ZERO_ADDRESS, {
+      await dailyauction.bet(0, DEADLINE, ZERO_ADDRESS, {
         from: account1,
         value: web3.utils.toWei('10'),
       });
@@ -132,7 +132,7 @@ contract('Auction', ([setter, recipient, account1, account2, account3]) => {
       const prevRecipientETHBalance2 = await web3.eth.getBalance(recipient);
 
       // Bet with 20 eth
-      await dailyauction.bet(DEADLINE, account2, {
+      await dailyauction.bet(0, DEADLINE, account2, {
         from: account1,
         value: web3.utils.toWei('20'),
       });
@@ -233,11 +233,11 @@ contract('Auction', ([setter, recipient, account1, account2, account3]) => {
 
       it('should success and update the contract state correctly (without ref)', async () => {
         // User1 & User 2: Bet with 10 eth
-        await dailyauction.bet(DEADLINE, ZERO_ADDRESS, {
+        await dailyauction.bet(0, DEADLINE, ZERO_ADDRESS, {
           from: account1,
           value: web3.utils.toWei('10'),
         });
-        await dailyauction.bet(DEADLINE, ZERO_ADDRESS, {
+        await dailyauction.bet(0, DEADLINE, ZERO_ADDRESS, {
           from: account2,
           value: web3.utils.toWei('20'),
         });
@@ -289,14 +289,26 @@ contract('Auction', ([setter, recipient, account1, account2, account3]) => {
         expect(event1.returnValues.value).to.eq('12000000000000000000');
         expect(event2.returnValues.value).to.eq('24000000000000000000');
       });
+    
+      it("should set amountOutMin for buyback", async () => {
+        const expectedAmountOutMin = 1000;
 
+        // Bet with 10 eth
+        await dailyauction.bet(expectedAmountOutMin, DEADLINE, ZERO_ADDRESS, {
+          from: account1,
+          value: web3.utils.toWei("10"),
+        });
+
+        expect((await uniswap.lastAmountsOutMin()).toNumber()).to.eq(expectedAmountOutMin);
+      });
+  
       it('should success and update the contract state correctly (with ref)', async () => {
         // User1 & User 2: Bet with 10 eth
-        await dailyauction.bet(DEADLINE, account3, {
+        await dailyauction.bet(0, DEADLINE, account3, {
           from: account1,
           value: web3.utils.toWei('10'),
         });
-        await dailyauction.bet(DEADLINE, account3, {
+        await dailyauction.bet(0, DEADLINE, account3, {
           from: account2,
           value: web3.utils.toWei('30'),
         });
@@ -352,11 +364,12 @@ contract('Auction', ([setter, recipient, account1, account2, account3]) => {
       it('should take into account premium and discount', async () => {
         await dailyauction.setPremiumPercent(10, { from: setter });
         // User1 & User 2: Bet with 10 eth
-        await dailyauction.bet(DEADLINE, account3, {
+        await dailyauction.bet(0, DEADLINE, account3, {
           from: account1,
           value: web3.utils.toWei('10'),
         });
-        await dailyauction.bet(DEADLINE, account3, {
+
+        await dailyauction.bet(0, DEADLINE, account3, {
           from: account2,
           value: web3.utils.toWei('30'),
         });
@@ -413,7 +426,7 @@ contract('Auction', ([setter, recipient, account1, account2, account3]) => {
       it("it shouldn't allow referrals when referrals are off", async () => {
         await dailyauction.setReferralsOn(false, { from: setter });
         // User1 & User 2: Bet with 10 eth
-        await dailyauction.bet(DEADLINE, account3, {
+        await dailyauction.bet(0, DEADLINE, account3, {
           from: account1,
           value: web3.utils.toWei('10'),
         });

@@ -227,22 +227,22 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             .uniswapMiddlePrice = getUniswapMiddlePriceForSevenDays();
     }
 
-    function _swapEth(uint256 amount, uint256 deadline) private {
+    /** Externals */
+    function _swapEth(uint256 amountOutMin, uint256 amount, uint256 deadline) private {
         address[] memory path = new address[](2);
 
         path[0] = IUniswapV2Router02(uniswap).WETH();
         path[1] = mainToken;
 
         IUniswapV2Router02(uniswap).swapExactETHForTokens{value: amount}(
-            0,
+            amountOutMin,
             path,
             staking,
             deadline
         );
     }
 
-    /** Externals */
-    function bet(uint256 deadline, address ref) external payable {
+    function bet(uint256 amountOutMin, uint256 deadline, address ref) external payable {
         _saveAuctionData();
         _updatePrice();
 
@@ -253,7 +253,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             uint256 toUniswap
         ) = _calculateRecipientAndUniswapAmountsToSend();
 
-        _swapEth(toUniswap, deadline);
+        _swapEth(amountOutMin, toUniswap, deadline);
 
         uint256 stepsFromStart = calculateStepsFromStart();
 
