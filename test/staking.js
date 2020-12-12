@@ -165,6 +165,7 @@ contract('Staking', ([bank, setter, recipient, staker1, staker2]) => {
     await staking.stake(web3.utils.toWei('10'), 5555, {
       from: staker1,
     });
+    
     await expectRevert(
       staking.stake(web3.utils.toWei('10'), 100000, {
         from: staker1,
@@ -181,16 +182,6 @@ contract('Staking', ([bank, setter, recipient, staker1, staker2]) => {
     await staking.stake(web3.utils.toWei('10'), 100, {
       from: staker1,
     });
-
-    await token.approve(staking.address, web3.utils.toWei('10'), {
-      from: staker2,
-    });
-
-    await staking.stake(web3.utils.toWei('10'), 100, {
-      from: staker2,
-    });
-
-    await token.transfer(staker1, web3.utils.toWei('100'), { from: bank });
 
     // Forward to the end of the staking period
     await helper.advanceTimeAndBlock(DAY * 100);
@@ -233,5 +224,40 @@ contract('Staking', ([bank, setter, recipient, staker1, staker2]) => {
       }),
       'Staking: Stake withdrawn'
     );
+  });
+
+  it('should calculate amount out and penalty correctly', async () => {
+    const stakingDays = 2;
+
+    await token.approve(staking.address, web3.utils.toWei('10'), {
+      from: staker1,
+    });
+
+    await staking.stake(web3.utils.toWei('10'), stakingDays, {
+      from: staker1,
+    });
+
+    const sessionId = await staking.sessionsOf(staker1, 0);
+    const sessionData = await staking.sessionDataOf(staker1, sessionId);
+
+    let previousPayout = "0";
+    let previousPenalty = "0";
+
+    await helper.advanceTimeAndBlock(DAY)
+
+    await staking.makePayout();
+
+    for (let i = 1; i <= 4; i++){
+      await helper.advanceTimeAndBlock(DAY * (0.2));
+  
+      const stakingInterest = await staking.calculateStakingInterest(sessionId, staker1, sessionData.shares);
+      const result = await staking.getAmountOutAndPenalty(sessionId, stakingInterest, {from: staker1});
+    
+      expect(result[0]).to.not.be.a.bignumber.that.equals(previousPayout);
+      expect(result[1]).to.not.be.a.bignumber.that.equals(previousPenalty);
+
+      previousPayout = result[0];
+      previousPenalty = result[1];
+    }
   });
 });

@@ -328,17 +328,19 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         view
         returns (uint256, uint256)
     {
-        uint256 stakingDays = (
+        uint256 stakingSeconds = (
             sessionDataOf[msg.sender][sessionId].end.sub(
                 sessionDataOf[msg.sender][sessionId].start
             )
-        )
-            .div(stepTimestamp);
+        );
+        
+        uint256 stakingDays = stakingSeconds.div(stepTimestamp);
 
-        uint256 daysStaked = (
+        uint256 secondsStaked = (
             now.sub(sessionDataOf[msg.sender][sessionId].start)
-        )
-            .div(stepTimestamp);
+        );
+
+        uint256 daysStaked = secondsStaked.div(stepTimestamp);
 
         uint256 amountAndInterest = sessionDataOf[msg.sender][sessionId]
             .amount
@@ -346,8 +348,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         // Early
         if (stakingDays > daysStaked) {
-            uint256 payOutAmount = amountAndInterest.mul(daysStaked).div(
-                stakingDays
+            uint256 payOutAmount = amountAndInterest.mul(secondsStaked).div(
+                stakingSeconds
             );
 
             uint256 earlyUnstakePenalty = amountAndInterest.sub(payOutAmount);
