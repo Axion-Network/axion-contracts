@@ -72,7 +72,7 @@ contract(
         { from: bank }
       );
 
-      token = await deployProxy(Token, [setter, 'Axion Token', 'AXN'], {
+      token = await deployProxy(Token, [setter, setter, 'Axion Token', 'AXN'], {
         unsafeAllowCustomTypes: true,
         unsafeAllowLinkedLibraries: true,
       });
@@ -82,19 +82,19 @@ contract(
 
       // Deploy foreign swap
 
-      foreignswap = await deployProxy(ForeignSwap, [setter], {
+      foreignswap = await deployProxy(ForeignSwap, [setter, setter], {
         unsafeAllowCustomTypes: true,
         unsafeAllowLinkedLibraries: true,
       });
 
       // Deploy BigPayDay Pool
-      bpd = await deployProxy(BPD, [setter], {
+      bpd = await deployProxy(BPD, [setter, setter], {
         unsafeAllowCustomTypes: true,
         unsafeAllowLinkedLibraries: true,
       });
 
       // Deploy SubBalances Contract
-      subbalances = await deployProxy(SubBalances, [setter], {
+      subbalances = await deployProxy(SubBalances, [setter, setter], {
         unsafeAllowCustomTypes: true,
         unsafeAllowLinkedLibraries: true,
       });
@@ -140,7 +140,7 @@ contract(
         foreignswap.address,
         bpd.address,
         auction.address,
-        "0x0000000000000000000000000000000000000000",
+        '0x0000000000000000000000000000000000000000',
         stakingCaller,
         new BN(DAY.toString(), 10),
         new BN(STAKE_PERIOD.toString(), 10),
@@ -305,10 +305,10 @@ contract(
 
       expect(stakeShares_2).to.be.bignumber.that.above(stakeShares_1);
 
-      const eligibleBefore_1 = (await subbalances.stakeSessions(stakeId)).payDayEligible;
-      const eligibleBefore_2 = (await subbalances.stakeSessions(
-        stakeId_2
-      )).payDayEligible;
+      const eligibleBefore_1 = (await subbalances.stakeSessions(stakeId))
+        .payDayEligible;
+      const eligibleBefore_2 = (await subbalances.stakeSessions(stakeId_2))
+        .payDayEligible;
       console.log(eligibleBefore_1);
       console.log(eligibleBefore_2);
 
@@ -399,10 +399,10 @@ contract(
         { from: stakingCaller }
       );
 
-      const eligibleAfter_1 = (await subbalances.stakeSessions(stakeId)).payDayEligible;
-      const eligibleAfter_2 = (await subbalances.stakeSessions(
-        stakeId_2
-      )).payDayEligible;
+      const eligibleAfter_1 = (await subbalances.stakeSessions(stakeId))
+        .payDayEligible;
+      const eligibleAfter_2 = (await subbalances.stakeSessions(stakeId_2))
+        .payDayEligible;
       console.log(eligibleAfter_1);
       console.log(eligibleAfter_2);
 

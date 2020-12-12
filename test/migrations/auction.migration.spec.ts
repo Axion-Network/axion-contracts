@@ -2,9 +2,6 @@ import { AuctionInstance } from '../../types/truffle-contracts';
 
 const auctionSnapshot = require('./mock-auction-snapshot.json');
 const initTestSmartContracts = require('../utils/initTestSmartContracts');
-import _ from 'lodash';
-
-const DAY = 86400;
 
 contract('Auction - Migration', ([setter, recipient]) => {
   let auction: AuctionInstance;
@@ -17,10 +14,16 @@ contract('Auction - Migration', ([setter, recipient]) => {
   describe('setNormalVariables', () => {
     it('should set all normal variables', async () => {
       // act
-      await auction.setNormalVariables('12');
+      await auction.setNormalVariables(
+        auctionSnapshot.lastAuctionEventId,
+        auctionSnapshot.start
+      );
 
       // assert
-      expect(await auction.lastAuctionEventId().then(String)).to.eq('12');
+      expect(await auction.lastAuctionEventId().then(String)).to.eq(
+        auctionSnapshot.lastAuctionEventId
+      );
+      expect(await auction.start().then(String)).to.eq(auctionSnapshot.start);
     });
   });
 

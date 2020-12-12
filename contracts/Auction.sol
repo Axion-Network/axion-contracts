@@ -113,16 +113,16 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     }
 
     function initialize(
-        address _manager
+        address _manager,
+        address _migrator
     ) public initializer {
-        _setupRole(MIGRATOR_ROLE, _manager);
         _setupRole(MANAGER_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _migrator);
         init_ = false;
     }
 
     function init(
         uint256 _stepTimestamp,
-        address _managerAddress,
         address _mainTokenAddress,
         address _stakingAddress,
         address payable _uniswapAddress,
@@ -131,11 +131,10 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         address _foreignSwapAddress,
         address _subbalancesAddress,
         address _auctionV1Address
-    ) external onlyManager {
+    ) external onlyMigrator {
         require(!init_, "Init is active");
         init_ = true;
         /** Roles */
-        _setupRole(MANAGER_ROLE, _managerAddress);
         _setupRole(CALLER_ROLE, _nativeSwapAddress);
         _setupRole(CALLER_ROLE, _foreignSwapAddress);
         _setupRole(CALLER_ROLE, _stakingAddress);
@@ -500,7 +499,8 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     }
 
     /** Setter methods for contract migration */
-    function setNormalVariables(uint256 _lastAuctionEventId) external onlyMigrator {
+    function setNormalVariables(uint256 _lastAuctionEventId, uint256 _start) external onlyMigrator {
+        start = _start;
         lastAuctionEventId = _lastAuctionEventId;
         lastAuctionEventIdV1 = _lastAuctionEventId;
     }

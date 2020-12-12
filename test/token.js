@@ -32,7 +32,7 @@ contract(
           from: swapper,
         }
       );
-      token = await deployProxy(Token, [setter, 'Axion Token', 'AXN'], {
+      token = await deployProxy(Token, [setter, setter, 'Axion Token', 'AXN'], {
         unsafeAllowCustomTypes: true,
         unsafeAllowLinkedLibraries: true,
       });

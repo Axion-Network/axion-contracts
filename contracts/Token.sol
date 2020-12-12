@@ -49,12 +49,13 @@ contract Token is IToken, Initializable, ERC20Upgradeable, AccessControlUpgradea
 
     /** Initialize functions */
     function initialize(
-        address _setter,
+        address _manager,
+        address _migrator,
         string memory _name,
         string memory _symbol
     ) public initializer {
-        _setupRole(MIGRATOR_ROLE, _setter);
-        _setupRole(MANAGER_ROLE, _setter);
+        _setupRole(MANAGER_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _migrator);
         __ERC20_init(_name, _symbol);
 
         /** I do not understand this */
@@ -64,7 +65,7 @@ contract Token is IToken, Initializable, ERC20Upgradeable, AccessControlUpgradea
     function initSwapperAndSwapToken(
         address _swapToken,
         address _swapper
-    ) external onlyManager {
+    ) external onlyMigrator {
         /** Setup */
         _setupRole(SWAPPER_ROLE, _swapper);
         swapToken = IERC20(_swapToken);
@@ -73,7 +74,7 @@ contract Token is IToken, Initializable, ERC20Upgradeable, AccessControlUpgradea
 
     function init(
         address[] calldata instances
-    ) external onlyManager {
+    ) external onlyMigrator {
         require(!init_, "NativeSwap: init is active");
         init_ = true;
 

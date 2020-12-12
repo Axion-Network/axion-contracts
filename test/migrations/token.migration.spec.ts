@@ -1,6 +1,5 @@
 import { TokenInstance } from '../../types/truffle-contracts';
 
-const Token = artifacts.require('Token');
 const initTestSmartContracts = require('../utils/initTestSmartContracts');
 const tokenSnapshot = require('./mock-token-snapshot.json');
 import _ from 'lodash';

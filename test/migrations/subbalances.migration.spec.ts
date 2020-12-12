@@ -1,6 +1,5 @@
 import { SubBalancesInstance } from '../../types/truffle-contracts';
 
-const SubBalances = artifacts.require('SubBalances');
 const initTestSmartContracts = require('../utils/initTestSmartContracts');
 const subBalancesSnapshot = require('./mock-sub-balances-snapshot.json');
 import _ from 'lodash';
@@ -18,12 +17,17 @@ contract('SubBalances - Migration', ([setter, recipient]) => {
       // act
       await subBalances.setNormalVariables(
         subBalancesSnapshot.currentSharesTotalSupply,
-        subBalancesSnapshot.periods
+        subBalancesSnapshot.periods,
+        subBalancesSnapshot.startTimestamp
       );
 
       // assert
       expect(await subBalances.currentSharesTotalSupply().then(String)).to.eq(
         subBalancesSnapshot.currentSharesTotalSupply
+      );
+
+      expect(await subBalances.startTimestamp().then(String)).to.eq(
+        subBalancesSnapshot.startTimestamp
       );
 
       for (const idx of _.range(5)) {

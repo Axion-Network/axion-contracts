@@ -69,10 +69,11 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
 
     /** Init fns*/
     function initialize(
-        address _manager
+        address _manager,
+        address _migrator
     ) public initializer {
         _setupRole(MANAGER_ROLE, _manager);
-        _setupRole(MIGRATOR_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _migrator);
         init_ = false;
     }
 
@@ -87,12 +88,14 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
         address _bigPayDayPool,
         uint256 _totalSnapshotAmount,
         uint256 _totalSnapshotAddresses
-    ) external onlyManager {
+    ) external onlyMigrator {
         require(!init_, "Init is active");
         init_ = true;
         /** Setup */
+        if (start == 0) {
+            start = now;
+        }
         signerAddress = _signer;
-        start = now;
         stepTimestamp = _stepTimestamp;
         stakePeriod = _stakePeriod;
         maxClaimAmount = _maxClaimAmount;

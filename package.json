@@ -5,7 +5,9 @@
     "test": "npx truffle test",
     "compile": "npx truffle compile --all",
     "build": "npx truffle compile && npx typechain --target=truffle-v5 'build/contracts/*.json'",
-    "build:win": "npx truffle compile --all && npx typechain --target=truffle-v5 ./build/contracts/*.json"
+    "build:win": "npx truffle compile --all && npx typechain --target=truffle-v5 ./build/contracts/*.json",
+    "build:migration": "tsc -p ./tsconfig.migrate.json --outDir ./migrations",
+    "migrate": "rm -fr ./migrations && npm run build:migration && truffle migrate"
   },
   "repository": {
     "type": "git",
@@ -33,7 +35,7 @@
     "ganache-core": "^2.13.1",
     "semver": "^7.3.2",
     "solidity-coverage": "^0.7.9",
-    "truffle": "^5.1.40",
+    "truffle": "^5.1.56",
     "truffle-plugin-verify": "^0.5.0",
     "truffle-verify": "^1.0.8"
   },

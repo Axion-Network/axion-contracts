@@ -116,10 +116,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     /** Init functions */
     function initialize(
-        address _manager
+        address _manager,
+        address _migrator
     ) public initializer {
         _setupRole(MANAGER_ROLE, _manager);
-        _setupRole(MIGRATOR_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _migrator);
         init_ = false;
     }
     
@@ -130,7 +131,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address _foreignSwapAddress,
         address _stakingV1Address,
         uint256 _stepTimestamp
-    ) external {
+    ) external onlyMigrator {
         require(!init_, "Staking: init is active");
         init_ = true;
         /** Setup */
@@ -563,8 +564,18 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     // migration functions
-    function setOtherVars(uint256 _shareRate, uint256 _sharesTotalSupply, uint256 _nextPayoutCall,
-            uint256 _globalPayin, uint256 _globalPayout, uint256[] calldata _payouts, uint256[] calldata _sharesTotalSupplyVec, uint256 _lastSessionId) external onlyMigrator {
+    function setOtherVars(
+        uint256 _startTime, 
+        uint256 _shareRate, 
+        uint256 _sharesTotalSupply, 
+        uint256 _nextPayoutCall,
+        uint256 _globalPayin, 
+        uint256 _globalPayout, 
+        uint256[] calldata _payouts, 
+        uint256[] calldata _sharesTotalSupplyVec, 
+        uint256 _lastSessionId
+    ) external onlyMigrator {
+        startContract = _startTime;
         shareRate = _shareRate;
         sharesTotalSupply = _sharesTotalSupply;
         nextPayoutCall = _nextPayoutCall;
@@ -580,23 +591,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
     }
 
-    function setSessionID(address _wallet, uint256 _sessionID) external onlyMigrator {
-        sessionsOf[_wallet].push(_sessionID);
+    function setSessionsOf(address[] calldata _wallets, uint256[] calldata _sessionIds) external onlyMigrator {
+        for (uint256 idx = 0; idx < _wallets.length; idx = idx.add(1)) {
+            sessionsOf[_wallets[idx]].push(_sessionIds[idx]);
+        }
     }
-
-    function setSessionDataOf(address _wallet, uint256 _sessionID, uint256 _amount, uint256 _shares, uint256 _starttime,
-        uint256 _endtime, uint256 _firstPayout, uint256 _lastPayout) external onlyMigrator {
-
-        sessionDataOf[_wallet][_sessionID] = Session({
-            amount: _amount,
-            start: _starttime,
-            end: _endtime,
-            shares: _shares,
-            firstPayout: _firstPayout,
-            lastPayout: _lastPayout,
-            withdrawn: false,
-            payout: 0
-        });
-    }
-
 }

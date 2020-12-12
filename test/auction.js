@@ -245,36 +245,30 @@ contract('Auction', ([setter, recipient, account1, account2, account3]) => {
         // Advance the date to day 177 after launch, so the auction on day 176 is ended
         await helper.advanceTimeAndBlock(DAY);
 
-        expect((await dailyauction.auctionBidOf('176', account1))
-          .withdrawn).to.be.false;
-        expect((await dailyauction.auctionBidOf('176', account2))
-          .withdrawn).to.be.false;
+        expect((await dailyauction.auctionBidOf('176', account1)).withdrawn).to
+          .be.false;
+        expect((await dailyauction.auctionBidOf('176', account2)).withdrawn).to
+          .be.false;
 
         // User1 & User2: Withdraw on day 8
         await dailyauction.withdraw('176', { from: account1 });
         await dailyauction.withdraw('176', { from: account2 });
 
         // Check state of user1 and user2
-        const { 
-          eth: user1Eth, 
-          ref: user1Ref, 
-          withdrawn: user1Withdrawn
-         } = await dailyauction.auctionBidOf(
-          '176',
-          account1
-        );
+        const {
+          eth: user1Eth,
+          ref: user1Ref,
+          withdrawn: user1Withdrawn,
+        } = await dailyauction.auctionBidOf('176', account1);
         expect(web3.utils.fromWei(user1Eth)).to.eq('10');
         expect(user1Ref).to.eq(ZERO_ADDRESS);
         expect(user1Withdrawn).to.be.true;
 
-        const { 
-          eth: user2Eth, 
-          ref: user2Ref, 
-          withdrawn: user2Withdrawn
-         } = await dailyauction.auctionBidOf(
-          '176',
-          account2
-        );
+        const {
+          eth: user2Eth,
+          ref: user2Ref,
+          withdrawn: user2Withdrawn,
+        } = await dailyauction.auctionBidOf('176', account2);
         expect(web3.utils.fromWei(user2Eth)).to.eq('20');
         expect(user2Ref).to.eq(ZERO_ADDRESS);
         expect(user2Withdrawn).to.be.true;
@@ -289,19 +283,21 @@ contract('Auction', ([setter, recipient, account1, account2, account3]) => {
         expect(event1.returnValues.value).to.eq('12000000000000000000');
         expect(event2.returnValues.value).to.eq('24000000000000000000');
       });
-    
-      it("should set amountOutMin for buyback", async () => {
+
+      it('should set amountOutMin for buyback', async () => {
         const expectedAmountOutMin = 1000;
 
         // Bid with 10 eth
         await dailyauction.bid(expectedAmountOutMin, DEADLINE, ZERO_ADDRESS, {
           from: account1,
-          value: web3.utils.toWei("10"),
+          value: web3.utils.toWei('10'),
         });
 
-        expect((await uniswap.lastAmountsOutMin()).toNumber()).to.eq(expectedAmountOutMin);
+        expect((await uniswap.lastAmountsOutMin()).toNumber()).to.eq(
+          expectedAmountOutMin
+        );
       });
-  
+
       it('should success and update the contract state correctly (with ref)', async () => {
         // User1 & User 2: Bid with 10 eth
         await dailyauction.bid(0, DEADLINE, account3, {
@@ -316,36 +312,30 @@ contract('Auction', ([setter, recipient, account1, account2, account3]) => {
         // Advance the date to day 177 after launch, so the auction on day 176 is ended
         await helper.advanceTimeAndBlock(DAY);
 
-        expect((await dailyauction.auctionBidOf('176', account1))
-          .withdrawn).to.be.false;
-        expect((await dailyauction.auctionBidOf('176', account2))
-          .withdrawn).to.be.false;
+        expect((await dailyauction.auctionBidOf('176', account1)).withdrawn).to
+          .be.false;
+        expect((await dailyauction.auctionBidOf('176', account2)).withdrawn).to
+          .be.false;
 
         // User1 & User2: Withdraw on day 8
         await dailyauction.withdraw('176', { from: account1 });
         await dailyauction.withdraw('176', { from: account2 });
 
         // Check state of user1 and user2
-        const { 
-          eth: user1Eth, 
-          ref: user1Ref, 
-          withdrawn: user1Withdrawn
-         } = await dailyauction.auctionBidOf(
-          '176',
-          account1
-        );
+        const {
+          eth: user1Eth,
+          ref: user1Ref,
+          withdrawn: user1Withdrawn,
+        } = await dailyauction.auctionBidOf('176', account1);
         expect(web3.utils.fromWei(user1Eth)).to.eq('10');
         expect(user1Ref).to.eq(account3);
         expect(user1Withdrawn).to.be.true;
 
-        const { 
-          eth: user2Eth, 
-          ref: user2Ref, 
-          withdrawn: user2Withdrawn
-         } = await dailyauction.auctionBidOf(
-          '176',
-          account2
-        );
+        const {
+          eth: user2Eth,
+          ref: user2Ref,
+          withdrawn: user2Withdrawn,
+        } = await dailyauction.auctionBidOf('176', account2);
         expect(web3.utils.fromWei(user2Eth)).to.eq('30');
         expect(user2Ref).to.eq(account3);
         expect(user2Withdrawn).to.be.true;
@@ -377,36 +367,30 @@ contract('Auction', ([setter, recipient, account1, account2, account3]) => {
         // Advance the date to day 177 after launch, so the auction on day 176 is ended
         await helper.advanceTimeAndBlock(DAY);
 
-        expect((await dailyauction.auctionBidOf('176', account1))
-          .withdrawn).to.be.false;
-        expect((await dailyauction.auctionBidOf('176', account2))
-          .withdrawn).to.be.false;
+        expect((await dailyauction.auctionBidOf('176', account1)).withdrawn).to
+          .be.false;
+        expect((await dailyauction.auctionBidOf('176', account2)).withdrawn).to
+          .be.false;
 
         // User1 & User2: Withdraw on day 8
         await dailyauction.withdraw('176', { from: account1 });
         await dailyauction.withdraw('176', { from: account2 });
 
         // Check state of user1 and user2
-        const { 
-          eth: user1Eth, 
-          ref: user1Ref, 
-          withdrawn: user1Withdrawn
-         } = await dailyauction.auctionBidOf(
-          '176',
-          account1
-        );
+        const {
+          eth: user1Eth,
+          ref: user1Ref,
+          withdrawn: user1Withdrawn,
+        } = await dailyauction.auctionBidOf('176', account1);
         expect(web3.utils.fromWei(user1Eth)).to.eq('10');
         expect(user1Ref).to.eq(account3);
         expect(user1Withdrawn).to.be.true;
 
-        const { 
-          eth: user2Eth, 
-          ref: user2Ref, 
-          withdrawn: user2Withdrawn
-         } = await dailyauction.auctionBidOf(
-          '176',
-          account2
-        );
+        const {
+          eth: user2Eth,
+          ref: user2Ref,
+          withdrawn: user2Withdrawn,
+        } = await dailyauction.auctionBidOf('176', account2);
         expect(web3.utils.fromWei(user2Eth)).to.eq('30');
         expect(user2Ref).to.eq(account3);
         expect(user2Withdrawn).to.be.true;
@@ -433,21 +417,18 @@ contract('Auction', ([setter, recipient, account1, account2, account3]) => {
         // Advance the date to day 177 after launch, so the auction on day 176 is ended
         await helper.advanceTimeAndBlock(DAY);
 
-        expect((await dailyauction.auctionBidOf('176', account1))
-          .withdrawn).to.be.false;
+        expect((await dailyauction.auctionBidOf('176', account1)).withdrawn).to
+          .be.false;
 
         // User1 & User2: Withdraw on day 8
         await dailyauction.withdraw('176', { from: account1 });
 
         // Check state of user1 and user2
-        const { 
-          eth: user1Eth, 
-          ref: user1Ref, 
-          withdrawn: user1Withdrawn
-         } = await dailyauction.auctionBidOf(
-          '176',
-          account1
-        );
+        const {
+          eth: user1Eth,
+          ref: user1Ref,
+          withdrawn: user1Withdrawn,
+        } = await dailyauction.auctionBidOf('176', account1);
         expect(web3.utils.fromWei(user1Eth)).to.eq('10');
         expect(user1Ref).to.eq(ZERO_ADDRESS);
         expect(user1Withdrawn).to.be.true;

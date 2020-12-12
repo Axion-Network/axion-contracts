@@ -54,10 +54,11 @@ contract BPD is IBPD, Initializable, AccessControlUpgradeable {
 
     /** initializers */
     function initialize(
-        address _manager
+        address _manager,
+        address _migrator
     ) public initializer {
         _setupRole(MANAGER_ROLE, _manager);
-        _setupRole(MIGRATOR_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _migrator);
         poolYearPercentages = [10, 15, 20, 25, 30];
         init_ = false;
     }
@@ -66,7 +67,7 @@ contract BPD is IBPD, Initializable, AccessControlUpgradeable {
         address _mainToken,
         address _foreignSwap,
         address _subBalancePool
-    ) public onlyManager {
+    ) public onlyMigrator {
         require(!init_, "Init is active");
         init_ = true;
         /** Setup */

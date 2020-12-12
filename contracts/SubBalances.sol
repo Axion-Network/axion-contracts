@@ -82,10 +82,11 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
 
     /** Start Init functins */
     function initialize(
-        address _manager
+        address _manager,
+        address _migrator
     ) public initializer {
         _setupRole(MANAGER_ROLE, _manager);
-        _setupRole(MIGRATOR_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _migrator);
     }
 
     function init(
@@ -97,7 +98,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         address _stakingAddress,
         uint256 _stepTimestamp,
         uint256 _basePeriod
-    ) external onlyManager {
+    ) external onlyMigrator {
         require(!init_, "NativeSwap: init is active");
         init_ = true;
         /** Setup */
@@ -123,26 +124,6 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     		// subBalance.payDayEnd = subBalance.payDayStart.add(stepTimestamp);
             subBalance.requiredStakePeriod = periods[i];
     	}
-    }
-
-    function setAddresses(
-        address _mainTokenAddress,
-        address _foreignSwapAddress,
-        address _bigPayDayPoolAddress,
-        address _auctionAddress,
-        address _subBalancesV1Address,
-        address _stakingAddress
-    ) external onlyManager {
-        _setupRole(STAKING_ROLE, _stakingAddress);
-
-        addresses = Addresses({
-            mainToken: _mainTokenAddress,
-            foreignSwap: _foreignSwapAddress,
-            bigPayDayPool: _bigPayDayPoolAddress,
-            auction: _auctionAddress
-        });
-
-        subBalancesV1 = ISubBalancesV1(_subBalancesV1Address);
     }
 
     /** END INIT FUNCS */
@@ -455,10 +436,12 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     /* Setter methods for contract migration */
     function setNormalVariables(
         uint256 _currentSharesTotalSupply, 
-        uint256[5] calldata _periods
+        uint256[5] calldata _periods,
+        uint256 _startTimestamp
     ) external onlyMigrator {
         currentSharesTotalSupply = _currentSharesTotalSupply;
         periods = _periods;
+        startTimestamp = _startTimestamp;
     }
 
     function setSubBalanceList(

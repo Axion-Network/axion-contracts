@@ -23,7 +23,7 @@ const getBlockchainTimestamp = async () => {
 };
 
 contract(
-  'Auction',
+  'Sub balances unstake',
   ([
     setter,
     foreignSwapAddress,

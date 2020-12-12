@@ -6,9 +6,8 @@ require('dotenv').config({ path: '.env' });
 
 const {
   ETHERSCAN_API_KEY,
-  INFURA_PROJECT_ID,
-  INFURA_PROJECT_SECRET,
-  SETTER_PRIV,
+  INFURA_URL,
+  DEPLOYER_SECRET,
   DEPLOY_GAS_LIMIT,
   DEPLOY_GAS_PRICE,
 } = process.env;
@@ -64,14 +63,7 @@ module.exports = {
     // Useful for deploying to a public network.
     // NB: It's important to wrap the provider as a function.
     ropsten: {
-      provider: () =>
-        new HDWalletProvider(
-          SETTER_PRIV.toString(),
-          'wss://:' +
-            INFURA_PROJECT_SECRET +
-            '@ropsten.infura.io/ws/v3/' +
-            INFURA_PROJECT_ID
-        ),
+      provider: () => new HDWalletProvider(DEPLOYER_SECRET, INFURA_URL),
       network_id: 3, // Ropsten's id
       gas: DEPLOY_GAS_LIMIT, // Ropsten has a lower block limit than mainnet
       gasPrice: DEPLOY_GAS_PRICE * 1000000000,
@@ -80,15 +72,7 @@ module.exports = {
       skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
     },
     kovan: {
-      provider: () =>
-        new HDWalletProvider(
-          SETTER_PRIV.toString(),
-          'wss://:' +
-            INFURA_PROJECT_SECRET +
-            '@' +
-            'kovan.infura.io/ws/v3/' +
-            INFURA_PROJECT_ID
-        ),
+      provider: () => new HDWalletProvider(DEPLOYER_SECRET, INFURA_URL),
       network_id: 42, // Kovan's id
       gas: DEPLOY_GAS_LIMIT, // Ropsten has a lower block limit than mainnet
       gasPrice: DEPLOY_GAS_PRICE * 1000000000, // 20 gwei (in wei) (default: 100 gwei)
@@ -97,15 +81,7 @@ module.exports = {
       skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
     },
     rinkeby: {
-      provider: () =>
-        new HDWalletProvider(
-          SETTER_PRIV.toString(),
-          'wss://:' +
-            INFURA_PROJECT_SECRET +
-            '@' +
-            'rinkeby.infura.io/ws/v3/' +
-            INFURA_PROJECT_ID
-        ),
+      provider: () => new HDWalletProvider(DEPLOYER_SECRET, INFURA_URL),
       network_id: 4, // Rinkeby's id
       gas: DEPLOY_GAS_LIMIT, // Ropsten has a lower block limit than mainnet
       gasPrice: DEPLOY_GAS_PRICE * 1000000000, // 20 gwei (in wei) (default: 100 gwei)
@@ -114,21 +90,13 @@ module.exports = {
       skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
     },
     live: {
-      provider: () =>
-        new HDWalletProvider(
-          SETTER_PRIV.toString(),
-          'wss://:' +
-            INFURA_PROJECT_SECRET +
-            '@' +
-            'mainnet.infura.io/ws/v3/' +
-            INFURA_PROJECT_ID
-        ),
+      provider: () => new HDWalletProvider(DEPLOYER_SECRET, INFURA_URL),
       network_id: 1, // Mainnet's id
       gas: DEPLOY_GAS_LIMIT, // gas block limit
       gasPrice: DEPLOY_GAS_PRICE * 1000000000, // 20 gwei (in wei) (default: 100 gwei)
       confirmations: 2, // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 1000, // # of blocks before a deployment times out  (minimum/default: 50)
-      skipDryRun: false, // Skip dry run before migrations? (default: false for public nets )
+      skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
     },
     ganache: {
       network_id: '*', // eslint-disable-line camelcase

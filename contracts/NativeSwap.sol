@@ -53,10 +53,11 @@ contract NativeSwap is Initializable, AccessControlUpgradeable {
     }
     /** Init functions */
     function initialize(
-        address _manager
+        address _manager,
+        address _migrator
     ) public initializer {
         _setupRole(MANAGER_ROLE, _manager);
-        _setupRole(MIGRATOR_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _migrator);
         init_ = false;
     }
 
@@ -66,7 +67,7 @@ contract NativeSwap is Initializable, AccessControlUpgradeable {
         address _swapToken,
         address _mainToken,
         address _auction
-    ) external {
+    ) external onlyMigrator {
         require(!init_, "init is active");
         init_ = true;
         
@@ -75,7 +76,9 @@ contract NativeSwap is Initializable, AccessControlUpgradeable {
         swapToken = IERC20(_swapToken);
         mainToken = IToken(_mainToken);
         auction = IAuction(_auction);
-        start = now;
+        if (start == 0) {
+            start = now;
+        }
     }
     /** End init functions */
 

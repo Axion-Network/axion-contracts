@@ -17,6 +17,7 @@ const UniswapV2Router02Mock = artifacts.require('UniswapV2Router02Mock');
 const DAY = 86400;
 const STAKE_PERIOD = 350;
 
+const V1Contracts = '0x0000000000000000000000000000000000000000';
 const testSigner_ = web3.utils.toChecksumAddress(
   '0xCC64d26Dab6c7B971d26846A4B2132985fe8C358'
 );
@@ -58,37 +59,42 @@ async function initTestSmartContracts({
     );
   }
 
+  /** All contracts init function had manager as first address then migrator as second address */
   /** Proxies */
-  const auction = await deployProxy(Auction, [setter], {
+  const auction = await deployProxy(Auction, [setter, setter], {
     unsafeAllowCustomTypes: true,
     unsafeAllowLinkedLibraries: true,
   });
 
-  const token = await deployProxy(Token, [setter, 'Axion Token', 'AXN'], {
+  const token = await deployProxy(
+    Token,
+    [setter, setter, 'Axion Token', 'AXN'],
+    {
+      unsafeAllowCustomTypes: true,
+      unsafeAllowLinkedLibraries: true,
+    }
+  );
+
+  const nativeswap = await deployProxy(NativeSwap, [setter, setter], {
     unsafeAllowCustomTypes: true,
     unsafeAllowLinkedLibraries: true,
   });
 
-  const nativeswap = await deployProxy(NativeSwap, [setter], {
+  const bpd = await deployProxy(BPD, [setter, setter], {
     unsafeAllowCustomTypes: true,
     unsafeAllowLinkedLibraries: true,
   });
 
-  const bpd = await deployProxy(BPD, [setter], {
+  const foreignswap = await deployProxy(ForeignSwap, [setter, setter], {
     unsafeAllowCustomTypes: true,
     unsafeAllowLinkedLibraries: true,
   });
 
-  const foreignswap = await deployProxy(ForeignSwap, [setter], {
+  const subbalances = await deployProxy(SubBalances, [setter, setter], {
     unsafeAllowCustomTypes: true,
     unsafeAllowLinkedLibraries: true,
   });
-
-  const subbalances = await deployProxy(SubBalances, [setter], {
-    unsafeAllowCustomTypes: true,
-    unsafeAllowLinkedLibraries: true,
-  });
-  const staking = await deployProxy(Staking, [setter], {
+  const staking = await deployProxy(Staking, [setter, setter], {
     unsafeAllowCustomTypes: true,
     unsafeAllowLinkedLibraries: true,
   });
@@ -106,8 +112,9 @@ async function initTestSmartContracts({
     usedAuctionAddress,
     usedSubBalancesAddress,
     foreignswap.address,
-    "0x0000000000000000000000000000000000000000",
-    new BN(DAY.toString(), 10)
+    V1Contracts,
+    new BN(DAY.toString(), 10),
+    { from: setter }
   );
 
   await token.initSwapperAndSwapToken(swaptoken.address, nativeswap.address, {
@@ -158,7 +165,6 @@ async function initTestSmartContracts({
 
   await auction.init(
     new BN(DAY.toString(), 10),
-    setter,
     usedTokenAddress,
     usedStakingAddress,
     uniswap.address,
@@ -166,7 +172,7 @@ async function initTestSmartContracts({
     nativeswap.address,
     foreignswap.address,
     usedSubBalancesAddress,
-    "0x0000000000000000000000000000000000000000",
+    V1Contracts,
     { from: setter }
   );
 
@@ -175,7 +181,7 @@ async function initTestSmartContracts({
     foreignswap.address,
     bpd.address,
     usedAuctionAddress,
-    "0x0000000000000000000000000000000000000000",
+    V1Contracts,
     usedStakingAddress,
     new BN(DAY.toString(), 10),
     new BN(STAKE_PERIOD.toString(), 10),

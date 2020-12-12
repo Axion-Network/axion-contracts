@@ -1,6 +1,5 @@
 import { BPDInstance } from '../../types/truffle-contracts';
 
-const BPD = artifacts.require('BPD');
 const initTestSmartContracts = require('../utils/initTestSmartContracts');
 const bpdSnapshot = require('./mock-bpd-snapshot.json');
 import _ from 'lodash';

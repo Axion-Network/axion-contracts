@@ -15,3 +15,6 @@ venv/
 
 # typechain
 types
+
+# migrations foler will be generated from migrations-ts
+migrations
