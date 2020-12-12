@@ -97,21 +97,23 @@ contract('Staking - Migration', ([setter, recipient]) => {
           sessionDataOf.get(address).set("shares", []);
           sessionDataOf.get(address).set("start", []);
           sessionDataOf.get(address).set("stop", []);
-          sessionDataOf.get(address).set("nextPayout", []);
+          sessionDataOf.get(address).set("firstPayout", []);
+          sessionDataOf.get(address).set("lastPayout", []);
         }
         sessionDataOf.get(address).get("sessionID").push(stakingSnapshot.sessionID[idx]);
         sessionDataOf.get(address).get("amount").push(getAsString(stakingSnapshot.amount[idx]));
         sessionDataOf.get(address).get("shares").push(getAsString(stakingSnapshot.shares[idx]));
         sessionDataOf.get(address).get("start").push(stakingSnapshot.starttime[idx]);
         sessionDataOf.get(address).get("stop").push(stakingSnapshot.stoptime[idx]);
-        sessionDataOf.get(address).get("nextPayout").push(getAsString(stakingSnapshot.nextPayout[idx]));
+        sessionDataOf.get(address).get("firstPayout").push(getAsString(stakingSnapshot.firstPayout[idx]));
+        sessionDataOf.get(address).get("lastPayout").push(getAsString(stakingSnapshot.lastPayout[idx]));
 
         await staking.setSessionDataOf(address, stakingSnapshot.sessionID[idx],
             getAsString(stakingSnapshot.amount[idx]), getAsString(stakingSnapshot.shares[idx]), stakingSnapshot.starttime[idx],
-            stakingSnapshot.stoptime[idx], getAsString(stakingSnapshot.nextPayout[idx]));
+            stakingSnapshot.stoptime[idx], getAsString(stakingSnapshot.firstPayout[idx]), getAsString(stakingSnapshot.lastPayout[idx]));
         const gas_inst = await staking.setSessionDataOf.estimateGas(address, stakingSnapshot.sessionID[idx],
             getAsString(stakingSnapshot.amount[idx]), getAsString(stakingSnapshot.shares[idx]), stakingSnapshot.starttime[idx],
-            stakingSnapshot.stoptime[idx], getAsString(stakingSnapshot.nextPayout[idx]));
+            stakingSnapshot.stoptime[idx], getAsString(stakingSnapshot.firstPayout[idx]), getAsString(stakingSnapshot.lastPayout[idx]));
         gas += gas_inst;
       }
       console.log('sessionsDataOf single gas=' + gas);
@@ -119,13 +121,14 @@ contract('Staking - Migration', ([setter, recipient]) => {
       for(const address of sessionDataOf.keys()) {
         const sessionIDVec = sessionDataOf.get(address).get("sessionID");
         for (const idx of _.range(sessionIDVec.length)) {
-          const {  amount, start, end, shares, nextPayout} = await staking.sessionDataOf(address, sessionIDVec[idx]) as any;
+          const {  amount, start, end, shares, firstPayout, lastPayout} = await staking.sessionDataOf(address, sessionIDVec[idx]) as any;
 
           expect(String(amount)).to.equal(sessionDataOf.get(address).get("amount")[idx]);
           expect(String(start)).to.equal(String(sessionDataOf.get(address).get("start")[idx]));
           expect(String(end)).to.equal(String(sessionDataOf.get(address).get("stop")[idx]));
           expect(String(shares)).to.equal(sessionDataOf.get(address).get("shares")[idx]);
-          expect(String(nextPayout)).to.equal(sessionDataOf.get(address).get("nextPayout")[idx]);
+          expect(String(firstPayout)).to.equal(sessionDataOf.get(address).get("firstPayout")[idx]);
+          expect(String(lastPayout)).to.equal(sessionDataOf.get(address).get("lastPayout")[idx]);
           // console.log(String(address) + ' id=' + String(sessionID));
         }
       }

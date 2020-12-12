@@ -103,9 +103,8 @@ contract('Upgradeability', ([setter, recipient, bank, account1, account2]) => {
       expect(dataBefore.start.toString()).to.eq(dataAfter.start.toString());
       expect(dataBefore.end.toString()).to.eq(dataAfter.end.toString());
       expect(dataBefore.shares.toString()).to.eq(dataAfter.shares.toString());
-      expect(dataBefore.nextPayout.toString()).to.eq(
-        dataAfter.nextPayout.toString()
-      );
+      expect(dataBefore.firstPayout.toString()).to.eq(dataAfter.firstPayout.toString());
+      expect(dataBefore.lastPayout.toString()).to.eq(dataAfter.lastPayout.toString());
     });
 
     it('should upgrade auction', async () => {

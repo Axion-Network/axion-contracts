@@ -5,6 +5,7 @@ pragma solidity >=0.4.25 <0.7.0;
 /** OpenZeppelin Dependencies */
 // import "@openzeppelin/contracts-upgradeable/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 /** Local Interfaces */
@@ -52,7 +53,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 start;
         uint256 end;
         uint256 shares;
-        uint256 nextPayout;
+        uint256 firstPayout;
+        uint256 lastPayout;
         bool withdrawn;
         uint256 payout;
     }
@@ -164,7 +166,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             start: start,
             end: end,
             shares: shares,
-            nextPayout: payouts.length,
+            firstPayout: payouts.length,
+            lastPayout: payouts.length + stakingDays,
             withdrawn: false,
             payout: 0
         });
@@ -205,7 +208,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             start: start,
             end: end,
             shares: shares,
-            nextPayout: payouts.length,
+            firstPayout: payouts.length,
+            lastPayout: payouts.length + stakingDays,
             withdrawn: false,
             payout: 0
         });
@@ -234,10 +238,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 shares
     ) public view returns (uint256) {
         uint256 stakingInterest = 0;
+        uint256 lastIndex = MathUpgradeable.min(
+            payouts.length, 
+            sessionDataOf[account][sessionId].lastPayout
+        );
 
         for (
-            uint256 i = sessionDataOf[account][sessionId].nextPayout;
-            i < payouts.length;
+            uint256 i = sessionDataOf[account][sessionId].firstPayout;
+            i < lastIndex;
             i++
         ) {
             uint256 payout = payouts[i].payout.mul(shares).div(
@@ -496,14 +504,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function setSessionDataOf(address _wallet, uint256 _sessionID, uint256 _amount, uint256 _shares, uint256 _starttime,
-        uint256 _endtime, uint256 _nextPayout) external onlyMigrator {
+        uint256 _endtime, uint256 _firstPayout, uint256 _lastPayout) external onlyMigrator {
 
         sessionDataOf[_wallet][_sessionID] = Session({
             amount: _amount,
             start: _starttime,
             end: _endtime,
             shares: _shares,
-            nextPayout: _nextPayout,
+            firstPayout: _firstPayout,
+            lastPayout: _lastPayout,
             withdrawn: false,
             payout: 0
         });

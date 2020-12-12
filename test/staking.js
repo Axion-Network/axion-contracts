@@ -226,6 +226,49 @@ contract('Staking', ([bank, setter, recipient, staker1, staker2]) => {
     );
   });
 
+  it('should stop accruing interest after stake end date', async () => {
+    const stakingDays = 10;
+
+    await token.approve(staking.address, web3.utils.toWei('10'), {
+      from: staker1,
+    });
+
+    await staking.stake(web3.utils.toWei('10'), stakingDays, {
+      from: staker1,
+    });
+
+    const sessionId = await staking.sessionsOf(staker1, 0);
+
+    const session = await staking.sessionDataOf(
+      staker1,
+      sessionId
+    );
+
+    let previousInterest = "0";
+
+    for (let i = 0; i < stakingDays; i++) {
+      await helper.advanceTimeAndBlock(DAY);
+
+      await staking.makePayout();
+
+      const interest = await staking.calculateStakingInterest(sessionId, staker1, session.shares);
+
+      expect(interest).to.not.be.a.bignumber.that.equals(previousInterest);
+
+      previousInterest = interest;
+    }
+
+    // DAY 11
+    await helper.advanceTimeAndBlock(DAY);
+
+    await staking.makePayout();
+
+    const interest = await staking.calculateStakingInterest(sessionId, staker1, session.shares);
+
+    expect(interest).to.be.a.bignumber.that.equals(previousInterest);
+
+  });
+
   it('should calculate amount out and penalty correctly', async () => {
     const stakingDays = 2;
 
@@ -238,6 +281,7 @@ contract('Staking', ([bank, setter, recipient, staker1, staker2]) => {
     });
 
     const sessionId = await staking.sessionsOf(staker1, 0);
+
     const sessionData = await staking.sessionDataOf(staker1, sessionId);
 
     let previousPayout = "0";
