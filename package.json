@@ -5,7 +5,7 @@
     "test": "npx truffle test",
     "compile": "npx truffle compile --all",
     "build": "npx truffle compile && npx typechain --target=truffle-v5 'build/contracts/*.json'",
-    "build:win": "npx truffle compile && npx typechain --target=truffle-v5 ./build/contracts/*.json"
+    "build:win": "npx truffle compile --all && npx typechain --target=truffle-v5 ./build/contracts/*.json"
   },
   "repository": {
     "type": "git",

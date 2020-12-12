@@ -80,10 +80,15 @@ advanceTimeAndBlock = async (time) => {
   return Promise.resolve(web3.eth.getBlock('latest'));
 };
 
+timeout = async (ms) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 module.exports = {
   advanceTime,
   advanceBlock,
   advanceTimeAndBlock,
   takeSnapshot,
   revertToSnapShot,
+  timeout
 };

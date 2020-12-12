@@ -54,8 +54,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 shares;
         uint256 nextPayout;
         bool withdrawn;
-        uint256 interest;
-        uint256 penalty;
+        uint256 payout;
     }
 
     /** Private */
@@ -122,7 +121,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address _foreignSwap,
         uint256 _stepTimestamp
     ) external {
-        require(!init_, "NativeSwap: init is active");
+        require(!init_, "Staking: init is active");
         init_ = true;
         /** Setup */
         _setupRole(EXTERNAL_STAKER_ROLE, _foreignSwap);
@@ -167,8 +166,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             shares: shares,
             nextPayout: payouts.length,
             withdrawn: false,
-            interest: 0,
-            penalty: 0
+            payout: 0
         });
 
         sessionsOf[msg.sender].push(sessionId);
@@ -209,8 +207,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             shares: shares,
             nextPayout: payouts.length,
             withdrawn: false,
-            interest: 0,
-            penalty: 0
+            payout: 0
         });
 
         sessionsOf[staker].push(sessionId);
@@ -236,7 +233,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address account,
         uint256 shares
     ) public view returns (uint256) {
-        uint256 stakingInterest;
+        uint256 stakingInterest = 0;
 
         for (
             uint256 i = sessionDataOf[account][sessionId].nextPayout;
@@ -277,39 +274,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         require(
             sessionDataOf[msg.sender][sessionId].withdrawn == false,
-            "NativeSwap: Stake withdrawn"
+            "Staking: Stake withdrawn"
         );
 
         uint256 shares = sessionDataOf[msg.sender][sessionId].shares;
-
-        sessionDataOf[msg.sender][sessionId].withdrawn = true;
-
-        if (sessionDataOf[msg.sender][sessionId].nextPayout >= payouts.length) {
-            // To auction
-            uint256 amount = sessionDataOf[msg.sender][sessionId].amount;
-
-            _initPayout(auction, amount);
-            IAuction(auction).callIncomeDailyTokensTrigger(amount);
-
-            emit Unstake(
-                msg.sender,
-                sessionId,
-                amount,
-                sessionDataOf[msg.sender][sessionId].start,
-                sessionDataOf[msg.sender][sessionId].end,
-                shares
-            );
-
-            ISubBalances(subBalances).callOutcomeStakerTrigger(
-                msg.sender,
-                sessionId,
-                sessionDataOf[msg.sender][sessionId].start,
-                sessionDataOf[msg.sender][sessionId].end,
-                shares
-            );
-
-            return;
-        }
 
         uint256 stakingInterest = calculateStakingInterest(
             sessionId,
@@ -325,9 +293,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             sessionId,
             stakingInterest
         );
-
-        sessionDataOf[msg.sender][sessionId].interest = amountOut;
-        sessionDataOf[msg.sender][sessionId].penalty = penalty;
 
         // To auction
         _initPayout(auction, penalty);
@@ -350,8 +315,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             sessionId,
             sessionDataOf[msg.sender][sessionId].start,
             sessionDataOf[msg.sender][sessionId].end,
-            sessionDataOf[msg.sender][sessionId].shares
+            shares
         );
+
+        sessionDataOf[msg.sender][sessionId].end = now;
+        sessionDataOf[msg.sender][sessionId].withdrawn = true;
+        sessionDataOf[msg.sender][sessionId].payout = amountOut;
     }
 
     function getAmountOutAndPenalty(uint256 sessionId, uint256 stakingInterest)
@@ -412,7 +381,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function makePayout() public {
-        require(now >= nextPayoutCall, "NativeSwap: Wrong payout time");
+        require(now >= nextPayoutCall, "Staking: Wrong payout time");
 
         uint256 payout = _getPayout();
 
@@ -534,8 +503,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             shares: _shares,
             nextPayout: _nextPayout,
             withdrawn: false,
-            interest: 0,
-            penalty: 0
+            payout: 0
         });
     }
 

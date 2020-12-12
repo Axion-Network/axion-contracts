@@ -173,7 +173,7 @@ contract('Staking', ([bank, setter, recipient, staker1, staker2]) => {
     );
   });
 
-  it('should unstake', async () => {
+  it('should unstake and not allow second unstake', async () => {
     await token.approve(staking.address, web3.utils.toWei('10'), {
       from: staker1,
     });
@@ -205,8 +205,9 @@ contract('Staking', ([bank, setter, recipient, staker1, staker2]) => {
     );
 
     expect(preUnstakeSessionData.withdrawn).equals(false);
-    expect(preUnstakeSessionData.interest).to.be.a.bignumber.that.is.zero;
-    expect(preUnstakeSessionData.penalty).to.be.a.bignumber.that.is.zero;
+    expect(preUnstakeSessionData.payout).to.be.a.bignumber.that.is.zero;
+
+    await helper.timeout(1000);
 
     await staking.unstake(sessionId, {
       from: staker1,
@@ -222,7 +223,15 @@ contract('Staking', ([bank, setter, recipient, staker1, staker2]) => {
     );
 
     expect(afterUnstakeSessionData.withdrawn).equals(true);
-    expect(afterUnstakeSessionData.interest).to.not.be.a.bignumber.that.is.zero;
-    expect(afterUnstakeSessionData.penalty).to.be.a.bignumber.that.is.zero;
+    expect(afterUnstakeSessionData.payout).to.not.be.a.bignumber.that.is.zero;
+    expect(afterUnstakeSessionData.end).to.be.a.bignumber.that.is.lessThan(Date.now().toString());
+    expect(afterUnstakeSessionData.end).to.not.be.a.bignumber.that.is.equals(preUnstakeSessionData.end);
+
+    await expectRevert(
+      staking.unstake(sessionId, {
+        from: staker1,
+      }),
+      'Staking: Stake withdrawn'
+    );
   });
 });
