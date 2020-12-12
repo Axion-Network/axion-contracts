@@ -12,12 +12,13 @@ import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IToken.sol";
 import "./interfaces/IAuction.sol";
 import "./interfaces/IStaking.sol";
+import "./interfaces/IAuctionV1.sol";
 
 contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
 
     /** Events */
-    event Bet(
+    event Bid(
         address indexed account,
         uint256 value,
         uint256 indexed auctionId,
@@ -41,10 +42,26 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         uint256 uniswapMiddlePrice;
     }
 
-    struct UserBet {
+    struct UserBid {
         uint256 eth;
         address ref;
         bool withdrawn;
+    }
+
+    struct Addresses {
+        address mainToken;
+        address staking;
+        address payable uniswap;
+        address payable recipient;
+    }
+
+    struct Options {
+        uint256 autoStakeDays;
+        uint256 referrerPercent;
+        uint256 referredPercent;
+        bool referralsOn;
+        uint256 discountPercent;
+        uint256 premiumPercent;
     }
 
     /** Roles */
@@ -55,25 +72,19 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     /** Mapping */
     mapping(uint256 => AuctionReserves) public reservesOf;
     mapping(address => uint256[]) public auctionsOf;
-    mapping(uint256 => mapping(address => UserBet)) public auctionBetOf;
+    mapping(uint256 => mapping(address => UserBid)) public auctionBidOf;
     mapping(uint256 => mapping(address => bool)) public existAuctionsOf;
 
     /** Simple types */
     uint256 public lastAuctionEventId;
+    uint256 public lastAuctionEventIdV1;
     uint256 public start;
     uint256 public stepTimestamp;
-    uint256 public discountPercent;
-    uint256 public premiumPercent;
+    
+    Options public options;
+    Addresses public addresses;
+    IAuctionV1 public auctionV1;
 
-    uint256 public autoStakeDays;
-    uint256 public referrerPercent;
-    uint256 public referredPercent;
-    bool public referralsOn;
-
-    address public mainToken;
-    address public staking;
-    address payable public uniswap;
-    address payable public recipient;
     bool public init_;
 
     /** modifiers */
@@ -111,64 +122,72 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
     function init(
         uint256 _stepTimestamp,
-        address _manager,
-        address _mainToken,
-        address _staking,
-        address payable _uniswap,
-        address payable _recipient,
-        address _nativeSwap,
-        address _foreignSwap,
-        address _subbalances
+        address _managerAddress,
+        address _mainTokenAddress,
+        address _stakingAddress,
+        address payable _uniswapAddress,
+        address payable _recipientAddress,
+        address _nativeSwapAddress,
+        address _foreignSwapAddress,
+        address _subbalancesAddress,
+        address _auctionV1Address
     ) external onlyManager {
         require(!init_, "Init is active");
         init_ = true;
         /** Roles */
-        _setupRole(MANAGER_ROLE, _manager);
-        _setupRole(CALLER_ROLE, _nativeSwap);
-        _setupRole(CALLER_ROLE, _foreignSwap);
-        _setupRole(CALLER_ROLE, _staking);
-        _setupRole(CALLER_ROLE, _subbalances);
+        _setupRole(MANAGER_ROLE, _managerAddress);
+        _setupRole(CALLER_ROLE, _nativeSwapAddress);
+        _setupRole(CALLER_ROLE, _foreignSwapAddress);
+        _setupRole(CALLER_ROLE, _stakingAddress);
+        _setupRole(CALLER_ROLE, _subbalancesAddress);
+
         // Timer
-        autoStakeDays = 14;
         start = now;
         stepTimestamp = _stepTimestamp;
-        // Auction discounts and premium
-        discountPercent = 20;
-        premiumPercent = 0;
-        // Referral Bonuses
-        referrerPercent = 20;
-        referredPercent = 10;
-        referralsOn = true;
+        
+        // Options
+        options = Options({
+            autoStakeDays: 14,
+            referrerPercent: 20,
+            referredPercent: 10,
+            referralsOn: true,
+            discountPercent: 20,
+            premiumPercent: 0
+        });
+        
         // Addresses
-        mainToken = _mainToken;
-        staking = _staking;
-        uniswap = _uniswap;
-        recipient = _recipient;
+        auctionV1 = IAuctionV1(_auctionV1Address);
+        addresses = Addresses({
+            mainToken: _mainTokenAddress,
+            staking: _stakingAddress,
+            uniswap: _uniswapAddress,
+            recipient: _recipientAddress
+        });
     }
 
     /** Public Setter Functions */
     function setReferrerPercentage(uint256 percent) external onlyManager {
-        referrerPercent = percent;
+        options.referrerPercent = percent;
     }
 
     function setReferredPercentage(uint256 percent) external onlyManager {
-        referredPercent = percent;
+        options.referredPercent = percent;
     }
 
     function setReferralsOn(bool _referralsOn) external onlyManager {
-        referralsOn = _referralsOn;
+        options.referralsOn = _referralsOn;
     }
 
     function setAutoStakeDays(uint256 _autoStakeDays) external onlyManager {
-        autoStakeDays = _autoStakeDays;
+        options.autoStakeDays = _autoStakeDays;
     }
 
     function setDiscountPercent(uint256 percent) external onlyManager {
-        discountPercent = percent;
+        options.discountPercent = percent;
     }
 
     function setPremiumPercent(uint256 percent) external onlyManager {
-        premiumPercent = percent;
+        options.premiumPercent = percent;
     }
 
     /** Public Getter functions */
@@ -183,10 +202,10 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     function getUniswapLastPrice() public view returns (uint256) {
         address[] memory path = new address[](2);
 
-        path[0] = IUniswapV2Router02(uniswap).WETH();
-        path[1] = mainToken;
+        path[0] = IUniswapV2Router02(addresses.uniswap).WETH();
+        path[1] = addresses.mainToken;
 
-        uint256 price = IUniswapV2Router02(uniswap).getAmountsOut(
+        uint256 price = IUniswapV2Router02(addresses.uniswap).getAmountsOut(
             1e18,
             path
         )[1];
@@ -231,18 +250,18 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     function _swapEth(uint256 amountOutMin, uint256 amount, uint256 deadline) private {
         address[] memory path = new address[](2);
 
-        path[0] = IUniswapV2Router02(uniswap).WETH();
-        path[1] = mainToken;
+        path[0] = IUniswapV2Router02(addresses.uniswap).WETH();
+        path[1] = addresses.mainToken;
 
-        IUniswapV2Router02(uniswap).swapExactETHForTokens{value: amount}(
+        IUniswapV2Router02(addresses.uniswap).swapExactETHForTokens{value: amount}(
             amountOutMin,
             path,
-            staking,
+            addresses.staking,
             deadline
         );
     }
 
-    function bet(uint256 amountOutMin, uint256 deadline, address ref) external payable {
+    function bid(uint256 amountOutMin, uint256 deadline, address ref) external payable {
         _saveAuctionData();
         _updatePrice();
 
@@ -258,15 +277,15 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         uint256 stepsFromStart = calculateStepsFromStart();
 
         /** If referralsOn is true sallow to set ref */
-        if (referralsOn == true) {
-            auctionBetOf[stepsFromStart][_msgSender()].ref = ref;
+        if (options.referralsOn == true) {
+            auctionBidOf[stepsFromStart][_msgSender()].ref = ref;
         } else {
             // Else set ref to 0x0 for this auction bid
-            auctionBetOf[stepsFromStart][_msgSender()].ref = address(0);
+            auctionBidOf[stepsFromStart][_msgSender()].ref = address(0);
         }
 
-        auctionBetOf[stepsFromStart][_msgSender()]
-            .eth = auctionBetOf[stepsFromStart][_msgSender()].eth.add(
+        auctionBidOf[stepsFromStart][_msgSender()]
+            .eth = auctionBidOf[stepsFromStart][_msgSender()].eth.add(
             msg.value
         );
 
@@ -279,9 +298,9 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             msg.value
         );
 
-        recipient.transfer(toRecipient);
+        addresses.recipient.transfer(toRecipient);
 
-        emit Bet(msg.sender, msg.value, stepsFromStart, now);
+        emit Bid(msg.sender, msg.value, stepsFromStart, now);
     }
 
     function withdraw(uint256 auctionId) external {
@@ -290,20 +309,48 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
         uint256 stepsFromStart = calculateStepsFromStart();
 
-        require(stepsFromStart > auctionId, "auction is active");
-        require(auctionBetOf[auctionId][_msgSender()].eth > 0, "zero balance in auction");
-        require(auctionBetOf[auctionId][_msgSender()].withdrawn == false, "bet is withdrawn");
+        UserBid storage userBid = auctionBidOf[auctionId][_msgSender()];
 
-        uint256 auctionETHUserBalance = auctionBetOf[auctionId][_msgSender()]
-            .eth;
+        require(stepsFromStart > auctionId, "Auction: Auction is active");
+        require(userBid.eth > 0 && userBid.withdrawn == false, "Auction: Zero bid or withdrawn");
 
-        auctionBetOf[auctionId][_msgSender()].withdrawn = true;
+        userBid.withdrawn = true;
 
-        uint256 payout = _calculatePayout(auctionId, auctionETHUserBalance);
+        callWithdraw(userBid.ref, userBid.eth, auctionId, stepsFromStart);
+    }
+
+    function withdrawV1(uint256 auctionId) external {
+        _saveAuctionData();
+        _updatePrice();
+
+        // CHECK LAST ID HERE
+        require(auctionId <= lastAuctionEventIdV1, "Auction: Invalid auction id");
+
+        uint256 stepsFromStart = calculateStepsFromStart();
+        require(stepsFromStart > auctionId, "Auction: Auction is active");
+
+        /** This stops a user from using WithdrawV1 twice, since the bid is put into memory at the end */
+        UserBid storage userBid = auctionBidOf[auctionId][_msgSender()];
+        require(userBid.eth == 0 && userBid.withdrawn == false, "Auction: Invalid auction ID");
+
+        (uint256 eth, address ref) = auctionV1.auctionBetOf(auctionId, _msgSender());
+        require(eth > 0, "Auction: Zero balance in auction/invalid auction ID");
+
+        callWithdraw(ref, eth, auctionId, stepsFromStart);
+
+        auctionBidOf[auctionId][_msgSender()] = UserBid({
+            eth: eth,
+            ref: ref,
+            withdrawn: true
+        });
+    }
+
+    function callWithdraw(address ref, uint256 eth, uint256 auctionId, uint256 stepsFromStart) internal {
+        uint256 payout = _calculatePayout(auctionId, eth);
 
         uint256 uniswapPayoutWithPercent = _calculatePayoutWithUniswap(
             auctionId,
-            auctionETHUserBalance,
+            eth,
             payout
         );
 
@@ -317,18 +364,18 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             payout = uniswapPayoutWithPercent;
         }
 
-        if (address(auctionBetOf[auctionId][_msgSender()].ref) == address(0)) {
-            IToken(mainToken).burn(address(this), payout);
+        if (address(ref) == address(0)) {
+            IToken(addresses.mainToken).burn(address(this), payout);
 
-            IStaking(staking).externalStake(
+            IStaking(addresses.staking).externalStake(
                 payout,
-                autoStakeDays,
+                options.autoStakeDays,
                 _msgSender()
             );
 
             emit Withdraval(msg.sender, payout, stepsFromStart, now);
         } else {
-            IToken(mainToken).burn(address(this), payout);
+            IToken(addresses.mainToken).burn(address(this), payout);
 
             (
                 uint256 toRefMintAmount,
@@ -337,18 +384,18 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
             payout = payout.add(toUserMintAmount);
 
-            IStaking(staking).externalStake(
+            IStaking(addresses.staking).externalStake(
                 payout,
-                autoStakeDays,
+                options.autoStakeDays,
                 _msgSender()
             );
 
             emit Withdraval(msg.sender, payout, stepsFromStart, now);
 
-            IStaking(staking).externalStake(
+            IStaking(addresses.staking).externalStake(
                 toRefMintAmount,
-                autoStakeDays,
-                auctionBetOf[auctionId][_msgSender()].ref
+                options.autoStakeDays,
+                ref
             );
         }
     }
@@ -399,8 +446,8 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             .div(1e18);
 
         uint256 uniswapPayoutWithPercent = uniswapPayout
-            .add(uniswapPayout.mul(discountPercent).div(100))
-            .sub(uniswapPayout.mul(premiumPercent).div(100));
+            .add(uniswapPayout.mul(options.discountPercent).div(100))
+            .sub(uniswapPayout.mul(options.premiumPercent).div(100));
 
         if (payout > uniswapPayoutWithPercent) {
             return uniswapPayoutWithPercent;
@@ -435,8 +482,8 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         view
         returns (uint256, uint256)
     {
-        uint256 toRefMintAmount = amount.mul(referrerPercent).div(100);
-        uint256 toUserMintAmount = amount.mul(referredPercent).div(100);
+        uint256 toRefMintAmount = amount.mul(options.referrerPercent).div(100);
+        uint256 toUserMintAmount = amount.mul(options.referredPercent).div(100);
 
         return (toRefMintAmount, toUserMintAmount);
     }
@@ -455,6 +502,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     /** Setter methods for contract migration */
     function setNormalVariables(uint256 _lastAuctionEventId) external onlyMigrator {
         lastAuctionEventId = _lastAuctionEventId;
+        lastAuctionEventIdV1 = _lastAuctionEventId;
     }
 
     function setReservesOf(
@@ -492,14 +540,14 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         }
     }
 
-    function setAuctionBetOf(
+    function setAuctionBidOf(
         uint256 sessionId,
         address[] calldata userAddresses,
         uint256[] calldata eths,
         address[] calldata refs
     ) external onlyMigrator {
         for (uint256 i = 0; i < userAddresses.length; i = i.add(1)) {
-            auctionBetOf[sessionId][userAddresses[i]] = UserBet({
+            auctionBidOf[sessionId][userAddresses[i]] = UserBid({
                 eth: eths[i],
                 ref: refs[i],
                 withdrawn: false

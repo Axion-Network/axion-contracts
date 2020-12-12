@@ -50,7 +50,7 @@ contract('Staking - Migration', ([setter, recipient]) => {
       expect(String(await staking.nextPayoutCall())).to.equal(stakingSnapshotRest.nextPayoutCall);
       expect(String(await staking.globalPayin())).to.equal(stakingSnapshotRest.globalPayin);
       expect(String(await staking.globalPayout())).to.equal(stakingSnapshotRest.globalPayout);
-      expect(await staking._sessionsIds().then(String)).to.eq(String(stakingSnapshot.maxSessionID))
+      expect(await staking.lastSessionId().then(String)).to.eq(String(stakingSnapshot.maxSessionID))
 
       for (const day of _.range(stakingSnapshotRest.payouts.length)) {
         const {payout, sharesTotalSupply} = await staking.payouts(day) as any;

@@ -106,6 +106,7 @@ async function initTestSmartContracts({
     usedAuctionAddress,
     usedSubBalancesAddress,
     foreignswap.address,
+    "0x0000000000000000000000000000000000000000",
     new BN(DAY.toString(), 10)
   );
 
@@ -165,6 +166,7 @@ async function initTestSmartContracts({
     nativeswap.address,
     foreignswap.address,
     usedSubBalancesAddress,
+    "0x0000000000000000000000000000000000000000",
     { from: setter }
   );
 
@@ -173,6 +175,7 @@ async function initTestSmartContracts({
     foreignswap.address,
     bpd.address,
     usedAuctionAddress,
+    "0x0000000000000000000000000000000000000000",
     usedStakingAddress,
     new BN(DAY.toString(), 10),
     new BN(STAKE_PERIOD.toString(), 10),

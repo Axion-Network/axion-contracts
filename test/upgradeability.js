@@ -60,12 +60,12 @@ contract('Upgradeability', ([setter, recipient, bank, account1, account2]) => {
   describe('upgrades', () => {
     it('works with simple numbers', async () => {
       await auction.setReferrerPercentage(5, { from: setter });
-      const value1 = await auction.referrerPercent();
+      const value1 = (await auction.options()).referrerPercent;
       const auctionUpgrade = await upgradeProxy(auction.address, Auction, {
         unsafeAllowCustomTypes: true,
         unsafeAllowLinkedLibraries: true,
       });
-      const value2 = await auctionUpgrade.referrerPercent();
+      const value2 = (await auctionUpgrade.options()).referrerPercent;
 
       expect(value1.toString()).to.eq(value2.toString());
       expect(auction.address).to.eq(auctionUpgrade.address);
@@ -110,13 +110,13 @@ contract('Upgradeability', ([setter, recipient, bank, account1, account2]) => {
     it('should upgrade auction', async () => {
       // Advance the date to day 100 after launch
       await helper.advanceTimeAndBlock(DAY * 100);
-      // Bet with 10 eth
-      await auction.bet(0, DEADLINE, account2, {
+      // Bid with 10 eth
+      await auction.bid(0, DEADLINE, account2, {
         from: account1,
         value: web3.utils.toWei('10'),
       });
       const currentAuctionIdBefore = await auction.lastAuctionEventId();
-      const auctionBetOfBefore = await auction.auctionBetOf(
+      const auctionBidOfBefore = await auction.auctionBidOf(
         currentAuctionIdBefore,
         account1
       );
@@ -130,7 +130,7 @@ contract('Upgradeability', ([setter, recipient, bank, account1, account2]) => {
 
       const currentAuctionIdAfter = await auctionUpgrade.lastAuctionEventId();
       const auctionsOfAfter = await auction.auctionsOf(account1, 0);
-      const auctionBetOfAfter = await auctionUpgrade.auctionBetOf(
+      const auctionBidOfAfter = await auctionUpgrade.auctionBidOf(
         currentAuctionIdAfter,
         account1
       );
@@ -142,11 +142,11 @@ contract('Upgradeability', ([setter, recipient, bank, account1, account2]) => {
       expect(currentAuctionIdBefore.toString()).to.eq(
         currentAuctionIdAfter.toString()
       );
-      expect(auctionBetOfBefore.eth.toString()).to.eq(
-        auctionBetOfAfter.eth.toString()
+      expect(auctionBidOfBefore.eth.toString()).to.eq(
+        auctionBidOfAfter.eth.toString()
       );
-      expect(auctionBetOfBefore.ref.toString()).to.eq(
-        auctionBetOfAfter.ref.toString()
+      expect(auctionBidOfBefore.ref.toString()).to.eq(
+        auctionBidOfAfter.ref.toString()
       );
       expect(reservesBefore.eth.toString()).to.eq(reservesAfter.eth.toString());
       expect(reservesBefore.token.toString()).to.eq(

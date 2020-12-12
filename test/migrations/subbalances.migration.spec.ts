@@ -158,38 +158,4 @@ contract('SubBalances - Migration', ([setter, recipient]) => {
       }
     });
   });
-
-  describe('addUserStakings', () => {
-    it('should init addUserStakings using snapshot', async () => {
-      // arrange
-      const addresses: string[] = [];
-      const sessionIdCountList: string[] = [];
-      const allSessionIds: string[] = [];
-      Object.keys(subBalancesSnapshot.userStakings)
-        .slice(0, 5)
-        .forEach((address) => {
-          addresses.push(address);
-          const sessionIds = subBalancesSnapshot.userStakings[address];
-          sessionIdCountList.push(sessionIds.length);
-          allSessionIds.push(...sessionIds);
-        });
-
-      // act
-      await subBalances.addUserStakings(
-        addresses,
-        sessionIdCountList,
-        allSessionIds
-      );
-
-      // assert
-      for (const address of addresses) {
-        const expectedSessionIds = subBalancesSnapshot.userStakings[address];
-        for (let idx = 0; idx < expectedSessionIds.length; idx = idx + 1) {
-          expect(
-            await subBalances.userStakings(address, idx).then(String)
-          ).to.eq(expectedSessionIds[idx]);
-        }
-      }
-    });
-  });
 });

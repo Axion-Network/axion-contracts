@@ -205,7 +205,7 @@
     "0xb671D773defcCabCf920D6fB4d03139fb5D3EA0A": ["3"],
     "0x4205eAD70a5e93fbA2518d8F54ac46930828f68b": ["3"]
   },
-  "auctionBetOf": {
+  "auctionBidOf": {
     "1": {
       "0x1Dbd1948bCa962e9F7b03d4E6740371c4Ef9C940": {
         "0": "220000000000000000",

@@ -13,6 +13,8 @@ import "./interfaces/IToken.sol";
 import "./interfaces/IAuction.sol";
 import "./interfaces/IStaking.sol";
 import "./interfaces/ISubBalances.sol";
+import "./interfaces/IStakingV1.sol";
+
 
 contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
@@ -59,8 +61,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 payout;
     }
 
-    /** Private */
-    uint256 public _sessionsIds;
+    struct Addresses {
+        address mainToken;
+        address auction;
+        address subBalances;
+    }
+
+    Addresses public addresses;
+    IStakingV1 public stakingV1;
 
     /** Roles */
     bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
@@ -68,9 +76,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     /** Public Variables */
-    address public mainToken;
-    address public auction;
-    address public subBalances;
     uint256 public shareRate;
     uint256 public sharesTotalSupply;
     uint256 public nextPayoutCall;
@@ -78,6 +83,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     uint256 public startContract;
     uint256 public globalPayout;
     uint256 public globalPayin;
+    uint256 public lastSessionId;
+    uint256 public lastSessionIdV1;
 
     /** Mappings / Arrays */
     mapping(address => mapping(uint256 => Session)) public sessionDataOf;
@@ -117,20 +124,27 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
     
     function init(
-        address _mainToken,
-        address _auction,
-        address _subBalances,
-        address _foreignSwap,
+        address _mainTokenAddress,
+        address _auctionAddress,
+        address _subBalancesAddress,
+        address _foreignSwapAddress,
+        address _stakingV1Address,
         uint256 _stepTimestamp
     ) external {
         require(!init_, "Staking: init is active");
         init_ = true;
         /** Setup */
-        _setupRole(EXTERNAL_STAKER_ROLE, _foreignSwap);
-        _setupRole(EXTERNAL_STAKER_ROLE, _auction);
-        mainToken = _mainToken;
-        auction = _auction;
-        subBalances = _subBalances;
+        _setupRole(EXTERNAL_STAKER_ROLE, _foreignSwapAddress);
+        _setupRole(EXTERNAL_STAKER_ROLE, _auctionAddress);
+
+        addresses = Addresses({
+            mainToken: _mainTokenAddress,
+            auction: _auctionAddress,
+            subBalances: _subBalancesAddress
+        });
+        
+        stakingV1 = IStakingV1(_stakingV1Address);
+
         shareRate = 1e18;
         stepTimestamp = _stepTimestamp;
         nextPayoutCall = now.add(_stepTimestamp);
@@ -155,9 +169,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
 
-        IToken(mainToken).burn(msg.sender, amount);
-        _sessionsIds = _sessionsIds.add(1);
-        uint256 sessionId = _sessionsIds;
+        IToken(addresses.mainToken).burn(msg.sender, amount);
+        lastSessionId = lastSessionId.add(1);
+        uint256 sessionId = lastSessionId;
         uint256 shares = _getStakersSharesAmount(amount, start, end);
         sharesTotalSupply = sharesTotalSupply.add(shares);
 
@@ -174,7 +188,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sessionsOf[msg.sender].push(sessionId);
 
-        ISubBalances(subBalances).callIncomeStakerTrigger(
+        ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
             msg.sender,
             sessionId,
             start,
@@ -198,8 +212,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
 
-        _sessionsIds = _sessionsIds.add(1);
-        uint256 sessionId = _sessionsIds;
+        lastSessionId = lastSessionId.add(1);
+        uint256 sessionId = lastSessionId;
         uint256 shares = _getStakersSharesAmount(amount, start, end);
         sharesTotalSupply = sharesTotalSupply.add(shares);
 
@@ -216,7 +230,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sessionsOf[staker].push(sessionId);
 
-        ISubBalances(subBalances).callIncomeStakerTrigger(
+        ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
             staker,
             sessionId,
             start,
@@ -228,23 +242,23 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function _initPayout(address to, uint256 amount) internal {
-        IToken(mainToken).mint(to, amount);
+        IToken(addresses.mainToken).mint(to, amount);
         globalPayout = globalPayout.add(amount);
     }
 
     function calculateStakingInterest(
-        uint256 sessionId,
-        address account,
+        uint256 firstPayout,
+        uint256 lastPayout,
         uint256 shares
     ) public view returns (uint256) {
         uint256 stakingInterest = 0;
         uint256 lastIndex = MathUpgradeable.min(
             payouts.length, 
-            sessionDataOf[account][sessionId].lastPayout
+            lastPayout
         );
 
         for (
-            uint256 i = sessionDataOf[account][sessionId].firstPayout;
+            uint256 i = firstPayout;
             i < lastIndex;
             i++
         ) {
@@ -259,16 +273,17 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function _updateShareRate(
-        address account,
         uint256 shares,
         uint256 stakingInterest,
-        uint256 sessionId
+        uint256 amount,
+        uint256 start,
+        uint256 end
     ) internal {
         uint256 newShareRate = _getShareRate(
-            sessionDataOf[account][sessionId].amount,
+            amount,
             shares,
-            sessionDataOf[account][sessionId].start,
-            sessionDataOf[account][sessionId].end,
+            start,
+            end,
             stakingInterest
         );
 
@@ -280,79 +295,144 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     function unstake(uint256 sessionId) external {
         if (now >= nextPayoutCall) makePayout();
 
+        Session storage session = sessionDataOf[msg.sender][sessionId];
+
         require(
-            sessionDataOf[msg.sender][sessionId].withdrawn == false,
+            session.shares > 0 
+                && session.withdrawn == false,
+            "Staking: Stake withdrawn/invalid"
+        );
+
+        uint256 amountOut = unstakeInternal(
+            sessionId,
+            session.amount, 
+            session.start, 
+            session.end, 
+            session.shares, 
+            session.firstPayout, 
+            session.lastPayout
+        );
+
+        session.end = now;
+        session.withdrawn = true;
+        session.payout = amountOut;
+    }
+
+    function unstakeV1(uint256 sessionId) external {
+        if (now >= nextPayoutCall) makePayout();
+
+        require(sessionId <= lastSessionIdV1, "Staking: Invalid sessionId");
+
+        Session storage session = sessionDataOf[msg.sender][sessionId];
+
+        // Unstaked already
+        require(
+            session.shares == 0 && session.withdrawn == false,
             "Staking: Stake withdrawn"
         );
 
-        uint256 shares = sessionDataOf[msg.sender][sessionId].shares;
+        (uint256 amount, uint256 start, uint256 end, uint256 shares, uint256 firstPayout) 
+            = stakingV1.sessionDataOf(msg.sender, sessionId);
 
+        // Unstaked in v1 / doesn't exist
+        require(
+            shares > 0,
+            "Staking: Stake withdrawn"
+        );
+
+        uint256 lastPayout = (end - start) / stepTimestamp + firstPayout;
+
+        uint256 amountOut = unstakeInternal(sessionId, amount, start, end, shares, firstPayout, lastPayout);
+
+        sessionDataOf[msg.sender][sessionId] = Session({
+            amount: amount,
+            start: start,
+            end: now,
+            shares: shares,
+            firstPayout: firstPayout,
+            lastPayout: lastPayout,
+            withdrawn: true,
+            payout: amountOut
+        });
+
+        sessionsOf[msg.sender].push(sessionId);
+    }
+
+    function unstakeInternal(
+        uint256 sessionId, 
+        uint256 amount, 
+        uint256 start, 
+        uint256 end, 
+        uint256 shares, 
+        uint256 firstPayout,
+        uint256 lastPayout
+    ) internal returns (uint256) {
         uint256 stakingInterest = calculateStakingInterest(
-            sessionId,
-            msg.sender,
+            firstPayout,
+            lastPayout,
             shares
         );
 
-        _updateShareRate(msg.sender, shares, stakingInterest, sessionId);
+        _updateShareRate(
+            shares, 
+            stakingInterest, 
+            amount, 
+            start, 
+            end
+        );
 
         sharesTotalSupply = sharesTotalSupply.sub(shares);
 
         (uint256 amountOut, uint256 penalty) = getAmountOutAndPenalty(
-            sessionId,
+            amount,
+            start,
+            end,
             stakingInterest
         );
 
         // To auction
-        _initPayout(auction, penalty);
-        IAuction(auction).callIncomeDailyTokensTrigger(penalty);
+        _initPayout(addresses.auction, penalty);
+        IAuction(addresses.auction).callIncomeDailyTokensTrigger(penalty);
 
         // To account
         _initPayout(msg.sender, amountOut);
+
+
+        // Call outcome to subbalances
+        ISubBalances(addresses.subBalances).callOutcomeStakerTriggerV1(
+            msg.sender,
+            sessionId,
+            start,
+            end,
+            shares
+        );
 
         emit Unstake(
             msg.sender,
             sessionId,
             amountOut,
-            sessionDataOf[msg.sender][sessionId].start,
-            sessionDataOf[msg.sender][sessionId].end,
+            start,
+            end,
             shares
         );
 
-        ISubBalances(subBalances).callOutcomeStakerTrigger(
-            msg.sender,
-            sessionId,
-            sessionDataOf[msg.sender][sessionId].start,
-            sessionDataOf[msg.sender][sessionId].end,
-            shares
-        );
-
-        sessionDataOf[msg.sender][sessionId].end = now;
-        sessionDataOf[msg.sender][sessionId].withdrawn = true;
-        sessionDataOf[msg.sender][sessionId].payout = amountOut;
+        return amountOut;
     }
 
-    function getAmountOutAndPenalty(uint256 sessionId, uint256 stakingInterest)
+    function getAmountOutAndPenalty(uint256 amount, uint256 start, uint256 end, uint256 stakingInterest)
         public
         view
         returns (uint256, uint256)
     {
-        uint256 stakingSeconds = (
-            sessionDataOf[msg.sender][sessionId].end.sub(
-                sessionDataOf[msg.sender][sessionId].start
-            )
-        );
+        uint256 stakingSeconds = end.sub(start);
         
         uint256 stakingDays = stakingSeconds.div(stepTimestamp);
 
-        uint256 secondsStaked = (
-            now.sub(sessionDataOf[msg.sender][sessionId].start)
-        );
+        uint256 secondsStaked = now.sub(start);
 
         uint256 daysStaked = secondsStaked.div(stepTimestamp);
 
-        uint256 amountAndInterest = sessionDataOf[msg.sender][sessionId]
-            .amount
-            .add(stakingInterest);
+        uint256 amountAndInterest = amount.add(stakingInterest);
 
         // Early
         if (stakingDays > daysStaked) {
@@ -405,9 +485,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function readPayout() external view returns (uint256) {
-        uint256 amountTokenInDay = IERC20Upgradeable(mainToken).balanceOf(address(this));
+        uint256 amountTokenInDay = IERC20Upgradeable(addresses.mainToken).balanceOf(address(this));
 
-        uint256 currentTokenTotalSupply = (IERC20Upgradeable(mainToken).totalSupply()).add(
+        uint256 currentTokenTotalSupply = (IERC20Upgradeable(addresses.mainToken).totalSupply()).add(
             globalPayin
         );
 
@@ -419,7 +499,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function _getPayout() internal returns (uint256) {
-        uint256 amountTokenInDay = IERC20Upgradeable(mainToken).balanceOf(address(this));
+        uint256 amountTokenInDay = IERC20Upgradeable(addresses.mainToken).balanceOf(address(this));
 
         globalPayin = globalPayin.add(amountTokenInDay);
 
@@ -431,11 +511,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             globalPayout = 0;
         }
 
-        uint256 currentTokenTotalSupply = (IERC20Upgradeable(mainToken).totalSupply()).add(
+        uint256 currentTokenTotalSupply = (IERC20Upgradeable(addresses.mainToken).totalSupply()).add(
             globalPayin
         );
 
-        IToken(mainToken).burn(address(this), amountTokenInDay);
+        IToken(addresses.mainToken).burn(address(this), amountTokenInDay);
 
         uint256 inflation = uint256(8)
             .mul(currentTokenTotalSupply.add(sharesTotalSupply))
@@ -484,13 +564,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     // migration functions
     function setOtherVars(uint256 _shareRate, uint256 _sharesTotalSupply, uint256 _nextPayoutCall,
-            uint256 _globalPayin, uint256 _globalPayout, uint256[] calldata _payouts, uint256[] calldata _sharesTotalSupplyVec, uint256 maxSessionID) external onlyMigrator {
+            uint256 _globalPayin, uint256 _globalPayout, uint256[] calldata _payouts, uint256[] calldata _sharesTotalSupplyVec, uint256 _lastSessionId) external onlyMigrator {
         shareRate = _shareRate;
         sharesTotalSupply = _sharesTotalSupply;
         nextPayoutCall = _nextPayoutCall;
         globalPayin = _globalPayin;
         globalPayout = _globalPayout;
-        _sessionsIds = maxSessionID;
+        lastSessionId = _lastSessionId;
+        lastSessionIdV1 = _lastSessionId;
 
         for(uint256 i=0; i<_payouts.length; i++) {
             payouts.push(

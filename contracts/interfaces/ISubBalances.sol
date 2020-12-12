@@ -18,4 +18,12 @@ interface ISubBalances {
         uint256 end,
         uint256 shares
     ) external;
+
+    function callOutcomeStakerTriggerV1(
+        address staker,
+        uint256 sessionId,
+        uint256 start,
+        uint256 end,
+        uint256 shares
+    ) external;
 }

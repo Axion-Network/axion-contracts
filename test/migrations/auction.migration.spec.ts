@@ -117,17 +117,17 @@ contract('Auction - Migration', ([setter, recipient]) => {
     });
   });
 
-  describe('setAuctionBetOf', () => {
-    it('should init auctionBetOf using snapshot', async () => {
+  describe('setAuctionBidOf', () => {
+    it('should init auctionBidOf using snapshot', async () => {
       // arrange
-      const sessionId = Object.keys(auctionSnapshot.auctionBetOf)[0];
+      const sessionId = Object.keys(auctionSnapshot.auctionBidOf)[0];
       const userAddresses: string[] = [];
       const eths: string[] = [];
       const refs: string[] = [];
-      Object.keys(auctionSnapshot.auctionBetOf[sessionId]).map(
+      Object.keys(auctionSnapshot.auctionBidOf[sessionId]).map(
         (userAddress) => {
           userAddresses.push(userAddress);
-          const { eth, ref } = auctionSnapshot.auctionBetOf[sessionId][
+          const { eth, ref } = auctionSnapshot.auctionBidOf[sessionId][
             userAddress
           ];
           eths.push(eth);
@@ -136,18 +136,18 @@ contract('Auction - Migration', ([setter, recipient]) => {
       );
 
       // act
-      await auction.setAuctionBetOf(sessionId, userAddresses, eths, refs);
+      await auction.setAuctionBidOf(sessionId, userAddresses, eths, refs);
 
       // assert
       for (const userAddress of userAddresses) {
-        const { eth, ref } = (await auction.auctionBetOf(
+        const { eth, ref } = (await auction.auctionBidOf(
           sessionId,
           userAddress
         )) as any;
-        const expectedAuctionBet =
-          auctionSnapshot.auctionBetOf[sessionId][userAddress];
-        expect(eth.toString()).to.eq(expectedAuctionBet.eth);
-        expect(ref.toString()).to.eq(expectedAuctionBet.ref);
+        const expectedAuctionBid =
+          auctionSnapshot.auctionBidOf[sessionId][userAddress];
+        expect(eth.toString()).to.eq(expectedAuctionBid.eth);
+        expect(ref.toString()).to.eq(expectedAuctionBid.ref);
       }
     });
   });
@@ -161,7 +161,7 @@ contract('Auction - Migration', ([setter, recipient]) => {
       Object.keys(auctionSnapshot.existAuctionsOf[sessionId]).map(
         (userAddress) => {
           userAddresses.push(userAddress);
-          const exist = auctionSnapshot.auctionBetOf[sessionId][userAddress];
+          const exist = auctionSnapshot.auctionBidOf[sessionId][userAddress];
           exists.push(exist);
         }
       );

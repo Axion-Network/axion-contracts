@@ -13,6 +13,7 @@ import "./interfaces/IAuction.sol";
 import "./interfaces/IForeignSwap.sol";
 import "./interfaces/IBPD.sol";
 import "./interfaces/ISubBalances.sol";
+import "./interfaces/ISubBalancesV1.sol";
 
 
 contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
@@ -28,7 +29,6 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     struct StakeSession {
     	address staker;
     	uint256 shares;
-    	// uint256 sessionId;
     	uint256 start;
     	uint256 end;
     	uint256 finishTime;
@@ -37,39 +37,40 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     }
 
     struct SubBalance {
-    	// mapping (address => uint256[]) userStakings;
-    	// mapping (uint256 => StakeSession) stakeSessions;
     	uint256 totalShares;
     	uint256 totalWithdrawAmount;
     	uint256 payDayTime;
-    	// uint256 payDayEnd;
         uint256 requiredStakePeriod;
     	bool minted;
     }
+
+    struct Addresses {
+        address mainToken;
+        address foreignSwap;
+        address bigPayDayPool;
+        address auction;
+    }
+
+    Addresses public addresses;
+    ISubBalancesV1 public subBalancesV1;
 
     /** Role vars */
     bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant STAKING_ROLE = keccak256("CALLER_ROLE");
-    // Public addresses
-    address public mainToken;
-    address public foreignSwap;
-	address public bigPayDayPool;
-	address public auction;
-    // Public Ints
+    
 	uint256 public startTimestamp;
     uint256 public stepTimestamp;
     uint256 public basePeriod;
 	uint256 public currentSharesTotalSupply;
-    // Mappings / Array
+
     SubBalance[5] public subBalanceList;
     uint256[5] public periods;
-    mapping (address => uint256[]) public userStakings;
     mapping (uint256 => StakeSession) public stakeSessions;
-    // booleans
+
     bool public init_;
 
-    /** No longer needed with initializble */
+    /** No longer needed with initializable */
     modifier onlyManager() {
         require(hasRole(MANAGER_ROLE, _msgSender()), "Caller is not a manager");
         _;
@@ -88,22 +89,29 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     }
 
     function init(
-        address _mainToken,
-        address _foreignSwap,
-        address _bigPayDayPool,
-        address _auction,
-        address _staking,
+        address _mainTokenAddress,
+        address _foreignSwapAddress,
+        address _bigPayDayPoolAddress,
+        address _auctionAddress,
+        address _subBalancesV1Address,
+        address _stakingAddress,
         uint256 _stepTimestamp,
         uint256 _basePeriod
     ) external onlyManager {
         require(!init_, "NativeSwap: init is active");
         init_ = true;
         /** Setup */
-        _setupRole(STAKING_ROLE, _staking);
-        mainToken = _mainToken;
-        foreignSwap = _foreignSwap;
-        bigPayDayPool = _bigPayDayPool;
-        auction = _auction;
+        _setupRole(STAKING_ROLE, _stakingAddress);
+
+        addresses = Addresses({
+            mainToken: _mainTokenAddress,
+            foreignSwap: _foreignSwapAddress,
+            bigPayDayPool: _bigPayDayPoolAddress,
+            auction: _auctionAddress
+        });
+
+        subBalancesV1 = ISubBalancesV1(_subBalancesV1Address);
+
         stepTimestamp = _stepTimestamp;
         basePeriod = _basePeriod;
     	startTimestamp = now;
@@ -118,18 +126,25 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     }
 
     function setAddresses(
-        address _mainToken,
-        address _foreignSwap,
-        address _bigPayDayPool,
-        address _auction,
-        address _staking
+        address _mainTokenAddress,
+        address _foreignSwapAddress,
+        address _bigPayDayPoolAddress,
+        address _auctionAddress,
+        address _subBalancesV1Address,
+        address _stakingAddress
     ) external onlyManager {
-        _setupRole(STAKING_ROLE, _staking);
-        mainToken = _mainToken;
-        foreignSwap = _foreignSwap;
-        bigPayDayPool = _bigPayDayPool;
-        auction = _auction;
+        _setupRole(STAKING_ROLE, _stakingAddress);
+
+        addresses = Addresses({
+            mainToken: _mainTokenAddress,
+            foreignSwap: _foreignSwapAddress,
+            bigPayDayPool: _bigPayDayPoolAddress,
+            auction: _auctionAddress
+        });
+
+        subBalancesV1 = ISubBalancesV1(_subBalancesV1Address);
     }
+
     /** END INIT FUNCS */
     function getStartTimes() public view returns (uint256[5] memory startTimes) {
         for (uint256 i = 0; i < subBalanceList.length; i ++) {
@@ -157,41 +172,14 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
                 shareAmount = subBalanceList[i].totalShares;
                 return shareAmount;
             }
-
-            // return 0;
         }
     }
-
-    function getSessionStats(uint256 sessionId) 
-        public 
-        view 
-        returns (address staker, uint256 shares, uint256 start, uint256 sessionEnd, bool withdrawn) 
-    {
-        StakeSession storage stakeSession = stakeSessions[sessionId];
-        staker = stakeSession.staker;
-        shares = stakeSession.shares;
-        start = stakeSession.start;
-        if (stakeSession.finishTime > 0) {
-            sessionEnd = stakeSession.finishTime;
-        } else {
-            sessionEnd = stakeSession.end;
-        }
-        withdrawn = stakeSession.withdrawn;
-    }
-
-    function getSessionEligibility(uint256 sessionId) public view returns (bool[5] memory stakePayDays) {
-        StakeSession storage stakeSession = stakeSessions[sessionId];
-        for (uint256 i = 0; i < subBalanceList.length; i ++) {
-            stakePayDays[i] = stakeSession.payDayEligible[i];
-        }
-    }
-
 
     function calculateSessionPayout(uint256 sessionId) public view returns (uint256, uint256) {
         StakeSession storage stakeSession = stakeSessions[sessionId];
 
         uint256 subBalancePayoutAmount;
-        uint256[5] memory bpdRawAmounts = IBPD(bigPayDayPool).getPoolYearAmounts();
+        uint256[5] memory bpdRawAmounts = IBPD(addresses.bigPayDayPool).getPoolYearAmounts();
         for (uint256 i = 0; i < subBalanceList.length; i++) {
             SubBalance storage subBalance = subBalanceList[i];
 
@@ -256,12 +244,12 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         stakeSession.withdrawn = true;
 
         if (payoutAmount > 0) {
-            IERC20Upgradeable(mainToken).transfer(_msgSender(), payoutAmount);
+            IERC20Upgradeable(addresses.mainToken).transfer(_msgSender(), payoutAmount);
         }
 
         if (penaltyAmount > 0) {
-            IERC20Upgradeable(mainToken).transfer(auction, penaltyAmount);
-            IAuction(auction).callIncomeDailyTokensTrigger(penaltyAmount);
+            IERC20Upgradeable(addresses.mainToken).transfer(addresses.auction, penaltyAmount);
+            IAuction(addresses.auction).callIncomeDailyTokensTrigger(penaltyAmount);
         }
     }
 
@@ -304,8 +292,6 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
                 payDayEligible: stakerPayDays,
                 withdrawn: false
             });
-            userStakings[staker].push(sessionId);
-
         }
 
         // Adding to shares
@@ -328,7 +314,6 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         require(end > start, "SUBBALANCES: Stake end must be after stake start");
         uint256 stakeDays = end.sub(start).div(stepTimestamp);
         uint256 realStakeEnd = now;
-        // uint256 daysStaked = realStakeEnd.sub(stakeStart).div(stepTimestamp);
 
         if (stakeDays >= basePeriod) {
             StakeSession storage stakeSession = stakeSessions[sessionId];
@@ -352,10 +337,8 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
                 }
             }
 
-
             // Setting real stake end
             stakeSessions[sessionId].finishTime = realStakeEnd;
-
         }
 
         // Substract shares from total
@@ -364,9 +347,67 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         } else {
             currentSharesTotalSupply = currentSharesTotalSupply.sub(shares);
         }
-
     }
 
+    function callOutcomeStakerTriggerV1(
+        address staker,
+        uint256 sessionId,
+        uint256 start,
+        uint256 end,
+        uint256 shares
+    ) 
+        external
+        override
+    {
+        (staker);
+        require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
+        require(end > start, "SUBBALANCES: Stake end must be after stake start");
+        uint256 stakeDays = end.sub(start).div(stepTimestamp);
+        uint256 realStakeEnd = now;
+
+        if (stakeDays >= basePeriod) {
+            (address sessionStaker, uint256 sessionShares, uint256 sessionStart, uint256 sessionEnd, bool sessionWithdrawn) 
+                = subBalancesV1.getSessionStats(sessionId);
+
+            bool[5] memory stakePayDays = subBalancesV1.getSessionEligibility(sessionId);
+
+            // Rechecking eligibility of paydays
+            for (uint256 i = 0; i < subBalanceList.length; i++) {
+                SubBalance storage subBalance = subBalanceList[i];  
+
+                // Removing from payday if unstaked before
+                if (realStakeEnd < subBalance.payDayTime) {
+                    bool wasEligible = stakePayDays[i];
+                    stakePayDays[i] = false;
+
+                    if (wasEligible) {
+                        if (shares > subBalance.totalShares) {
+                           subBalance.totalShares = 0;
+                        } else {
+                            subBalance.totalShares = subBalance.totalShares.sub(shares);
+                        }
+                    }
+                }
+            }
+
+            stakeSessions[sessionId] = StakeSession({
+                staker: sessionStaker,
+                shares: sessionShares,
+                start: sessionStart,
+                end: sessionEnd,
+                finishTime: realStakeEnd,
+                payDayEligible: stakePayDays,
+                withdrawn: false
+            });
+        }
+
+        // Substract shares from total
+        if (shares > currentSharesTotalSupply) {
+            currentSharesTotalSupply = 0;
+        } else {
+            currentSharesTotalSupply = currentSharesTotalSupply.sub(shares);
+        }
+    }
 
     // Pool logic
     function generatePool() external returns (bool) {
@@ -377,7 +418,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     			uint256 yearTokens = getPoolFromBPD(i);
     			(uint256 bpdTokens, uint256 addAmount) = _bpdAmountFromRaw(yearTokens);
 
-    			IToken(mainToken).mint(address(this), addAmount);
+    			IToken(addresses.mainToken).mint(address(this), addAmount);
     			subBalance.totalWithdrawAmount = bpdTokens;
     			subBalance.minted = true;
 
@@ -387,31 +428,29 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     	}
     }
 
-
     // Pool logic
     function getPoolFromBPD(uint256 poolNumber) internal returns (uint256 poolAmount) {
-    	poolAmount = IBPD(bigPayDayPool).transferYearlyPool(poolNumber);
+    	poolAmount = IBPD(addresses.bigPayDayPool).transferYearlyPool(poolNumber);
     }
 
     // Pool logic
     function _bpdAmountFromRaw(uint256 yearTokenAmount) internal view returns (uint256 totalAmount, uint256 addAmount) {
-    	uint256 currentTokenTotalSupply = IERC20Upgradeable(mainToken).totalSupply();
+    	uint256 currentTokenTotalSupply = IERC20Upgradeable(addresses.mainToken).totalSupply();
 
         uint256 inflation = uint256(8).mul(currentTokenTotalSupply.add(currentSharesTotalSupply)).div(36500);
 
         
-        uint256 criticalMassCoeff = IForeignSwap(foreignSwap).getCurrentClaimedAmount().mul(1e18).div(
-            IForeignSwap(foreignSwap).getTotalSnapshotAmount());
+        uint256 criticalMassCoeff = IForeignSwap(addresses.foreignSwap).getCurrentClaimedAmount().mul(1e18).div(
+            IForeignSwap(addresses.foreignSwap).getTotalSnapshotAmount());
 
-       uint256 viralityCoeff = IForeignSwap(foreignSwap).getCurrentClaimedAddresses().mul(1e18).div(
-            IForeignSwap(foreignSwap).getTotalSnapshotAddresses());
+       uint256 viralityCoeff = IForeignSwap(addresses.foreignSwap).getCurrentClaimedAddresses().mul(1e18).div(
+            IForeignSwap(addresses.foreignSwap).getTotalSnapshotAddresses());
 
         uint256 totalUprisingCoeff = uint256(1e18).add(criticalMassCoeff).add(viralityCoeff);
 
         totalAmount = yearTokenAmount.add(inflation).mul(totalUprisingCoeff).div(1e18);
         addAmount = totalAmount.sub(yearTokenAmount);
     }
-
 
     /* Setter methods for contract migration */
     function setNormalVariables(
@@ -471,25 +510,6 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
                 payDayEligible: payDayEligible,
                 withdrawn: false
             });
-        }
-    }
-
-    function addUserStakings(
-        address[] calldata _addresses,
-        uint256[] calldata _sessionCountList,
-        uint256[] calldata _sessionIds
-    ) external onlyMigrator {
-        uint256 sessionIdIdx = 0;
-
-        for (uint256 i = 0; i < _addresses.length; i = i + 1) {
-            address userAddress = _addresses[i];
-            uint256 sessionCount = _sessionCountList[i];
-            uint256[] memory sessionIds = new uint256[](sessionCount);
-            for (uint256 j = 0; j < sessionCount; j = j + 1) {
-                sessionIds[j] = _sessionIds[sessionIdIdx];
-                sessionIdIdx = sessionIdIdx + 1;
-            }
-            userStakings[userAddress] = sessionIds;
         }
     }
 }

@@ -251,7 +251,8 @@ contract('Staking', ([bank, setter, recipient, staker1, staker2]) => {
 
       await staking.makePayout();
 
-      const interest = await staking.calculateStakingInterest(sessionId, staker1, session.shares);
+      const interest = await staking.calculateStakingInterest(
+        session.firstPayout, session.lastPayout, session.shares);
 
       expect(interest).to.not.be.a.bignumber.that.equals(previousInterest);
 
@@ -263,7 +264,8 @@ contract('Staking', ([bank, setter, recipient, staker1, staker2]) => {
 
     await staking.makePayout();
 
-    const interest = await staking.calculateStakingInterest(sessionId, staker1, session.shares);
+    const interest = await staking.calculateStakingInterest(
+      session.firstPayout, session.lastPayout, session.shares);
 
     expect(interest).to.be.a.bignumber.that.equals(previousInterest);
 
@@ -294,8 +296,11 @@ contract('Staking', ([bank, setter, recipient, staker1, staker2]) => {
     for (let i = 1; i <= 4; i++){
       await helper.advanceTimeAndBlock(DAY * (0.2));
   
-      const stakingInterest = await staking.calculateStakingInterest(sessionId, staker1, sessionData.shares);
-      const result = await staking.getAmountOutAndPenalty(sessionId, stakingInterest, {from: staker1});
+      const stakingInterest = await staking.calculateStakingInterest(
+        sessionData.firstPayout, sessionData.lastPayout, sessionData.shares);
+
+      const result = await staking.getAmountOutAndPenalty(
+        sessionData.amount, sessionData.start, sessionData.end, stakingInterest, {from: staker1});
     
       expect(result[0]).to.not.be.a.bignumber.that.equals(previousPayout);
       expect(result[1]).to.not.be.a.bignumber.that.equals(previousPenalty);

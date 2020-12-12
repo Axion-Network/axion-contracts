@@ -140,6 +140,7 @@ contract(
         foreignswap.address,
         bpd.address,
         auction.address,
+        "0x0000000000000000000000000000000000000000",
         stakingCaller,
         new BN(DAY.toString(), 10),
         new BN(STAKE_PERIOD.toString(), 10),
@@ -304,10 +305,10 @@ contract(
 
       expect(stakeShares_2).to.be.bignumber.that.above(stakeShares_1);
 
-      const eligibleBefore_1 = await subbalances.getSessionEligibility(stakeId);
-      const eligibleBefore_2 = await subbalances.getSessionEligibility(
+      const eligibleBefore_1 = (await subbalances.stakeSessions(stakeId)).payDayEligible;
+      const eligibleBefore_2 = (await subbalances.stakeSessions(
         stakeId_2
-      );
+      )).payDayEligible;
       console.log(eligibleBefore_1);
       console.log(eligibleBefore_2);
 
@@ -398,10 +399,10 @@ contract(
         { from: stakingCaller }
       );
 
-      const eligibleAfter_1 = await subbalances.getSessionEligibility(stakeId);
-      const eligibleAfter_2 = await subbalances.getSessionEligibility(
+      const eligibleAfter_1 = (await subbalances.stakeSessions(stakeId)).payDayEligible;
+      const eligibleAfter_2 = (await subbalances.stakeSessions(
         stakeId_2
-      );
+      )).payDayEligible;
       console.log(eligibleAfter_1);
       console.log(eligibleAfter_2);
 
