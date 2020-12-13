@@ -156,9 +156,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         }
     }
 
-    function calculateSessionPayout(uint256 sessionId) public view returns (uint256, uint256) {
-        StakeSession storage stakeSession = stakeSessions[sessionId];
-
+    function calculateSessionPayout(uint256 start, uint256 end, uint256 finishTime, uint256 shares, bool[5] payDayEligible) public view returns (uint256, uint256) {
         uint256 subBalancePayoutAmount;
         uint256[5] memory bpdRawAmounts = IBPD(addresses.bigPayDayPool).getPoolYearAmounts();
         for (uint256 i = 0; i < subBalanceList.length; i++) {
@@ -171,22 +169,22 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
             } else {
                 (subBalanceAmount, addAmount) = _bpdAmountFromRaw(bpdRawAmounts[i]);
             }
-            if (stakeSession.payDayEligible[i]) {
-                uint256 stakerShare = stakeSession.shares.mul(1e18).div(subBalance.totalShares);
+            if (payDayEligible[i]) {
+                uint256 stakerShare = shares.mul(1e18).div(subBalance.totalShares);
                 uint256 stakerAmount = subBalanceAmount.mul(stakerShare).div(1e18);
                 subBalancePayoutAmount = subBalancePayoutAmount.add(stakerAmount);
             }
         }
 
-        uint256 stakingDays = stakeSession.end.sub(stakeSession.start).div(stepTimestamp);
+        uint256 stakingDays = end.sub(start).div(stepTimestamp);
         uint256 stakeEnd;
-        if (stakeSession.finishTime != 0) {
-            stakeEnd = stakeSession.finishTime;
+        if (finishTime != 0) {
+            stakeEnd = finishTime;
         } else {
-            stakeEnd = stakeSession.end;
+            stakeEnd = end;
         }
 
-        uint256 daysStaked = stakeEnd.sub(stakeSession.start).div(stepTimestamp);
+        uint256 daysStaked = stakeEnd.sub(start).div(stepTimestamp);
 
         // Early unstaked
         if (stakingDays > daysStaked) {
@@ -220,7 +218,14 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         require(stakeSession.finishTime != 0, "cannot withdraw before unclaim");
         require(!stakeSession.withdrawn, "already withdrawn");
         require(_msgSender() == stakeSession.staker, "caller not matching sessionId");
-        (uint256 payoutAmount, uint256 penaltyAmount) = calculateSessionPayout(sessionId);
+        (uint256 payoutAmount, uint256 penaltyAmount) 
+            = calculateSessionPayout(
+                stakeSession.start,
+                stakeSession.end,
+                stakeSession.finishTime,
+                stakeSession.shares,
+                stakeSession.payDayEligible
+            );
 
         stakeSession.withdrawn = true;
 
