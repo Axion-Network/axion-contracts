@@ -17,7 +17,15 @@ const TOTAL_SNAPSHOT_ADDRESS = '183035';
 module.exports = async function (
   deployer,
   network,
-  [setterAddress, swapTokenAddress, uniswapAddress, recipientAddress]
+  [
+    setterAddress,
+    swapTokenAddress,
+    uniswapAddress,
+    recipientAddress,
+    auctionV1Address,
+    stakingV1Address,
+    subBalancesV1Address,
+  ]
 ) {
   if (!process.argv.includes('migrate')) {
     return;
@@ -34,6 +42,9 @@ module.exports = async function (
       SWAP_TOKEN_ADDRESS,
       UNISWAP_ADDRESS,
       TIME_IN_DAY,
+      AUCTION_V1_ADDRESS,
+      STAKING_V1_ADDRESS,
+      SUB_BALANCES_V1_ADDRESS,
     } = process.env as any;
 
     if (!TEST_NETWORKS.includes(network)) {
@@ -65,7 +76,19 @@ module.exports = async function (
       SWAP_TOKEN_ADDRESS ?? hex4Token?.address ?? swapTokenAddress;
     const usedUniswapAddress = UNISWAP_ADDRESS ?? uniswapAddress;
     const usedRecipientAddress = RECIPIENT_ADDRESS ?? recipientAddress;
-    const usedSetter = setterAddress ?? DEPLOYER_ADDRESS;
+    const usedAuctionV1Address = AUCTION_V1_ADDRESS ?? auctionV1Address;
+    const usedStakingV1Address = STAKING_V1_ADDRESS ?? stakingV1Address;
+    const usedSubBalancesV1Address =
+      SUB_BALANCES_V1_ADDRESS ?? subBalancesV1Address;
+    const usedSetter = DEPLOYER_ADDRESS ?? setterAddress;
+
+    console.log('usedSwapTokenAddress', usedSwapTokenAddress);
+    console.log('usedUniswapAddress', usedUniswapAddress);
+    console.log('usedRecipientAddress', usedRecipientAddress);
+    console.log('usedAuctionV1Address', usedAuctionV1Address);
+    console.log('usedStakingV1Address', usedStakingV1Address);
+    console.log('usedSubBalancesV1Address', usedSubBalancesV1Address);
+    console.log('usedSetter', usedSetter);
 
     await Promise.all([
       // Staking
@@ -75,6 +98,7 @@ module.exports = async function (
           auction.address,
           subBalances.address,
           foreignSwap.address,
+          usedStakingV1Address,
           new BN(TIME_IN_DAY, 10)
         )
         .then(() => console.log('Staking init')),
@@ -140,7 +164,8 @@ module.exports = async function (
           usedRecipientAddress,
           nativeSwap.address,
           foreignSwap.address,
-          subBalances.address
+          subBalances.address,
+          usedAuctionV1Address
         )
         .then(() => console.log('auction init')),
 
@@ -151,6 +176,7 @@ module.exports = async function (
           foreignSwap.address,
           bpd.address,
           auction.address,
+          usedSubBalancesV1Address,
           staking.address,
           new BN(TIME_IN_DAY, 10),
           new BN(STAKE_PERIOD.toString(), 10)
