@@ -342,6 +342,8 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             ref: ref,
             withdrawn: true
         });
+
+        auctionsOf[_msgSender()].push(auctionId);
     }
 
     function callWithdraw(address ref, uint256 eth, uint256 auctionId, uint256 stepsFromStart) internal {
