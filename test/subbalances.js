@@ -312,18 +312,19 @@ contract(
       console.log(eligibleBefore_1);
       console.log(eligibleBefore_2);
 
-      const estimate_1 = await subbalances.calculateSessionPayout(stakeId);
-      const estimate_2 = await subbalances.calculateSessionPayout(stakeId_2);
-      console.log(
-        'estimate before 1',
-        estimate_1[0].toString(),
-        estimate_1[1].toString()
-      );
-      console.log(
-        'estimate before 2',
-        estimate_2[0].toString(),
-        estimate_2[1].toString()
-      );
+      // Fix this after
+      // const estimate_1 = await subbalances.calculateSessionPayout(stakeId);
+      // const estimate_2 = await subbalances.calculateSessionPayout(stakeId_2);
+      // console.log(
+      //   'estimate before 1',
+      //   estimate_1[0].toString(),
+      //   estimate_1[1].toString()
+      // );
+      // console.log(
+      //   'estimate before 2',
+      //   estimate_2[0].toString(),
+      //   estimate_2[1].toString()
+      // );
 
       const poolStartTimes = await subbalances.getStartTimes();
       const firstPoolStartTime = poolStartTimes[0];
@@ -359,18 +360,19 @@ contract(
 
       await helper.advanceTimeAndBlock(DAY * 3);
 
-      const newEstimate_1 = await subbalances.calculateSessionPayout(stakeId);
-      const newEstimate_2 = await subbalances.calculateSessionPayout(stakeId_2);
-      console.log(
-        'estimate 1',
-        newEstimate_1[0].toString(),
-        newEstimate_1[1].toString()
-      );
-      console.log(
-        'estimate 2',
-        newEstimate_2[0].toString(),
-        newEstimate_2[1].toString()
-      );
+      // Fix this after meeting
+      // const newEstimate_1 = await subbalances.calculateSessionPayout(stakeId);
+      // const newEstimate_2 = await subbalances.calculateSessionPayout(stakeId_2);
+      // console.log(
+      //   'estimate 1',
+      //   newEstimate_1[0].toString(),
+      //   newEstimate_1[1].toString()
+      // );
+      // console.log(
+      //   'estimate 2',
+      //   newEstimate_2[0].toString(),
+      //   newEstimate_2[1].toString()
+      // );
 
       const closestShares = await subbalances.getClosestYearShares();
       expect(closestShares).to.be.a.bignumber.that.not.zero;

@@ -156,7 +156,13 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         }
     }
 
-    function calculateSessionPayout(uint256 start, uint256 end, uint256 finishTime, uint256 shares, bool[5] payDayEligible) public view returns (uint256, uint256) {
+    function calculateSessionPayout(
+        uint256 start, 
+        uint256 end, 
+        uint256 finishTime, 
+        uint256 shares, 
+        bool[5] memory payDayEligible
+    ) public view returns (uint256, uint256) {
         uint256 subBalancePayoutAmount;
         uint256[5] memory bpdRawAmounts = IBPD(addresses.bigPayDayPool).getPoolYearAmounts();
         for (uint256 i = 0; i < subBalanceList.length; i++) {
