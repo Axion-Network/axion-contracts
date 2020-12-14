@@ -115,7 +115,6 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
 
         stepTimestamp = _stepTimestamp;
         basePeriod = _basePeriod;
-    	startTimestamp = now;
 
     	for (uint256 i = 0; i < subBalanceList.length; i++) {
             periods[i] = _basePeriod.mul(i.add(1));

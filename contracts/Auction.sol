@@ -141,7 +141,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _setupRole(CALLER_ROLE, _subbalancesAddress);
 
         // Timer
-        start = now;
         stepTimestamp = _stepTimestamp;
         
         // Options

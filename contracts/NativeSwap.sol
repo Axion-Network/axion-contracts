@@ -76,9 +76,6 @@ contract NativeSwap is Initializable, AccessControlUpgradeable {
         swapToken = IERC20(_swapToken);
         mainToken = IToken(_mainToken);
         auction = IAuction(_auction);
-        if (start == 0) {
-            start = now;
-        }
     }
     /** End init functions */
 
