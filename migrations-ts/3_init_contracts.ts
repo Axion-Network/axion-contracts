@@ -90,99 +90,101 @@ module.exports = async function (
     console.log('usedSubBalancesV1Address', usedSubBalancesV1Address);
     console.log('usedSetter', usedSetter);
 
-    await Promise.all([
-      // Staking
-      staking
-        .init(
-          token.address,
-          auction.address,
-          subBalances.address,
-          foreignSwap.address,
-          usedStakingV1Address,
-          new BN(TIME_IN_DAY, 10)
+    // Staking
+    await staking
+      .init(
+        token.address,
+        auction.address,
+        subBalances.address,
+        foreignSwap.address,
+        usedStakingV1Address,
+        new BN(TIME_IN_DAY, 10)
+      )
+      .then(() => console.log('Staking init'));
+
+    // AXN
+    await token
+      .initSwapperAndSwapToken(usedSwapTokenAddress, nativeSwap.address)
+      .then(() => console.log('AXN initSwapperAndSwapToken'));
+    await token
+      .init([
+        nativeSwap.address,
+        foreignSwap.address,
+        staking.address,
+        auction.address,
+        subBalances.address,
+      ])
+      .then(() => console.log('AXN init'));
+
+    // HEX4T
+    SWAP_TOKEN_ADDRESS
+      ? await Promise.resolve().then(() =>
+          console.log('No need to init swap token')
         )
-        .then(() => console.log('Staking init')),
+      : await hex4Token
+          ?.init([usedSetter])
+          .then(() => console.log('HEX4T init'));
 
-      // AXN
-      token
-        .initSwapperAndSwapToken(usedSwapTokenAddress, nativeSwap.address)
-        .then(() => console.log('AXN initSwapperAndSwapToken')),
-      token
-        .init([
-          nativeSwap.address,
-          foreignSwap.address,
-          staking.address,
-          auction.address,
-          subBalances.address,
-        ])
-        .then(() => console.log('AXN init')),
+    // NativeSwap
+    await nativeSwap
+      .init(
+        new BN(STAKE_PERIOD.toString(), 10),
+        new BN(TIME_IN_DAY, 10),
+        usedSwapTokenAddress,
+        token.address,
+        auction.address
+      )
+      .then(() => console.log('nativeSwap init'));
 
-      // HEX4T
-      SWAP_TOKEN_ADDRESS
-        ? Promise.resolve()
-        : hex4Token?.init([usedSetter]).then(() => console.log('HEX4T init')),
+    // BPD
+    await bpd
+      .init(token.address, foreignSwap.address, subBalances.address)
+      .then(() => console.log('bpd init'));
 
-      // NativeSwap
-      nativeSwap
-        .init(
-          new BN(STAKE_PERIOD.toString(), 10),
-          new BN(TIME_IN_DAY, 10),
-          usedSwapTokenAddress,
-          token.address,
-          auction.address
-        )
-        .then(() => console.log('nativeSwap init')),
+    // ForeignSwap
+    await foreignSwap
+      .init(
+        SIGNER_ADDRESS,
+        new BN(TIME_IN_DAY, 10),
+        new BN(STAKE_PERIOD.toString(), 10),
+        MAX_CLAIM_AMOUNT,
+        token.address,
+        auction.address,
+        staking.address,
+        bpd.address,
+        TOTAL_SNAPSHOT_AMOUNT,
+        TOTAL_SNAPSHOT_ADDRESS
+      )
+      .then(() => console.log('foreignSwap init'));
 
-      // BPD
-      bpd
-        .init(token.address, foreignSwap.address, subBalances.address)
-        .then(() => console.log('bpd init')),
+    // Auction
+    await auction
+      .init(
+        new BN(TIME_IN_DAY, 10),
+        token.address,
+        staking.address,
+        usedUniswapAddress,
+        usedRecipientAddress,
+        nativeSwap.address,
+        foreignSwap.address,
+        subBalances.address,
+        usedAuctionV1Address
+      )
+      .then(() => console.log('auction init'));
 
-      // ForeignSwap
-      foreignSwap
-        .init(
-          SIGNER_ADDRESS,
-          new BN(TIME_IN_DAY, 10),
-          new BN(STAKE_PERIOD.toString(), 10),
-          MAX_CLAIM_AMOUNT,
-          token.address,
-          auction.address,
-          staking.address,
-          bpd.address,
-          TOTAL_SNAPSHOT_AMOUNT,
-          TOTAL_SNAPSHOT_ADDRESS
-        )
-        .then(() => console.log('foreignSwap init')),
-
-      // Auction
-      auction
-        .init(
-          new BN(TIME_IN_DAY, 10),
-          token.address,
-          staking.address,
-          usedUniswapAddress,
-          usedRecipientAddress,
-          nativeSwap.address,
-          foreignSwap.address,
-          subBalances.address,
-          usedAuctionV1Address
-        )
-        .then(() => console.log('auction init')),
-
-      // SubBalances
-      subBalances
-        .init(
-          token.address,
-          foreignSwap.address,
-          bpd.address,
-          auction.address,
-          usedSubBalancesV1Address,
-          staking.address,
-          new BN(TIME_IN_DAY, 10),
-          new BN(STAKE_PERIOD.toString(), 10)
-        )
-        .then(() => console.log('subBalances init')),
-    ]);
+    // SubBalances
+    await subBalances
+      .init(
+        token.address,
+        foreignSwap.address,
+        bpd.address,
+        auction.address,
+        usedSubBalancesV1Address,
+        staking.address,
+        new BN(TIME_IN_DAY, 10),
+        new BN(STAKE_PERIOD.toString(), 10)
+      )
+      .then(() => console.log('subBalances init'));
 
     console.log(
       '============================INIT CONTRACTS: DONE==============================='
