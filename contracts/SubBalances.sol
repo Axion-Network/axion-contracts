@@ -290,7 +290,6 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
 
                     subBalance.totalShares = subBalance.totalShares.add(shares);
                 }
-
             }
 
             // Saving user
@@ -328,24 +327,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         if (stakeDays >= basePeriod) {
             StakeSession storage stakeSession = stakeSessions[sessionId];
 
-            // Rechecking eligibility of paydays
-            for (uint256 i = 0; i < subBalanceList.length; i++) {
-                SubBalance storage subBalance = subBalanceList[i];  
-
-                // Removing from payday if unstaked before
-                if (realStakeEnd < subBalance.payDayTime) {
-                    bool wasEligible = stakeSession.payDayEligible[i];
-                    stakeSession.payDayEligible[i] = false;
-
-                    if (wasEligible) {
-                        if (shares > subBalance.totalShares) {
-                           subBalance.totalShares = 0;
-                        } else {
-                            subBalance.totalShares = subBalance.totalShares.sub(shares);
-                        }
-                    }
-                }
-            }
+            handleBpdEligibility(shares, realStakeEnd, stakeSession.payDayEligible);
 
             // Setting real stake end
             stakeSessions[sessionId].finishTime = realStakeEnd;
@@ -375,47 +357,51 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         uint256 stakeDays = end.sub(start).div(stepTimestamp);
         uint256 realStakeEnd = now;
 
-        if (stakeDays >= basePeriod) {
-            (address sessionStaker, uint256 sessionShares, uint256 sessionStart, uint256 sessionEnd, bool sessionWithdrawn) 
+        (address sessionStaker, uint256 sessionShares, uint256 sessionStart, uint256 sessionEnd, bool sessionWithdrawn) 
                 = subBalancesV1.getSessionStats(sessionId);
 
-            bool[5] memory stakePayDays = subBalancesV1.getSessionEligibility(sessionId);
+        bool[5] memory payDayEligible = subBalancesV1.getSessionEligibility(sessionId);
 
-            // Rechecking eligibility of paydays
-            for (uint256 i = 0; i < subBalanceList.length; i++) {
-                SubBalance storage subBalance = subBalanceList[i];  
-
-                // Removing from payday if unstaked before
-                if (realStakeEnd < subBalance.payDayTime) {
-                    bool wasEligible = stakePayDays[i];
-                    stakePayDays[i] = false;
-
-                    if (wasEligible) {
-                        if (shares > subBalance.totalShares) {
-                           subBalance.totalShares = 0;
-                        } else {
-                            subBalance.totalShares = subBalance.totalShares.sub(shares);
-                        }
-                    }
-                }
-            }
-
-            stakeSessions[sessionId] = StakeSession({
-                staker: sessionStaker,
-                shares: sessionShares,
-                start: sessionStart,
-                end: sessionEnd,
-                finishTime: realStakeEnd,
-                payDayEligible: stakePayDays,
-                withdrawn: false
-            });
+        if (stakeDays >= basePeriod) {
+            handleBpdEligibility(shares, realStakeEnd, payDayEligible);
         }
+
+        stakeSessions[sessionId] = StakeSession({
+            staker: sessionStaker,
+            shares: sessionShares,
+            start: sessionStart,
+            end: sessionEnd,
+            finishTime: realStakeEnd,
+            payDayEligible: payDayEligible,
+            withdrawn: false
+        });
 
         // Substract shares from total
         if (shares > currentSharesTotalSupply) {
             currentSharesTotalSupply = 0;
         } else {
             currentSharesTotalSupply = currentSharesTotalSupply.sub(shares);
+        }
+    }
+
+    function handleBpdEligibility(uint256 shares, uint256 realStakeEnd, bool[5] memory stakePayDays) internal {
+        // Rechecking eligibility of paydays
+        for (uint256 i = 0; i < subBalanceList.length; i++) {
+            SubBalance storage subBalance = subBalanceList[i];  
+
+            // Removing from payday if unstaked before
+            if (realStakeEnd < subBalance.payDayTime) {
+                bool wasEligible = stakePayDays[i];
+                stakePayDays[i] = false;
+
+                if (wasEligible) {
+                    if (shares > subBalance.totalShares) {
+                        subBalance.totalShares = 0;
+                    } else {
+                        subBalance.totalShares = subBalance.totalShares.sub(shares);
+                    }
+                }
+            }
         }
     }
 

@@ -320,6 +320,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             session.lastPayout
         );
 
+        ISubBalances(addresses.subBalances).callOutcomeStakerTrigger(
+            msg.sender,
+            sessionId,
+            session.start,
+            session.end,
+            session.shares
+        );
+
         session.end = now;
         session.withdrawn = true;
         session.payout = amountOut;
@@ -349,7 +357,23 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         uint256 lastPayout = (end - start) / stepTimestamp + firstPayout;
 
-        uint256 amountOut = unstakeInternal(sessionId, amount, start, end, shares, firstPayout, lastPayout);
+        uint256 amountOut = unstakeInternal(
+            sessionId, 
+            amount, 
+            start, 
+            end, 
+            shares, 
+            firstPayout, 
+            lastPayout
+        );
+
+        ISubBalances(addresses.subBalances).callOutcomeStakerTriggerV1(
+            msg.sender,
+            sessionId,
+            start,
+            end,
+            shares
+        );
 
         sessionDataOf[msg.sender][sessionId] = Session({
             amount: amount,
@@ -403,16 +427,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         // To account
         _initPayout(msg.sender, amountOut);
-
-
-        // Call outcome to subbalances
-        ISubBalances(addresses.subBalances).callOutcomeStakerTriggerV1(
-            msg.sender,
-            sessionId,
-            start,
-            end,
-            shares
-        );
 
         emit Unstake(
             msg.sender,
