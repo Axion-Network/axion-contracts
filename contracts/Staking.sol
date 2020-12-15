@@ -148,7 +148,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         shareRate = 1e18;
         stepTimestamp = _stepTimestamp;
-        nextPayoutCall = now.add(_stepTimestamp);
+
+        if (startContract == 0) {
+            startContract = now;
+        }
+        
+        nextPayoutCall = startContract.add(_stepTimestamp);
     }
     /** End init functions */
 

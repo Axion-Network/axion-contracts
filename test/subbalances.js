@@ -227,9 +227,6 @@ contract(
     });
 
     it('should withdraw payout for staker', async () => {
-      const amountBefore = await foreignswap.getUserClaimableAmountFor(
-        signAmount
-      );
 
       const initTime = new BN(await getBlockchainTimestamp());
 
@@ -305,34 +302,44 @@ contract(
 
       expect(stakeShares_2).to.be.bignumber.that.above(stakeShares_1);
 
-      const eligibleBefore_1 = (await subbalances.stakeSessions(stakeId))
-        .payDayEligible;
-      const eligibleBefore_2 = (await subbalances.stakeSessions(stakeId_2))
-        .payDayEligible;
-      console.log(eligibleBefore_1);
-      console.log(eligibleBefore_2);
+      const stake1 = await subbalances.getStakeSession(stakeId);
+      const stake2 = await subbalances.getStakeSession(stakeId_2);
 
-      // Fix this after
-      // const estimate_1 = await subbalances.calculateSessionPayout(stakeId);
-      // const estimate_2 = await subbalances.calculateSessionPayout(stakeId_2);
-      // console.log(
-      //   'estimate before 1',
-      //   estimate_1[0].toString(),
-      //   estimate_1[1].toString()
-      // );
-      // console.log(
-      //   'estimate before 2',
-      //   estimate_2[0].toString(),
-      //   estimate_2[1].toString()
-      // );
+      console.log(stake1.payDayEligible);
+      console.log(stake2.payDayEligible);
+
+      const estimate_1 = await subbalances.calculateSessionPayout(
+        stake1.start, 
+        stake1.end, 
+        stake1.finishTime, 
+        stake1.shares, 
+        stake1.payDayEligible
+      );
+
+      const estimate_2 = await subbalances.calculateSessionPayout(
+        stake2.start, 
+        stake2.end, 
+        stake2.finishTime, 
+        stake2.shares, 
+        stake2.payDayEligible
+      );
+
+      console.log(
+        'estimate before 1',
+        estimate_1[0].toString(),
+        estimate_1[1].toString()
+      );
+      console.log(
+        'estimate before 2',
+        estimate_2[0].toString(),
+        estimate_2[1].toString()
+      );
 
       const poolStartTimes = await subbalances.getStartTimes();
       const firstPoolStartTime = poolStartTimes[0];
       console.log(((firstPoolStartTime - afterSecondStake) / DAY).toString());
 
       await helper.advanceTimeAndBlock(DAY * 7);
-
-      const firstYearTime = new BN(await getBlockchainTimestamp());
 
       const subbalanceBalanceBefore = await token.balanceOf(
         subbalances.address
@@ -360,19 +367,35 @@ contract(
 
       await helper.advanceTimeAndBlock(DAY * 3);
 
-      // Fix this after meeting
-      // const newEstimate_1 = await subbalances.calculateSessionPayout(stakeId);
-      // const newEstimate_2 = await subbalances.calculateSessionPayout(stakeId_2);
-      // console.log(
-      //   'estimate 1',
-      //   newEstimate_1[0].toString(),
-      //   newEstimate_1[1].toString()
-      // );
-      // console.log(
-      //   'estimate 2',
-      //   newEstimate_2[0].toString(),
-      //   newEstimate_2[1].toString()
-      // );
+      const newStake1 = await subbalances.getStakeSession(stakeId);
+      const newStake2 = await subbalances.getStakeSession(stakeId_2);
+
+      const newEstimate_1 = await subbalances.calculateSessionPayout(
+        newStake1.start, 
+        newStake1.end, 
+        newStake1.finishTime, 
+        newStake1.shares, 
+        newStake1.payDayEligible
+      );
+
+      const newEstimate_2 = await subbalances.calculateSessionPayout(
+        newStake2.start, 
+        newStake2.end, 
+        newStake2.finishTime, 
+        newStake2.shares, 
+        newStake2.payDayEligible
+      );
+
+      console.log(
+        'estimate 1',
+        newEstimate_1[0].toString(),
+        newEstimate_1[1].toString()
+      );
+      console.log(
+        'estimate 2',
+        newEstimate_2[0].toString(),
+        newEstimate_2[1].toString()
+      );
 
       const closestShares = await subbalances.getClosestYearShares();
       expect(closestShares).to.be.a.bignumber.that.not.zero;
