@@ -311,13 +311,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             "Staking: Stake withdrawn/invalid"
         );
 
-        session.end = now;
-
+        uint256 actualEnd = now;
         uint256 amountOut = unstakeInternal(
             sessionId,
             session.amount, 
             session.start, 
-            session.end, 
+            session.end,
+            actualEnd,
             session.shares, 
             session.firstPayout, 
             session.lastPayout
@@ -331,6 +331,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             session.shares
         );
 
+        session.end = actualEnd;
         session.withdrawn = true;
         session.payout = amountOut;
     }
@@ -359,13 +360,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         uint256 lastPayout = (end - start) / stepTimestamp + firstPayout;
 
-        uint256 endDate = now;
-        
+        uint256 actualEnd = now;
         uint256 amountOut = unstakeInternal(
             sessionId, 
             amount, 
-            start, 
-            endDate, 
+            start,
+            end,
+            actualEnd,
             shares, 
             firstPayout, 
             lastPayout
@@ -375,14 +376,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             msg.sender,
             sessionId,
             start,
-            endDate,
+            actualEnd,
             shares
         );
 
         sessionDataOf[msg.sender][sessionId] = Session({
             amount: amount,
             start: start,
-            end: endDate,
+            end: actualEnd,
             shares: shares,
             firstPayout: firstPayout,
             lastPayout: lastPayout,
@@ -398,6 +399,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 amount, 
         uint256 start, 
         uint256 end, 
+        uint256 actualEnd,
         uint256 shares, 
         uint256 firstPayout,
         uint256 lastPayout
@@ -413,7 +415,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             stakingInterest, 
             amount, 
             start, 
-            end
+            actualEnd
         );
 
         sharesTotalSupply = sharesTotalSupply.sub(shares);
