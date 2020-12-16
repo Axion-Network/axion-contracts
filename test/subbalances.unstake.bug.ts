@@ -150,8 +150,8 @@ contract(
       ]);
 
       // Account 1 withdraw 1M to subbalance 1 and 2
-      expect((subBalance1 as any).totalShares.toString()).to.eq('5000000');
-      expect((subBalance2 as any).totalShares.toString()).to.eq('5000000');
+      expect((subBalance1 as any).totalShares.toString()).to.eq('6000000');
+      expect((subBalance2 as any).totalShares.toString()).to.eq('6000000');
 
       // The is in correct: it should reduce the amount only in subbalance 1 and 2
       // but now subbalance 3,4 ,5 amount also get decreased

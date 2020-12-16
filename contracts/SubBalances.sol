@@ -322,15 +322,14 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
         require(end > start, "SUBBALANCES: Stake end must be after stake start");
         uint256 stakeDays = end.sub(start).div(stepTimestamp);
-        uint256 realStakeEnd = now;
 
         if (stakeDays >= basePeriod) {
             StakeSession storage stakeSession = stakeSessions[sessionId];
 
-            handleBpdEligibility(shares, realStakeEnd, stakeSession.payDayEligible);
+            handleBpdEligibility(shares, end, stakeSession.payDayEligible);
 
             // Setting real stake end
-            stakeSessions[sessionId].finishTime = realStakeEnd;
+            stakeSessions[sessionId].finishTime = end;
         }
 
         // Substract shares from total
@@ -355,7 +354,6 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
         require(end > start, "SUBBALANCES: Stake end must be after stake start");
         uint256 stakeDays = end.sub(start).div(stepTimestamp);
-        uint256 realStakeEnd = now;
 
         (address sessionStaker, uint256 sessionShares, uint256 sessionStart, uint256 sessionEnd, bool sessionWithdrawn) 
                 = subBalancesV1.getSessionStats(sessionId);
@@ -363,7 +361,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         bool[5] memory payDayEligible = subBalancesV1.getSessionEligibility(sessionId);
 
         if (stakeDays >= basePeriod) {
-            handleBpdEligibility(shares, realStakeEnd, payDayEligible);
+            handleBpdEligibility(shares, end, payDayEligible);
         }
 
         stakeSessions[sessionId] = StakeSession({
@@ -371,7 +369,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
             shares: sessionShares,
             start: sessionStart,
             end: sessionEnd,
-            finishTime: realStakeEnd,
+            finishTime: end,
             payDayEligible: payDayEligible,
             withdrawn: false
         });

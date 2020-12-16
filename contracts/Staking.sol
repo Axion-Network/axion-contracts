@@ -310,6 +310,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             "Staking: Stake withdrawn/invalid"
         );
 
+        session.end = now;
+
         uint256 amountOut = unstakeInternal(
             sessionId,
             session.amount, 
@@ -328,7 +330,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             session.shares
         );
 
-        session.end = now;
         session.withdrawn = true;
         session.payout = amountOut;
     }
@@ -357,11 +358,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         uint256 lastPayout = (end - start) / stepTimestamp + firstPayout;
 
+        uint256 endDate = now;
+        
         uint256 amountOut = unstakeInternal(
             sessionId, 
             amount, 
             start, 
-            end, 
+            endDate, 
             shares, 
             firstPayout, 
             lastPayout
@@ -371,14 +374,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             msg.sender,
             sessionId,
             start,
-            end,
+            endDate,
             shares
         );
 
         sessionDataOf[msg.sender][sessionId] = Session({
             amount: amount,
             start: start,
-            end: now,
+            end: endDate,
             shares: shares,
             firstPayout: firstPayout,
             lastPayout: lastPayout,
@@ -576,11 +579,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 denominator = uint256(1820).mul(shares);
 
         return (numerator).mul(1e18).div(denominator);
-    }
-
-    // Helper
-    function getNow0x() external view returns (uint256) {
-        return now;
     }
 
     // migration functions
