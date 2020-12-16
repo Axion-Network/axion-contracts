@@ -120,7 +120,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
             startTimestamp = now;
 
             for (uint256 i = 0; i < subBalanceList.length; i++) {
-                periods[i] = _basePeriod.mul(i.add(1));
+                periods[i] = _basePeriod * (i + 1);
                 SubBalance storage subBalance = subBalanceList[i];
                 subBalance.payDayTime = startTimestamp.add(stepTimestamp.mul(periods[i]));
                 // subBalance.payDayEnd = subBalance.payDayStart.add(stepTimestamp);
@@ -154,7 +154,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
                 continue;
             } else {
                 shareAmount = subBalanceList[i].totalShares;
-                return shareAmount;
+                break;
             }
         }
     }
@@ -217,23 +217,21 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
             return (payoutAmount, earlyUnstakePenalty);
         // Unstaked in time, no penalty
         } else if (
-            stakingDays <= daysStaked && daysStaked < stakingDays.add(14)
+            daysStaked < stakingDays.add(14)
         ) {
             return (subBalancePayoutAmount, 0);
         // Unstaked late
         } else if (
-            stakingDays.add(14) <= daysStaked && daysStaked < stakingDays.add(714)
+            daysStaked < stakingDays.add(714)
         ) {
             uint256 daysAfterStaking = daysStaked.sub(stakingDays);
             uint256 payoutAmount = subBalancePayoutAmount.mul(uint256(714).sub(daysAfterStaking)).div(700);
             uint256 lateUnstakePenalty = subBalancePayoutAmount.sub(payoutAmount);
             return (payoutAmount, lateUnstakePenalty);
         // Too much time 
-        } else if (stakingDays.add(714) <= daysStaked) {
+        } else {
             return (0, subBalancePayoutAmount);
         }
-
-        return (0, 0);
     }
 
     function withdrawPayout(uint256 sessionId) public {
@@ -274,7 +272,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     ) external override {
         require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
         require(end > start, "SUBBALANCES: Stake end must be after stake start");
-        uint256 stakeDays = end.sub(start).div(stepTimestamp);
+        uint256 stakeDays = (end - start).div(stepTimestamp);
 
         // Skipping user if period less that year
         if (stakeDays >= basePeriod) {
@@ -350,7 +348,6 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         external
         override
     {
-        (staker);
         require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
         require(end > start, "SUBBALANCES: Stake end must be after stake start");
         uint256 stakeDays = end.sub(start).div(stepTimestamp);

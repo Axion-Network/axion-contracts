@@ -171,8 +171,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         if (now >= nextPayoutCall) makePayout();
 
         // Staking days must be greater then 0 and less then or equal to 5555.
-        require(stakingDays > 0, "stakingDays < 1");
+        require(stakingDays != 0, "stakingDays < 1");
         require(stakingDays <= 5555, "stakingDays > 5555");
+
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
 
@@ -213,7 +214,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     ) external override onlyExternalStaker {
         if (now >= nextPayoutCall) makePayout();
 
-        require(stakingDays > 0, "stakingDays < 1");
+        require(stakingDays != 0, "stakingDays < 1");
         require(stakingDays <= 5555, "stakingDays > 5555");
 
         uint256 start = now;
@@ -305,7 +306,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
         require(
-            session.shares > 0 
+            session.shares != 0 
                 && session.withdrawn == false,
             "Staking: Stake withdrawn/invalid"
         );
@@ -449,13 +450,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         returns (uint256, uint256)
     {
         uint256 stakingSeconds = end.sub(start);
-        
         uint256 stakingDays = stakingSeconds.div(stepTimestamp);
-
         uint256 secondsStaked = now.sub(start);
-
         uint256 daysStaked = secondsStaked.div(stepTimestamp);
-
         uint256 amountAndInterest = amount.add(stakingInterest);
 
         // Early
@@ -469,15 +466,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             return (payOutAmount, earlyUnstakePenalty);
             // In time
         } else if (
-            stakingDays <= daysStaked && daysStaked < stakingDays.add(14)
+            daysStaked < stakingDays.add(14)
         ) {
             return (amountAndInterest, 0);
             // Late
         } else if (
-            stakingDays.add(14) <= daysStaked &&
             daysStaked < stakingDays.add(714)
         ) {
-            uint256 daysAfterStaking = daysStaked.sub(stakingDays);
+            uint256 daysAfterStaking = daysStaked - stakingDays;
 
             uint256 payOutAmount = amountAndInterest
                 .mul(uint256(714).sub(daysAfterStaking))
@@ -487,11 +483,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
             return (payOutAmount, lateUnstakePenalty);
             // Nothing
-        } else if (stakingDays.add(714) <= daysStaked) {
+        } else {
             return (0, amountAndInterest);
         }
-
-        return (0, 0);
     }
 
     function makePayout() public {
@@ -527,12 +521,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         globalPayin = globalPayin.add(amountTokenInDay);
 
+        globalPayout = 0;
         if (globalPayin > globalPayout) {
             globalPayin = globalPayin.sub(globalPayout);
-            globalPayout = 0;
         } else {
             globalPayin = 0;
-            globalPayout = 0;
         }
 
         uint256 currentTokenTotalSupply = (IERC20Upgradeable(addresses.mainToken).totalSupply()).add(

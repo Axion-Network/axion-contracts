@@ -87,7 +87,7 @@ contract BPD is IBPD, Initializable, AccessControlUpgradeable {
                 continue;
             } else {
                 poolAmount = poolYearAmounts[i];
-                return poolAmount;
+                break;
             }
 
             // return 0;

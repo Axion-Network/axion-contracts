@@ -105,9 +105,9 @@ contract NativeSwap is Initializable, AccessControlUpgradeable {
         uint256 stepsFromStart = calculateStepsFromStart();
         require(stepsFromStart <= period, "swapNativeToken: swap is over");
         uint256 amount = swapTokenBalanceOf[msg.sender];
+        require(amount != 0, "swapNativeToken: amount == 0");
         uint256 deltaPenalty = calculateDeltaPenalty(amount);
         uint256 amountOut = amount.sub(deltaPenalty);
-        require(amount > 0, "swapNativeToken: amount == 0");
         swapTokenBalanceOf[msg.sender] = 0;
         mainToken.mint(address(auction), deltaPenalty);
         auction.callIncomeDailyTokensTrigger(deltaPenalty);

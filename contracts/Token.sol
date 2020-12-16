@@ -123,7 +123,7 @@ contract Token is IToken, Initializable, ERC20Upgradeable, AccessControlUpgradea
         require(!swapIsOver, "swap is over");
         uint256 balance = swapTokenBalance;
         swapTokenBalance = 0;
-        require(balance > 0, "balance <= 0");
+        require(balance != 0, "balance <= 0");
         _mint(_msgSender(), balance);
     }
 
