@@ -1,5 +1,15 @@
 {
   "reservesOf": {
+    "0": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
     "1": {
       "0": "38926225957195442482",
       "1": "16685779943000000050450450",
@@ -281,37 +291,717 @@
       "uniswapMiddlePrice": "4207755376265493431645660"
     },
     "29": {
-      "0": "28127714024590682114",
+      "0": "36536257208264674713",
       "1": "116565430045320108257163826",
-      "2": "3864588059858276099567336",
-      "3": "4089101380498182262781388",
-      "eth": "28127714024590682114",
+      "2": "4046296127982460047227888",
+      "3": "4115059675944494255304324",
+      "eth": "36536257208264674713",
       "token": "116565430045320108257163826",
-      "uniswapLastPrice": "3864588059858276099567336",
-      "uniswapMiddlePrice": "4089101380498182262781388"
+      "uniswapLastPrice": "4046296127982460047227888",
+      "uniswapMiddlePrice": "4115059675944494255304324"
     },
     "30": {
+      "0": "1090000000000000000",
+      "1": "413267457979312947207093",
+      "2": "3968312692165150809613714",
+      "3": "3981069113971593030187481",
+      "eth": "1090000000000000000",
+      "token": "413267457979312947207093",
+      "uniswapLastPrice": "3968312692165150809613714",
+      "uniswapMiddlePrice": "3981069113971593030187481"
+    },
+    "31": {
+      "0": "4074357415009736456",
+      "1": "5656121238532136772643385",
+      "2": "4087792440061020032235252",
+      "3": "4022987039128417274551287",
+      "eth": "4074357415009736456",
+      "token": "5656121238532136772643385",
+      "uniswapLastPrice": "4087792440061020032235252",
+      "uniswapMiddlePrice": "4022987039128417274551287"
+    },
+    "32": {
+      "0": "5425333232100000000",
+      "1": "6768675472928339453245424",
+      "2": "4294804161984953466978109",
+      "3": "4094820981872214442499171",
+      "eth": "5425333232100000000",
+      "token": "6768675472928339453245424",
+      "uniswapLastPrice": "4294804161984953466978109",
+      "uniswapMiddlePrice": "4094820981872214442499171"
+    },
+    "33": {
       "0": "0",
-      "1": "187675276283436822960464",
+      "1": "4697489896193429035570547",
       "2": "0",
       "3": "0",
       "eth": "0",
-      "token": "187675276283436822960464",
+      "token": "4697489896193429035570547",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "34": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
       "uniswapLastPrice": "0",
       "uniswapMiddlePrice": "0"
     },
     "35": {
       "0": "0",
-      "1": "4111873602867135689302846940",
+      "1": "4437570867974444580873458710",
       "2": "0",
       "3": "0",
       "eth": "0",
-      "token": "4111873602867135689302846940",
+      "token": "4437570867974444580873458710",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "36": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "37": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "38": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "39": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "40": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "41": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "42": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "43": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "44": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "45": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "46": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "47": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "48": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "49": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "50": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "51": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "52": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "53": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "54": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "55": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "56": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "57": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "58": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "59": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "60": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "61": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "62": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "63": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "64": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "65": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "66": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "67": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "68": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "69": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "70": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "71": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "72": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "73": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "74": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "75": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "76": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "77": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "78": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "79": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "80": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "81": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "82": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "83": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "84": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "85": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "86": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "87": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "88": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "89": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "90": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "91": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "92": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "93": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "94": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "95": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "96": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "97": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "98": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
+      "uniswapLastPrice": "0",
+      "uniswapMiddlePrice": "0"
+    },
+    "99": {
+      "0": "0",
+      "1": "0",
+      "2": "0",
+      "3": "0",
+      "eth": "0",
+      "token": "0",
       "uniswapLastPrice": "0",
       "uniswapMiddlePrice": "0"
     }
   },
   "start": "1605250956",
-  "lastAuctionEventId": "29",
-  "balanceOf": "5291775610946434652763376710"
+  "lastAuctionEventId": "32",
+  "balanceOf": "4941507630983250577872278464"
 }
