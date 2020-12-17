@@ -318,15 +318,14 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     {
         require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
         require(end > start, "SUBBALANCES: Stake end must be after stake start");
-        uint256 stakeDays = end.sub(start).div(stepTimestamp);
+        uint256 stakeDays = (end - start).div(stepTimestamp);
 
         if (stakeDays >= basePeriod) {
             StakeSession storage stakeSession = stakeSessions[sessionId];
 
-            handleBpdEligibility(shares, actualEnd, stakeSession.payDayEligible);
-
-            // Setting real stake end
-            stakeSessions[sessionId].finishTime = actualEnd;
+            stakeSession.finishTime = actualEnd;
+            stakeSession.payDayEligible 
+                = handleBpdEligibility(shares, actualEnd, stakeSession.payDayEligible);
         }
 
         // Substract shares from total
@@ -338,6 +337,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     }
 
     function callOutcomeStakerTriggerV1(
+        address staker,
         uint256 sessionId,
         uint256 start,
         uint256 end,
@@ -349,27 +349,24 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     {
         require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
         require(end > start, "SUBBALANCES: Stake end must be after stake start");
-        uint256 stakeDays = end.sub(start).div(stepTimestamp);
-
-        (address sessionStaker, uint256 sessionShares, uint256 sessionStart, uint256 sessionEnd, bool sessionWithdrawn) 
-                = subBalancesV1.getSessionStats(sessionId);
-
-        bool[5] memory payDayEligible = subBalancesV1.getSessionEligibility(sessionId);
+        uint256 stakeDays = (end - start).div(stepTimestamp);
 
         if (stakeDays >= basePeriod) {
-            handleBpdEligibility(shares, actualEnd, payDayEligible);
+            bool[5] memory payDayEligible = subBalancesV1.getSessionEligibility(sessionId);
+
+            payDayEligible = handleBpdEligibility(shares, actualEnd, payDayEligible);
+
+            stakeSessions[sessionId] = StakeSession({
+                staker: staker,
+                shares: shares,
+                start: start,
+                end: end,
+                finishTime: actualEnd,
+                payDayEligible: payDayEligible,
+                withdrawn: false
+            });
         }
-
-        stakeSessions[sessionId] = StakeSession({
-            staker: sessionStaker,
-            shares: sessionShares,
-            start: sessionStart,
-            end: sessionEnd,
-            finishTime: actualEnd,
-            payDayEligible: payDayEligible,
-            withdrawn: false
-        });
-
+        
         // Substract shares from total
         if (shares > currentSharesTotalSupply) {
             currentSharesTotalSupply = 0;
@@ -378,7 +375,9 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         }
     }
 
-    function handleBpdEligibility(uint256 shares, uint256 realStakeEnd, bool[5] memory stakePayDays) internal {
+    function handleBpdEligibility(uint256 shares, uint256 realStakeEnd, bool[5] memory stakePayDays) 
+        internal returns (bool[5] memory) 
+    {
         // Rechecking eligibility of paydays
         for (uint256 i = 0; i < subBalanceList.length; i++) {
             SubBalance storage subBalance = subBalanceList[i];  
@@ -397,6 +396,8 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
                 }
             }
         }
+
+        return stakePayDays;
     }
 
     // Pool logic

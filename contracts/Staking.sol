@@ -373,6 +373,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         ISubBalances(addresses.subBalances).callOutcomeStakerTriggerV1(
+            msg.sender,
             sessionId,
             start,
             end,
