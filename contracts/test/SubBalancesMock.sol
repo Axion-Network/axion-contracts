@@ -14,18 +14,18 @@ contract SubBalancesMock is ISubBalances {
     ) external override {}
 
     function callOutcomeStakerTrigger(
-        address staker,
         uint256 sessionId,
         uint256 start,
         uint256 end,
+        uint256 actualEnd,
         uint256 shares
     ) external override {}
 
     function callOutcomeStakerTriggerV1(
-        address staker,
         uint256 sessionId,
         uint256 start,
         uint256 end,
+        uint256 actualEnd,
         uint256 shares
     ) external override {}
 }

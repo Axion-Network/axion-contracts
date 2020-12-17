@@ -407,18 +407,18 @@ contract(
       expect(userBalanceBefore_2).to.be.a.bignumber.zero;
 
       await subbalances.callOutcomeStakerTrigger(
-        account1,
         stakeId,
         stakeStartTime,
+        stakeEndTime,
         stakeEndTime,
         stakeShares,
         { from: stakingCaller }
       );
 
       await subbalances.callOutcomeStakerTrigger(
-        account2,
         stakeId_2,
         stakeStartTime_2,
+        stakeEndTime_2,
         stakeEndTime_2,
         stakingShares_2,
         { from: stakingCaller }

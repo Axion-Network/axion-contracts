@@ -307,16 +307,15 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
 	}
 
     function callOutcomeStakerTrigger(
-        address staker,
         uint256 sessionId,
         uint256 start,
         uint256 end,
+        uint256 actualEnd,
         uint256 shares
     ) 
         external
         override
     {
-        (staker);
         require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
         require(end > start, "SUBBALANCES: Stake end must be after stake start");
         uint256 stakeDays = end.sub(start).div(stepTimestamp);
@@ -324,10 +323,10 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         if (stakeDays >= basePeriod) {
             StakeSession storage stakeSession = stakeSessions[sessionId];
 
-            handleBpdEligibility(shares, end, stakeSession.payDayEligible);
+            handleBpdEligibility(shares, actualEnd, stakeSession.payDayEligible);
 
             // Setting real stake end
-            stakeSessions[sessionId].finishTime = end;
+            stakeSessions[sessionId].finishTime = actualEnd;
         }
 
         // Substract shares from total
@@ -339,10 +338,10 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     }
 
     function callOutcomeStakerTriggerV1(
-        address staker,
         uint256 sessionId,
         uint256 start,
         uint256 end,
+        uint256 actualEnd,
         uint256 shares
     ) 
         external
@@ -358,7 +357,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         bool[5] memory payDayEligible = subBalancesV1.getSessionEligibility(sessionId);
 
         if (stakeDays >= basePeriod) {
-            handleBpdEligibility(shares, end, payDayEligible);
+            handleBpdEligibility(shares, actualEnd, payDayEligible);
         }
 
         stakeSessions[sessionId] = StakeSession({
@@ -366,7 +365,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
             shares: sessionShares,
             start: sessionStart,
             end: sessionEnd,
-            finishTime: end,
+            finishTime: actualEnd,
             payDayEligible: payDayEligible,
             withdrawn: false
         });

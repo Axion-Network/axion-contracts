@@ -259,7 +259,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 lastPayout,
         uint256 shares
     ) public view returns (uint256) {
-        uint256 stakingInterest = 0;
+        uint256 stakingInterest;
         uint256 lastIndex = MathUpgradeable.min(
             payouts.length, 
             lastPayout
@@ -324,10 +324,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         ISubBalances(addresses.subBalances).callOutcomeStakerTrigger(
-            msg.sender,
             sessionId,
             session.start,
             session.end,
+            actualEnd,
             session.shares
         );
 
@@ -373,9 +373,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         ISubBalances(addresses.subBalances).callOutcomeStakerTriggerV1(
-            msg.sender,
             sessionId,
             start,
+            end,
             actualEnd,
             shares
         );
