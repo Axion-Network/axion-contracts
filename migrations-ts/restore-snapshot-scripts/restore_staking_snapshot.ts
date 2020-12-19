@@ -26,7 +26,7 @@ export async function restoreStakingSnapshot(
 
   await staking.setOtherVars(
     startContract,
-    shareRate,
+    '1060000000000000000',
     sharesTotalSupply,
     nextPayoutCall,
     globalPayin,

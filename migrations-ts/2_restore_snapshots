@@ -1,9 +1,12 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { restoreAuctionSnapshot } from './restore-snapshot-scripts/restore_auction_snapshot';
 import { restoreBPDSnapshot } from './restore-snapshot-scripts/restore_bpd_snapshot';
 import { restoreForeignSwapSnapshot } from './restore-snapshot-scripts/restore_foreignswap_snapshot';
 import { restoreNativeSwapSnapshot } from './restore-snapshot-scripts/restore_nativeswap_snapshot';
 import { restoreSubBalancesSnapshot } from './restore-snapshot-scripts/restore_subbalances_snapshot';
-import { restoreTokenSnapshot } from './restore-snapshot-scripts/restore_token';
+import { airdropTokens } from './restore-snapshot-scripts/restore_token';
 import { getDeployedContracts } from './utils/get_deployed_contracts';
 import { restoreStakingSnapshot } from './restore-snapshot-scripts/restore_staking_snapshot';
 
@@ -32,9 +35,11 @@ module.exports = async function (deployer, network) {
     await restoreAuctionSnapshot(auction, token);
     await restoreSubBalancesSnapshot(subBalances);
     await restoreStakingSnapshot(staking, token);
-
-    // Todo: run the airdrop separately
-    // await restoreTokenSnapshot(token);
+    await airdropTokens(
+      token,
+      process.env.AIR_DROPPER_ADDRESS ??
+        '0x902634D7451277d46353969D5a4Ad56b71d08D6E'
+    );
 
     console.log(
       '============================RESTORE SNAPSHOTS: DONE==============================='
