@@ -279,7 +279,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         uint256 stepsFromStart = calculateStepsFromStart();
 
         /** If referralsOn is true sallow to set ref */
-        if (options.referralsOn == true) {
+        if ((options.referralsOn == true) && (auctionBidOf[stepsFromStart][_msgSender()].ref == address(0))) {
             auctionBidOf[stepsFromStart][_msgSender()].ref = ref;
         } else {
             // Else set ref to 0x0 for this auction bid
