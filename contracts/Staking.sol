@@ -280,26 +280,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return stakingInterest;
     }
 
-    function _updateShareRate(
-        uint256 shares,
-        uint256 stakingInterest,
-        uint256 amount,
-        uint256 start,
-        uint256 end
-    ) internal {
-        uint256 newShareRate = _getShareRate(
-            amount,
-            shares,
-            start,
-            end,
-            stakingInterest
-        );
-
-        if (newShareRate > shareRate) {
-            shareRate = newShareRate;
-        }
-    }
-
     function unstake(uint256 sessionId) external {
         if (now >= nextPayoutCall) makePayout();
 
@@ -411,14 +391,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             shares
         );
 
-        _updateShareRate(
-            shares, 
-            stakingInterest, 
-            amount, 
-            start, 
-            actualEnd
-        );
-
         sharesTotalSupply = sharesTotalSupply.sub(shares);
 
         (uint256 amountOut, uint256 penalty) = getAmountOutAndPenalty(
@@ -440,7 +412,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             sessionId,
             amountOut,
             start,
-            end,
+            actualEnd,
             shares
         );
 
@@ -578,6 +550,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     // migration functions
+    function setShareRate(
+        uint256 _shareRate
+    ) external onlyMigrator {
+        shareRate = _shareRate;
+    }
+
     function setOtherVars(
         uint256 _startTime, 
         uint256 _shareRate, 

@@ -75,11 +75,11 @@ module.exports = async function (
       staking,
     } = await getDeployedContracts(network);
 
-    const stakingDeployed = await Staking.deployed();
+    // const stakingDeployed = await Staking.deployed();
     // console.log(stakingDeployed);
 
     const upgradeAddress = await prepareUpgrade(
-      stakingDeployed.address,
+      '0x1920d646574E097c2c487F69F40814F95d45bf8C', // 0x1920d646574E097c2c487F69F40814F95d45bf8C
       Staking,
       {
         unsafeAllowCustomTypes: true,
