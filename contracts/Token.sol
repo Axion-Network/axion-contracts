@@ -139,15 +139,4 @@ contract Token is IToken, Initializable, ERC20Upgradeable, AccessControlUpgradea
     function getNow() external view returns (uint256) {
         return now;
     }
-
-    /* Setter methods for contract migration */
-    function setNormalVariables(uint256 _swapTokenBalance) external onlyMigrator {
-        swapTokenBalance = _swapTokenBalance;
-    }
-
-    function bulkMint(address[] calldata userAddresses, uint256[] calldata amounts) external onlyMigrator {
-        for (uint256 idx = 0; idx < userAddresses.length; idx = idx + 1) {
-            _mint(userAddresses[idx], amounts[idx]);
-        }
-    }
 }

@@ -129,9 +129,4 @@ contract NativeSwap is Initializable, AccessControlUpgradeable {
     function calculateStepsFromStart() public view returns (uint256) {
         return now.sub(start).div(stepTimestamp);
     }
-
-    /* Setter methods for contract migration */
-    function setStart(uint256 _start) external onlyMigrator {
-        start = _start;
-    }
 }

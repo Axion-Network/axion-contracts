@@ -126,10 +126,4 @@ contract BPD is IBPD, Initializable, AccessControlUpgradeable {
             }
         }
     }
-
-    /* Setter methods for contract migration */
-    function restoreState(bool[5] calldata _poolTransferred, uint256[5] calldata _poolYearAmounts) external onlyMigrator {
-        poolTransferred = _poolTransferred;
-        poolYearAmounts = _poolYearAmounts;
-    }
 }
