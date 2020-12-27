@@ -496,11 +496,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         globalPayin = globalPayin.add(amountTokenInDay);
 
-        globalPayout = 0;
         if (globalPayin > globalPayout) {
             globalPayin = globalPayin.sub(globalPayout);
+            globalPayout = 0;
         } else {
             globalPayin = 0;
+            globalPayout = 0;
         }
 
         uint256 currentTokenTotalSupply = (IERC20Upgradeable(addresses.mainToken).totalSupply()).add(
