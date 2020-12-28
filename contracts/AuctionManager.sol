@@ -85,27 +85,26 @@ contract AuctionManager is IAuctionManager, Initializable, Manageable {
         uint256 daysInFuture, 
         uint256 amount
     ) private {
-        uint256 afterMintedAmount = mintedAuction.add(amount);
-        require(afterMintedAmount.add(mintedBPD) <= MAX_MINT, "AUCTION MANAGER: Max mint has been reached");
+        mintedAuction = mintedAuction.add(amount);
+        require(mintedAuction.add(mintedBPD) <= MAX_MINT, "AUCTION MANAGER: Max mint has been reached");
 
         /** Mint the tokens send to Auction */
-        IToken(addresses.axion).mint(addresses.auction, amount.mul(1e18));
-        uint256 auctionId = IAuction(addresses.auction).addReservesToAuction(daysInFuture, amount.mul(1e18));
-        mintedAuction = afterMintedAmount;
-
+        uint256 actualAmount = amount.mul(1e18);
+        IToken(addresses.axion).mint(addresses.auction, actualAmount);
+        uint256 auctionId = IAuction(addresses.auction).addReservesToAuction(daysInFuture, actualAmount);
 
         emit SentToAuction(auctionId, amount);
     }
 
     /** Main public manager functions */
     function sendToBPD(uint256 amount) external onlyManager {
-        uint256 afterMintedAmount = mintedBPD.add(amount);
-        require(afterMintedAmount.add(mintedAuction) <= MAX_MINT, "AUCTION MANAGER: Max mint has been reached");
+        mintedBPD = mintedBPD.add(amount);
+        require(mintedBPD.add(mintedAuction) <= MAX_MINT, "AUCTION MANAGER: Max mint has been reached");
 
         /** Mint the tokens send to BPD */
-        IToken(addresses.axion).mint(addresses.bpd, amount.mul(1e18));
-        IBPD(addresses.bpd).callIncomeTokensTrigger(amount.mul(1e18));
-        mintedBPD = afterMintedAmount;
+        uint256 actualAmount = amount.mul(1e18);
+        IToken(addresses.axion).mint(addresses.bpd, actualAmount);
+        IBPD(addresses.bpd).callIncomeTokensTrigger(actualAmount);
 
         emit SentToBPD(amount);
     }

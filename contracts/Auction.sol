@@ -423,7 +423,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         override
         onlyCaller
         returns (uint256)
-    {  // Adds a specified amount of axion to a future action
+    {  // Adds a specified amount of axion to a future auction
         require(daysInFuture <= 365, "AUCTION: Days in future can not be greater then 365");
 
         uint256 stepsFromStart = calculateStepsFromStart();
