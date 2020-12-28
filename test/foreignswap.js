@@ -258,7 +258,18 @@ contract('ForeignSwap', ([setter, account1, account2, recipient]) => {
       foreignswap.claimFromForeign(wrongAmount, testSignature, {
         from: account1,
       }),
-      'CLAIM: amount <= 0'
+      'CLAIM: amount == 0'
+    );
+  });
+
+  it('should not allow claims larger than final max', async () => {
+    const finalMaxClaimable = new BN(await foreignswap.FINAL_MAX_CLAIMABLE_AMOUNT());
+
+    await expectRevert(
+      foreignswap.claimFromForeign(finalMaxClaimable.addn(1), testSignature, {
+        from: account1,
+      }),
+      "CLAIM: Cannot claim any more."
     );
   });
 });

@@ -57,6 +57,9 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
     /** Variables after initial contract launch must go below here. https://github.com/OpenZeppelin/openzeppelin-sdk/issues/37 */
     /** End Variables after launch */
 
+    uint256 public constant FINAL_MAX_CLAIMABLE_AMOUNT = 1000000000000000000000000000;
+    uint256 public finalClaimedAmount;
+
     /** Roles */
     modifier onlyManager() {
         require(hasRole(MANAGER_ROLE, _msgSender()), "Caller is not a manager");
@@ -178,7 +181,9 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
         public
         returns (bool)
     {
-        require(amount > 0, "CLAIM: amount <= 0");
+        finalClaimedAmount = finalClaimedAmount.add(amount);
+        require(finalClaimedAmount <= FINAL_MAX_CLAIMABLE_AMOUNT, "CLAIM: Cannot claim any more.");
+        require(amount != 0, "CLAIM: amount == 0");
         require(
             check(amount, signature),
             "CLAIM: cannot claim because signature is not correct"
