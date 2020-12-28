@@ -4,7 +4,7 @@ const { expect } = require('chai');
 const helper = require('./utils/utils.js');
 chai.use(require('chai-bn')(BN));
 const EthCrypto = require('eth-crypto');
-const initTestSmartContracts = require('./utils/initTestSmartContracts.js');
+const { initTestSmartContracts } = require('./utils/initTestSmartContracts');
 
 const DAY = 86400;
 //Mocks

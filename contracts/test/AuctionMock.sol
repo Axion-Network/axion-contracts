@@ -8,4 +8,6 @@ contract AuctionMock is IAuction {
     function callIncomeDailyTokensTrigger(uint256 amount) external override {}
 
     function callIncomeWeeklyTokensTrigger(uint256 amount) external override {}
+
+    function addReservesToAuction(uint256 daysInFuture, uint256 amount) external override returns(uint256) {}
 }

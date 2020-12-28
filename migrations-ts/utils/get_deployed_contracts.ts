@@ -1,4 +1,5 @@
 const Auction = artifacts.require('Auction');
+const AuctionManager = artifacts.require('AuctionManager');
 const BPD = artifacts.require('BPD');
 const ForeignSwap = artifacts.require('ForeignSwap');
 const NativeSwap = artifacts.require('NativeSwap');
@@ -22,6 +23,7 @@ export async function getDeployedContracts(network: string) {
     SUBBALANCES_ADDRESS,
     TOKEN_ADDRESS,
     HEX4T_ADDRESS,
+    AUCTION_POOL_ADDRESS,
   } = ADDRESSES;
 
   if (NETWORK !== network) {
@@ -51,6 +53,9 @@ export async function getDeployedContracts(network: string) {
   const hex4Token = HEX4T_ADDRESS ? await Token.at(HEX4T_ADDRESS) : undefined;
   const subBalances = await SubBalances.at(SUBBALANCES_ADDRESS);
   const staking = await Staking.at(STAKING_ADDRESS);
+  const auctionManager = AUCTION_POOL_ADDRESS
+    ? await AuctionManager.at(AUCTION_POOL_ADDRESS)
+    : null;
 
   return {
     auction,
@@ -61,5 +66,6 @@ export async function getDeployedContracts(network: string) {
     hex4Token,
     subBalances,
     staking,
+    auctionManager,
   };
 }

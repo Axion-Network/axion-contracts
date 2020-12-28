@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const BN = require('bn.js');
 
-const initTestSmartContracts = require('./utils/initTestSmartContracts.js');
+const { initTestSmartContracts } = require('./utils/initTestSmartContracts');
 
 const DAY = 86400;
 

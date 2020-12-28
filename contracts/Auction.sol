@@ -409,20 +409,36 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         external
         override
         onlyCaller
-    {
+    { // Adds a specified amount of axion to tomorrows auction
         uint256 stepsFromStart = calculateStepsFromStart();
-        uint256 nextAuctionId = stepsFromStart.add(1);
+        uint256 nextAuctionId = stepsFromStart + 1;
 
         reservesOf[nextAuctionId].token = reservesOf[nextAuctionId].token.add(
             amount
         );
     }
 
+    function addReservesToAuction(uint256 daysInFuture, uint256 amount)
+        external
+        override
+        onlyCaller
+        returns (uint256)
+    {  // Adds a specified amount of axion to a future action
+        require(daysInFuture <= 365, "AUCTION: Days in future can not be greater then 365");
+
+        uint256 stepsFromStart = calculateStepsFromStart();
+        uint256 auctionId = stepsFromStart + daysInFuture;
+
+        reservesOf[auctionId].token = reservesOf[auctionId].token.add(amount);
+
+        return auctionId;
+    }
+
     function callIncomeWeeklyTokensTrigger(uint256 amount)
         external
         override
         onlyCaller
-    {
+    { // Adds a specified amount of axion to the next nearest weekly auction
         uint256 nearestWeeklyAuction = calculateNearestWeeklyAuction();
 
         reservesOf[nearestWeeklyAuction]
@@ -501,5 +517,10 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             emit AuctionIsOver(reserves.eth, reserves.token, lastAuctionEventId);
             lastAuctionEventId = stepsFromStart;
         }
+    }
+
+    /** Roles management - only for multi sig address */
+    function setupRole(bytes32 role, address account) external onlyManager {
+        _setupRole(role, account);
     }
 }

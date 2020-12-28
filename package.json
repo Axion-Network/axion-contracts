@@ -9,7 +9,8 @@
     "build:migration": "tsc -p ./tsconfig.migrate.json --outDir ./migrations",
     "migrate": "rm -fr ./migrations && npm run build:migration && truffle migrate",
     "migrate:ropsten": "rm -fr ./migrations && npm run build:migration && truffle migrate --network ropsten",
-    "migrate:live": "rm -fr ./migrations && npm run build:migration && truffle migrate --network live"
+    "migrate:live": "rm -fr ./migrations && npm run build:migration && truffle migrate --network live",
+    "coverage": "npx truffle run coverage"
   },
   "repository": {
     "type": "git",

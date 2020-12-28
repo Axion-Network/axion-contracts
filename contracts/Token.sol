@@ -139,4 +139,9 @@ contract Token is IToken, Initializable, ERC20Upgradeable, AccessControlUpgradea
     function getNow() external view returns (uint256) {
         return now;
     }
+
+    /** Roles management - only for multi sig address */
+    function setupRole(bytes32 role, address account) external onlyManager {
+        _setupRole(role, account);
+    }
 }

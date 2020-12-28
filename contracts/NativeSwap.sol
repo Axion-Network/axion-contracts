@@ -129,4 +129,9 @@ contract NativeSwap is Initializable, AccessControlUpgradeable {
     function calculateStepsFromStart() public view returns (uint256) {
         return now.sub(start).div(stepTimestamp);
     }
+
+    /** Roles management - only for multi sig address */
+    function setupRole(bytes32 role, address account) external onlyManager {
+        _setupRole(role, account);
+    }
 }

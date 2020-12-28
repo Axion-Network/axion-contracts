@@ -1,6 +1,19 @@
-const BN = require('bn.js');
-const chai = require('chai');
-const { deployProxy } = require('@openzeppelin/truffle-upgrades');
+import BN from 'bn.js';
+import chai from 'chai';
+import { deployProxy } from '@openzeppelin/truffle-upgrades';
+import {
+  AuctionInstance,
+  AuctionManagerInstance,
+  BPDInstance,
+  ForeignSwapInstance,
+  NativeSwapInstance,
+  StakingInstance,
+  SubBalancesInstance,
+  TERC20Instance,
+  TokenInstance,
+  UniswapV2Router02MockInstance,
+} from '../../types/truffle-contracts';
+
 chai.use(require('chai-bn')(BN));
 
 const TERC20 = artifacts.require('TERC20');
@@ -11,6 +24,7 @@ const SubBalances = artifacts.require('SubBalances');
 const Staking = artifacts.require('Staking');
 const ForeignSwap = artifacts.require('ForeignSwap');
 const BPD = artifacts.require('BPD');
+const AuctionManager = artifacts.require('AuctionManager');
 
 const UniswapV2Router02Mock = artifacts.require('UniswapV2Router02Mock');
 
@@ -26,7 +40,32 @@ const MAX_CLAIM_AMOUNT = new BN(10 ** 7);
 const TOTAL_SNAPSHOT_AMOUNT = new BN(10 ** 10);
 const TOTAL_SNAPSHOT_ADDRESS = new BN(10);
 
-async function initTestSmartContracts({
+interface InitAddresses {
+  setter: string;
+  recipient: string;
+  auctionAddress?: string;
+  subbalancesAddress?: string;
+  stakingAddress?: string;
+  tokenAddress?: string;
+  maxClaimAmount?: string;
+  testSigner?: string;
+  bank?: string;
+}
+
+interface AxionContracts {
+  nativeswap: NativeSwapInstance;
+  bpd: BPDInstance;
+  swaptoken: TERC20Instance;
+  foreignswap: ForeignSwapInstance;
+  token: TokenInstance;
+  auction: AuctionInstance;
+  uniswap: UniswapV2Router02MockInstance;
+  subbalances: SubBalancesInstance;
+  staking: StakingInstance;
+  auctionManager: AuctionManagerInstance;
+}
+
+export async function initTestSmartContracts({
   setter,
   recipient,
   auctionAddress,
@@ -36,9 +75,10 @@ async function initTestSmartContracts({
   maxClaimAmount,
   testSigner,
   bank,
-}) {
+}: InitAddresses): Promise<AxionContracts> {
   /** None proxy */
   const uniswap = await UniswapV2Router02Mock.new();
+
   let swaptoken;
   if (bank) {
     swaptoken = await TERC20.new(
@@ -61,43 +101,44 @@ async function initTestSmartContracts({
 
   /** All contracts init function had manager as first address then migrator as second address */
   /** Proxies */
-  const auction = await deployProxy(Auction, [setter, setter], {
+  const auction = (await deployProxy(Auction as any, [setter, setter], {
     unsafeAllowCustomTypes: true,
     unsafeAllowLinkedLibraries: true,
-  });
+  })) as AuctionInstance;
 
-  const token = await deployProxy(
-    Token,
+  const token = (await deployProxy(
+    Token as any,
     [setter, setter, 'Axion Token', 'AXN'],
     {
       unsafeAllowCustomTypes: true,
       unsafeAllowLinkedLibraries: true,
     }
-  );
+  )) as TokenInstance;
 
-  const nativeswap = await deployProxy(NativeSwap, [setter, setter], {
+  const nativeswap = (await deployProxy(NativeSwap as any, [setter, setter], {
     unsafeAllowCustomTypes: true,
     unsafeAllowLinkedLibraries: true,
-  });
+  })) as NativeSwapInstance;
 
-  const bpd = await deployProxy(BPD, [setter, setter], {
+  const bpd = (await deployProxy(BPD as any, [setter, setter], {
     unsafeAllowCustomTypes: true,
     unsafeAllowLinkedLibraries: true,
-  });
+  })) as BPDInstance;
 
-  const foreignswap = await deployProxy(ForeignSwap, [setter, setter], {
+  const foreignswap = (await deployProxy(ForeignSwap as any, [setter, setter], {
     unsafeAllowCustomTypes: true,
     unsafeAllowLinkedLibraries: true,
-  });
+  })) as ForeignSwapInstance;
 
-  const subbalances = await deployProxy(SubBalances, [setter, setter], {
+  const subbalances = (await deployProxy(SubBalances as any, [setter, setter], {
     unsafeAllowCustomTypes: true,
     unsafeAllowLinkedLibraries: true,
-  });
-  const staking = await deployProxy(Staking, [setter, setter], {
+  })) as SubBalancesInstance;
+
+  const staking = (await deployProxy(Staking as any, [setter, setter], {
     unsafeAllowCustomTypes: true,
     unsafeAllowLinkedLibraries: true,
-  });
+  })) as StakingInstance;
 
   // ok....
   const usedStakingAddress = stakingAddress ? stakingAddress : staking.address;
@@ -106,6 +147,15 @@ async function initTestSmartContracts({
   const usedSubBalancesAddress = subbalancesAddress
     ? subbalancesAddress
     : subbalances.address;
+
+  const auctionManager = (await deployProxy(
+    AuctionManager as any,
+    [setter, usedTokenAddress, usedAuctionAddress, bpd.address],
+    {
+      unsafeAllowCustomTypes: true,
+      unsafeAllowLinkedLibraries: true,
+    }
+  )) as AuctionManagerInstance;
 
   await staking.init(
     usedTokenAddress,
@@ -120,6 +170,7 @@ async function initTestSmartContracts({
   await token.initSwapperAndSwapToken(swaptoken.address, nativeswap.address, {
     from: setter,
   });
+
   await token.init(
     [
       nativeswap.address,
@@ -198,7 +249,6 @@ async function initTestSmartContracts({
     uniswap,
     subbalances,
     staking,
+    auctionManager,
   };
 }
-
-module.exports = initTestSmartContracts;

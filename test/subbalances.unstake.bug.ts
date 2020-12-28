@@ -12,7 +12,7 @@ import {
 
 import BN from 'bn.js';
 
-const initTestSmartContracts = require('./utils/initTestSmartContracts.js');
+import { initTestSmartContracts } from './utils/initTestSmartContracts';
 
 const DAY = 86400;
 const STAKE_PERIOD = 350;

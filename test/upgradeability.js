@@ -3,7 +3,7 @@ const chai = require('chai');
 const { expect } = require('chai');
 const helper = require('./utils/utils.js');
 const { upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const initTestSmartContracts = require('./utils/initTestSmartContracts.js');
+const { initTestSmartContracts } = require('./utils/initTestSmartContracts');
 /** Helper Vars */
 const DAY = 86400;
 const DEADLINE = web3.utils.toWei('10000000');
@@ -72,8 +72,12 @@ contract('Upgradeability', ([setter, recipient, bank, account1, account2]) => {
     });
 
     it('should upgrade stakes with states', async () => {
-      await token.transfer(account1, web3.utils.toWei('1000'), { from: bank });
-      await token.transfer(account2, web3.utils.toWei('1000'), { from: bank });
+      await token.transfer(account1, web3.utils.toWei('1000'), {
+        from: bank,
+      });
+      await token.transfer(account2, web3.utils.toWei('1000'), {
+        from: bank,
+      });
       await token.approve(staking.address, web3.utils.toWei('10'), {
         from: account1,
       });
@@ -103,8 +107,12 @@ contract('Upgradeability', ([setter, recipient, bank, account1, account2]) => {
       expect(dataBefore.start.toString()).to.eq(dataAfter.start.toString());
       expect(dataBefore.end.toString()).to.eq(dataAfter.end.toString());
       expect(dataBefore.shares.toString()).to.eq(dataAfter.shares.toString());
-      expect(dataBefore.firstPayout.toString()).to.eq(dataAfter.firstPayout.toString());
-      expect(dataBefore.lastPayout.toString()).to.eq(dataAfter.lastPayout.toString());
+      expect(dataBefore.firstPayout.toString()).to.eq(
+        dataAfter.firstPayout.toString()
+      );
+      expect(dataBefore.lastPayout.toString()).to.eq(
+        dataAfter.lastPayout.toString()
+      );
     });
 
     it('should upgrade auction', async () => {

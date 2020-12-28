@@ -251,4 +251,9 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
 
         return (amountOut, delta, deltaAuctionWeekly);
     }
+
+    /** Roles management - only for multi sig address */
+    function setupRole(bytes32 role, address account) external onlyManager {
+        _setupRole(role, account);
+    }
 }

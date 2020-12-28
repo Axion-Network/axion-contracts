@@ -7,6 +7,8 @@ dist
 .vscode
 .DS_Store
 
+coverage
+
 # Webstorm config
 .idea
 

@@ -126,4 +126,9 @@ contract BPD is IBPD, Initializable, AccessControlUpgradeable {
             }
         }
     }
+
+    /** Roles management - only for multi sig address */
+    function setupRole(bytes32 role, address account) external onlyManager {
+        _setupRole(role, account);
+    }
 }

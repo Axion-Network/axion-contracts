@@ -551,4 +551,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         return (numerator).mul(1e18).div(denominator);
     }
+
+    /** Roles management - only for multi sig address */
+    function setupRole(bytes32 role, address account) external onlyManager {
+        _setupRole(role, account);
+    }
 }

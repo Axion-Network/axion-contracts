@@ -2,7 +2,7 @@ const BN = require('bn.js');
 const chai = require('chai');
 const { expect } = require('chai');
 const helper = require('./utils/utils.js');
-const initTestSmartContracts = require('./utils/initTestSmartContracts.js');
+const { initTestSmartContracts } = require('./utils/initTestSmartContracts');
 chai.use(require('chai-bn')(BN));
 const EthCrypto = require('eth-crypto');
 

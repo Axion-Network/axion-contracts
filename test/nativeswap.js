@@ -1,7 +1,7 @@
 const BN = require('bn.js');
 const chai = require('chai');
 const { expect } = require('chai');
-const initTestSmartContracts = require('./utils/initTestSmartContracts.js');
+const { initTestSmartContracts } = require('./utils/initTestSmartContracts');
 const helper = require('./utils/utils.js');
 chai.use(require('chai-bn')(BN));
 

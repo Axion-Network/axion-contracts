@@ -442,4 +442,9 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         totalAmount = yearTokenAmount.add(inflation).mul(totalUprisingCoeff).div(1e18);
         addAmount = totalAmount.sub(yearTokenAmount);
     }
+
+    /** Roles management - only for multi sig address */
+    function setupRole(bytes32 role, address account) external onlyManager {
+        _setupRole(role, account);
+    }
 }

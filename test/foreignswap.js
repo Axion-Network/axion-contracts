@@ -5,7 +5,7 @@ const helper = require('./utils/utils.js');
 const expectRevert = require('./utils/expectRevert.js');
 chai.use(require('chai-bn')(BN));
 const EthCrypto = require('eth-crypto');
-const initTestSmartContracts = require('./utils/initTestSmartContracts.js');
+const { initTestSmartContracts } = require('./utils/initTestSmartContracts');
 
 const DAY = 86400;
 
