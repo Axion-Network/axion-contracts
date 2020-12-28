@@ -495,10 +495,10 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     /** Storage Functions */
     function _saveAuctionData() internal {
         uint256 stepsFromStart = calculateStepsFromStart();
-        AuctionReserves memory reserves = reservesOf[stepsFromStart];
+        AuctionReserves memory reserves = reservesOf[lastAuctionEventId];
 
         if (lastAuctionEventId < stepsFromStart) {
-            emit AuctionIsOver(reserves.eth, reserves.token, stepsFromStart);
+            emit AuctionIsOver(reserves.eth, reserves.token, lastAuctionEventId);
             lastAuctionEventId = stepsFromStart;
         }
     }
