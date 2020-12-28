@@ -17,19 +17,7 @@ const MAX_CLAIM_AMOUNT = '10000000000000000000000000';
 const TOTAL_SNAPSHOT_AMOUNT = '370121420541683530700000000000';
 const TOTAL_SNAPSHOT_ADDRESS = '183035';
 
-module.exports = async function (
-  deployer,
-  network,
-  [
-    setterAddress,
-    swapTokenAddress,
-    uniswapAddress,
-    recipientAddress,
-    auctionV1Address,
-    stakingV1Address,
-    subBalancesV1Address,
-  ]
-) {
+module.exports = async function (deployer, network, []) {
   if (!process.argv.includes('migrate')) {
     return;
   }
@@ -42,12 +30,8 @@ module.exports = async function (
       DEPLOYER_ADDRESS,
       RECIPIENT_ADDRESS,
       MANAGER_ADDRESS,
-      SWAP_TOKEN_ADDRESS,
       UNISWAP_ADDRESS,
       TIME_IN_DAY,
-      AUCTION_V1_ADDRESS,
-      STAKING_V1_ADDRESS,
-      SUB_BALANCES_V1_ADDRESS,
     } = process.env as any;
 
     if (!TEST_NETWORKS.includes(network)) {
@@ -76,10 +60,10 @@ module.exports = async function (
     } = await getDeployedContracts(network);
 
     // const stakingDeployed = await Staking.deployed();
-    // console.log(stakingDeployed);
+    // console.log(staking.address);
 
     const upgradeAddress = await prepareUpgrade(
-      '0x1920d646574E097c2c487F69F40814F95d45bf8C', // 0x1920d646574E097c2c487F69F40814F95d45bf8C
+      staking.address, // 0x1920d646574E097c2c487F69F40814F95d45bf8C
       Staking,
       {
         unsafeAllowCustomTypes: true,
