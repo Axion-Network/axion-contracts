@@ -401,9 +401,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         // To auction
-        _initPayout(addresses.auction, penalty);
-        IAuction(addresses.auction).callIncomeDailyTokensTrigger(penalty);
-
+        if (penalty != 0) {
+            _initPayout(addresses.auction, penalty);
+            IAuction(addresses.auction).callIncomeDailyTokensTrigger(penalty);
+        }
+        
         // To account
         _initPayout(msg.sender, amountOut);
 
