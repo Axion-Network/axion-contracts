@@ -94,7 +94,7 @@ contract AuctionManager is IAuctionManager, Initializable, Manageable {
         mintedAuction = afterMintedAmount;
 
 
-        SentToAuction(auctionId, amount);
+        emit SentToAuction(auctionId, amount);
     }
 
     /** Main public manager functions */
@@ -107,6 +107,6 @@ contract AuctionManager is IAuctionManager, Initializable, Manageable {
         IBPD(addresses.bpd).callIncomeTokensTrigger(amount.mul(1e18));
         mintedBPD = afterMintedAmount;
 
-        SentToBPD(amount);
+        emit SentToBPD(amount);
     }
 }
