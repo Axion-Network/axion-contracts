@@ -1,27 +1,34 @@
 # Axion Contracts
 
-- Please make sure you work on the tasks from this [board](https://dev.azure.com/axion-network/Smart%20Contracts/_boards/board/t/Smart%20Contracts%20Team/Stories), 
-if the task you are working on is not there, please add one.
-
+- If you are new to hardhat, please read [Hardhat getting started](https://hardhat.org/getting-started/)
+- [Waffle](https://getwaffle.io/): A framework for testing smart contracts
 
 ## Setup Instructions
+
 1. install [node.js](https://nodejs.org/en/)
-2. install [truffle](https://www.trufflesuite.com/truffle)
+2. install yarn (if you don't have yet) run `npm install -g yarn`
 3. clone repo
-4. run `npm install` in axion-contracts directory
-5. run `npm run build` (on Windows `npm run build:win`)
-    - this compiles the smart contracts and exports artifacts to a build folder
-    - generate definition types for TypeScript and put it in a types folder ([typechain](https://github.com/ethereum-ts/TypeChain))
+4. run `yarn` in axion-contracts directory
+5. run `yarn compile`
+   - this compiles the smart contracts and exports artifacts to a artifacts folder
+   - generate definition types for TypeScript and put it in a typechain folder ([typechain](https://github.com/ethereum-ts/TypeChain))
 6. run the unit tests
-  * `npx truffle test` - runs all unit tests
-  * `npx truffle test TEST_PATH` - run a specific test located at TEST_PATH
-  
-Example of the test file in TypeScript: _subbalances.unstake.bug.ts_
+
+- `yarn test` - runs all unit tests
+- `yarn test TEST_PATH` - run a specific test located at TEST_PATH
+
+7. check code coverage run `yarn coverage`
+- please make sure to increase the threshold of code coverage over time _coverage:check_ in __package.json__
+
+## Useful commands
+
+- `npx hardhat --help` - to see all of the available tasks
+- `npx hardhat run scripts/FILENAME --network X` - to run the script of network X
 
 ## Manual Debugging
- * `truffle develop` - will start a truffle development blockchain and drop you into a truffle cli
- * `migrate` - run inside truffle cli to compile and migrate smart contracts onto the truffle development blockchain
+- `yarn dev` - will start a development blockchain (use --network dev to interact with the dev network)
 
 ## Additional resources
- * [Guide for debugging smart contracts with truffle develop](https://www.trufflesuite.com/tutorials/debugging-a-smart-contract)
- * [More info for unit testing with truffle](https://www.trufflesuite.com/docs/truffle/testing/testing-your-contracts)
+
+- [Hardhat Overview](https://hardhat.org/getting-started/#overview)
+- [Debugging with Hardhat Network](https://hardhat.org/tutorial/debugging-with-hardhat-network.html)

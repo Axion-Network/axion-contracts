@@ -12,9 +12,12 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '12'
+      - run: npm install -g yarn
       - name: Install dependencies
-        run: npm install
+        run: yarn
       - name: Run build
-        run: npm run build
+        run: yarn compile
       - name: Run tests
-        run: npm run test -- --network ganache
+        run: yarn test
+      - name: Run coverage
+        run: yarn coverage

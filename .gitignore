@@ -6,17 +6,24 @@ package-lock.json
 dist
 .vscode
 .DS_Store
+yarn-error.log
 
 coverage
 
 # Webstorm config
 .idea
 
+# .env
 .env
 venv/
 
-# typechain
-types
+#Coverages
+coverage.json
+coverage
 
-# migrations foler will be generated from migrations-ts
-migrations
+#Hardhat files
+cache
+artifacts
+
+#Typechain
+typechain

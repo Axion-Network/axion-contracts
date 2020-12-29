@@ -34,7 +34,7 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
     uint256 public stepTimestamp;
     uint256 public stakePeriod;
     uint256 public maxClaimAmount;
-    
+
     /** Public Addresses */
     address public mainToken;
     address public staking;
@@ -112,10 +112,10 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
     /** End Init Fns */
 
     function getCurrentClaimedAmount()
-        external
-        override
-        view
-        returns (uint256)
+    external
+    override
+    view
+    returns (uint256)
     {
         return claimedAmount;
     }
@@ -125,50 +125,50 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
     }
 
     function getCurrentClaimedAddresses()
-        external
-        override
-        view
-        returns (uint256)
+    external
+    override
+    view
+    returns (uint256)
     {
         return claimedAddresses;
     }
 
     function getTotalSnapshotAddresses()
-        external
-        override
-        view
-        returns (uint256)
+    external
+    override
+    view
+    returns (uint256)
     {
         return totalSnapshotAddresses;
     }
 
     function getMessageHash(uint256 amount, address account)
-        public
-        pure
-        returns (bytes32)
+    public
+    pure
+    returns (bytes32)
     {
         return keccak256(abi.encode(amount, account));
     }
 
     function check(uint256 amount, bytes memory signature)
-        public
-        view
-        returns (bool)
+    public
+    view
+    returns (bool)
     {
         bytes32 messageHash = getMessageHash(amount, address(msg.sender));
         return ECDSAUpgradeable.recover(messageHash, signature) == signerAddress;
     }
 
     function getUserClaimableAmountFor(uint256 amount)
-        public
-        view
-        returns (uint256, uint256)
+    public
+    view
+    returns (uint256, uint256)
     {
         if (amount > 0) {
             (
-                uint256 amountOut,
-                uint256 delta,
-                uint256 deltaAuctionWeekly
+            uint256 amountOut,
+            uint256 delta,
+            uint256 deltaAuctionWeekly
             ) = getClaimableAmount(amount);
             uint256 deltaPenalized = delta.add(deltaAuctionWeekly);
             return (amountOut, deltaPenalized);
@@ -178,8 +178,8 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
     }
 
     function claimFromForeign(uint256 amount, bytes memory signature)
-        public
-        returns (bool)
+    public
+    returns (bool)
     {
         finalClaimedAmount = finalClaimedAmount.add(amount);
         require(finalClaimedAmount <= FINAL_MAX_CLAIMABLE_AMOUNT, "CLAIM: Cannot claim any more.");
@@ -191,9 +191,9 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
         require(claimedBalanceOf[msg.sender] == 0, "CLAIM: cannot claim twice");
 
         (
-            uint256 amountOut,
-            uint256 delta,
-            uint256 deltaAuctionWeekly
+        uint256 amountOut,
+        uint256 delta,
+        uint256 deltaAuctionWeekly
         ) = getClaimableAmount(amount);
 
         uint256 deltaPart = delta.div(stakePeriod);
@@ -230,13 +230,13 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
     // }
 
     function getClaimableAmount(uint256 amount)
-        internal
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
+    internal
+    view
+    returns (
+        uint256,
+        uint256,
+        uint256
+    )
     {
         uint256 deltaAuctionWeekly = 0;
         if (amount > maxClaimAmount) {
