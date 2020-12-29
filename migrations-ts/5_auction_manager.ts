@@ -62,59 +62,6 @@ module.exports = async function (deployer, network, [managerAddress]) {
       return instance;
     })) as AuctionManagerInstance;
 
-    const auctionUpgrade = await prepareUpgrade(auction.address, Auction, {
-      unsafeAllowCustomTypes: true,
-      unsafeAllowLinkedLibraries: true,
-    });
-    console.log('Upgraded staking contract - ', auctionUpgrade);
-
-    const bpdUpgrade = await prepareUpgrade(bpd.address, BPD, {
-      unsafeAllowCustomTypes: true,
-      unsafeAllowLinkedLibraries: true,
-    });
-    console.log('Upgraded bpd contract - ', bpdUpgrade);
-
-    // Setup the roles using the migration script
-    if (network === 'ropsten') {
-      console.log('Setting up Auction Manager minter role for Token');
-      await token.setupRole(
-        await token.getMinterRole(),
-        auctionManager?.address ?? '0x00'
-      );
-      console.log('Setting up Auction Manager swap role for BPD');
-      await bpd.setupRole(
-        await bpd.SWAP_ROLE(),
-        auctionManager?.address ?? '0x00'
-      );
-      console.log('Setting up Auction Manager caller role for auction');
-      await auction.setupRole(
-        await auction.CALLER_ROLE(),
-        auctionManager?.address ?? '0x00'
-      );
-
-      console.log(
-        'Manager has caller role',
-        await token.hasRole(
-          await token.getMinterRole(),
-          auctionManager?.address ?? '0x00'
-        )
-      );
-      console.log(
-        'Manager has caller role',
-        await auction.hasRole(
-          await auction.CALLER_ROLE(),
-          auctionManager?.address ?? '0x00'
-        )
-      );
-      console.log(
-        'Manager has swap role',
-        await bpd.hasRole(
-          await bpd.SWAP_ROLE(),
-          auctionManager?.address ?? '0x00'
-        )
-      );
-    }
-
     const addressFilePath = path.join(
       __dirname,
       '..',

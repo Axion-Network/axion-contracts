@@ -57,7 +57,7 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
     /** Variables after initial contract launch must go below here. https://github.com/OpenZeppelin/openzeppelin-sdk/issues/37 */
     /** End Variables after launch */
 
-    uint256 public constant FINAL_MAX_CLAIMABLE_AMOUNT = 1000000000000000000000000000;
+    uint256 public constant FINAL_MAX_CLAIMABLE_AMOUNT = 10000000000000000000000000000;
     uint256 public finalClaimedAmount;
 
     /** Roles */
