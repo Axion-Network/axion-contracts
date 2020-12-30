@@ -5,7 +5,7 @@ import 'solidity-coverage';
 import '@openzeppelin/hardhat-upgrades';
 import '@nomiclabs/hardhat-etherscan';
 import dotenv from 'dotenv';
-import { NetworksUserConfig } from 'hardhat/src/types/config';
+import { NetworkUserConfig } from 'hardhat/types';
 dotenv.config();
 
 /* uncomment to see the gas report after running the test */
@@ -36,7 +36,7 @@ const getNetworkConfig = (chainId: number) => {
   ) {
     return {
       url: 'please update .env file',
-    } as NetworksUserConfig;
+    } as NetworkUserConfig;
   }
 
   return {
@@ -46,7 +46,10 @@ const getNetworkConfig = (chainId: number) => {
     gas: Number(DEPLOY_GAS_LIMIT),
     gasPrice: Number(DEPLOY_GAS_PRICE) * 1000000000, // gwei unit
     timeout: 600 * 1000, // milliseconds
-  } as NetworksUserConfig;
+    throwOnCallFailures: true,
+    throwOnTransactionFailures: true,
+    loggingEnabled: true,
+  } as NetworkUserConfig;
 };
 
 export default {

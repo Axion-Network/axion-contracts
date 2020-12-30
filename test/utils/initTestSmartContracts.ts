@@ -64,7 +64,6 @@ export async function initTestSmartContracts({
   testSigner,
   fakeToken,
 }: InitAddresses): Promise<AxionContracts> {
-
   /** None proxy */
   const uniswap = await ContractFactory.getUniswapV2Router02MockFactory().then(
     (factory) => factory.deploy()

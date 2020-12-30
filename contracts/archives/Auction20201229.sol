@@ -9,12 +9,12 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 /** Uniswap */
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 /** Local Interfaces */
-import "./interfaces/IToken.sol";
-import "./interfaces/IAuction.sol";
-import "./interfaces/IStaking.sol";
-import "./interfaces/IAuctionV1.sol";
+import "../interfaces/IToken.sol";
+import "../interfaces/IAuction.sol";
+import "../interfaces/IStaking.sol";
+import "../interfaces/IAuctionV1.sol";
 
-contract Auction is IAuction, Initializable, AccessControlUpgradeable {
+contract Auction20201219 is IAuction, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
 
     /** Events */
@@ -22,16 +22,14 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         address indexed account,
         uint256 value,
         uint256 indexed auctionId,
-        uint256 indexed time,
-        uint256 stakeDays
+        uint256 indexed time
     );
 
     event Withdraval(
         address indexed account,
         uint256 value,
         uint256 indexed auctionId,
-        uint256 indexed time,
-        uint256 stakeDays
+        uint256 indexed time
     );
 
     event AuctionIsOver(uint256 eth, uint256 token, uint256 indexed auctionId);
@@ -88,12 +86,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     IAuctionV1 public auctionV1;
 
     bool public init_;
-
-    /** Variables after initial contract launch must go below here. https://github.com/OpenZeppelin/openzeppelin-sdk/issues/37 */
-    /** End Variables after launch */
-
-    /** Store autoStake duration (auctionID, address) */
-    mapping(uint256 => mapping(address => uint256)) public autoStakeDaysOf;
 
     /** modifiers */
     modifier onlyCaller() {
@@ -271,13 +263,11 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         );
     }
 
-    function bid(uint256 amountOutMin, uint256 deadline, address ref, uint256 stakeDays) external payable {
+    function bid(uint256 amountOutMin, uint256 deadline, address ref) external payable {
         _saveAuctionData();
         _updatePrice();
 
         require(_msgSender() != ref, "msg.sender == ref");
-        require(stakeDays >= options.autoStakeDays, "stakeDays < minimum days");
-        require(stakeDays <= 5555, "stakeDays > 5555 days");
 
         (
             uint256 toRecipient,
@@ -301,9 +291,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             msg.value
         );
 
-        /** Save the amount of autostake days for this auction */
-        autoStakeDaysOf[stepsFromStart][_msgSender()] = stakeDays;
-
         if (!existAuctionsOf[stepsFromStart][_msgSender()]) {
             auctionsOf[_msgSender()].push(stepsFromStart);
             existAuctionsOf[stepsFromStart][_msgSender()] = true;
@@ -315,7 +302,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
         addresses.recipient.transfer(toRecipient);
 
-        emit Bid(msg.sender, msg.value, stepsFromStart, now, stakeDays);
+        emit Bid(msg.sender, msg.value, stepsFromStart, now);
     }
 
     function withdraw(uint256 auctionId) external {
@@ -326,18 +313,12 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
         UserBid storage userBid = auctionBidOf[auctionId][_msgSender()];
 
-        // get the amount of autostake days, and set to default if 0
-        uint256 stakeDays = autoStakeDaysOf[auctionId][_msgSender()];
-        if (stakeDays == 0) {
-            stakeDays = options.autoStakeDays;
-        }
-
         require(stepsFromStart > auctionId, "Auction: Auction is active");
         require(userBid.eth > 0 && userBid.withdrawn == false, "Auction: Zero bid or withdrawn");
 
         userBid.withdrawn = true;
 
-        callWithdraw(userBid.ref, userBid.eth, auctionId, stepsFromStart, stakeDays);
+        callWithdraw(userBid.ref, userBid.eth, auctionId, stepsFromStart);
     }
 
     function withdrawV1(uint256 auctionId) external {
@@ -357,7 +338,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         (uint256 eth, address ref) = auctionV1.auctionBetOf(auctionId, _msgSender());
         require(eth > 0, "Auction: Zero balance in auction/invalid auction ID");
 
-        callWithdraw(ref, eth, auctionId, stepsFromStart, options.autoStakeDays);
+        callWithdraw(ref, eth, auctionId, stepsFromStart);
 
         auctionBidOf[auctionId][_msgSender()] = UserBid({
             eth: eth,
@@ -368,7 +349,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         auctionsOf[_msgSender()].push(auctionId);
     }
 
-    function callWithdraw(address ref, uint256 eth, uint256 auctionId, uint256 stepsFromStart, uint256 stakeDays) internal {
+    function callWithdraw(address ref, uint256 eth, uint256 auctionId, uint256 stepsFromStart) internal {
         uint256 payout = _calculatePayout(auctionId, eth);
 
         uint256 uniswapPayoutWithPercent = _calculatePayoutWithUniswap(
@@ -392,11 +373,11 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
             IStaking(addresses.staking).externalStake(
                 payout,
-                stakeDays,
+                options.autoStakeDays,
                 _msgSender()
             );
 
-            emit Withdraval(msg.sender, payout, stepsFromStart, now, stakeDays);
+            emit Withdraval(msg.sender, payout, stepsFromStart, now);
         } else {
             IToken(addresses.mainToken).burn(address(this), payout);
 
@@ -409,11 +390,11 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
             IStaking(addresses.staking).externalStake(
                 payout,
-                stakeDays,
+                options.autoStakeDays,
                 _msgSender()
             );
 
-            emit Withdraval(msg.sender, payout, stepsFromStart, now, stakeDays);
+            emit Withdraval(msg.sender, payout, stepsFromStart, now);
 
             IStaking(addresses.staking).externalStake(
                 toRefMintAmount,

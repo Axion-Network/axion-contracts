@@ -16,6 +16,7 @@ import { TestUtil } from '../utils/TestUtil';
 
 /** Helper Vars */
 const DAY = 86400;
+const AUTOSTAKE_LENGTH = 350;
 const DEADLINE = ethers.utils.parseEther('10000000');
 
 describe('Upgradeability', () => {
@@ -132,11 +133,16 @@ describe('Upgradeability', () => {
       // Advance the date to day 100 after launch
       await TestUtil.increaseTime(DAY * 100);
       // Bid with 10 eth
-      await auction.connect(account1).bid(0, DEADLINE, account2.address, {
+      await auction.connect(account1).bid(0, DEADLINE, account2.address, AUTOSTAKE_LENGTH, {
         value: ethers.utils.parseEther('10'),
       });
       const currentAuctionIdBefore = await auction.lastAuctionEventId();
       const auctionBidOfBefore = await auction.auctionBidOf(
+        currentAuctionIdBefore,
+        account1.address
+      );
+
+      const autoStakeDaysOfBefore = await auction.autoStakeDaysOf(
         currentAuctionIdBefore,
         account1.address
       );
@@ -155,6 +161,10 @@ describe('Upgradeability', () => {
       const currentAuctionIdAfter = await auctionUpgrade.lastAuctionEventId();
       const auctionsOfAfter = await auction.auctionsOf(account1.address, 0);
       const auctionBidOfAfter = await auctionUpgrade.auctionBidOf(
+        currentAuctionIdAfter,
+        account1.address
+      );
+      const autoStakeDaysOfAfter = await auction.autoStakeDaysOf(
         currentAuctionIdAfter,
         account1.address
       );
@@ -181,6 +191,9 @@ describe('Upgradeability', () => {
       );
       expect(reservesBefore.uniswapMiddlePrice.toString()).to.eq(
         reservesAfter.uniswapMiddlePrice.toString()
+      );
+      expect(autoStakeDaysOfBefore.toString()).to.eq(
+        autoStakeDaysOfAfter.toString()
       );
     });
   });

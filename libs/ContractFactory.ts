@@ -3,6 +3,8 @@ import { ethers } from 'hardhat';
 import {
   Auction,
   Auction__factory,
+  Auction20201219,
+  Auction20201219__factory,
   AuctionManager,
   AuctionManager__factory,
   BPD,
@@ -22,6 +24,7 @@ import {
 
 enum AxionContract {
   Auction = 'Auction',
+  Auction20201219 = 'Auction20201219',
   AuctionManager = 'AuctionManager',
   BPD = 'BPD',
   ForeignSwap = 'ForeignSwap',
@@ -41,6 +44,15 @@ export class ContractFactory {
 
   static getAuctionAt(address: string): Promise<Auction> {
     return ethers.getContractAt(AxionContract.Auction, address) as Promise<Auction>;
+  }
+
+  // Auction20201219
+  static getAuction20201219Factory(): Promise<Auction20201219__factory> {
+    return ethers.getContractFactory(AxionContract.Auction20201219) as Promise<Auction20201219__factory>;
+  }
+
+  static getAuction20201219At(address: string): Promise<Auction20201219> {
+    return ethers.getContractAt(AxionContract.Auction20201219, address) as Promise<Auction20201219>;
   }
 
   // Auction Manager
