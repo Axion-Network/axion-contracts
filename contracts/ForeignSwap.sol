@@ -4,15 +4,15 @@ pragma solidity ^0.6.0;
 
 /** OpenZeppelin Dependencies (Via NodeModules) */
 // import "@openzeppelin/contracts-upgradeable/contracts/proxy/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
+import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol';
 /** Local Interfaces */
-import "./interfaces/IToken.sol";
-import "./interfaces/IAuction.sol";
-import "./interfaces/IStaking.sol";
-import "./interfaces/IBPD.sol";
-import "./interfaces/IForeignSwap.sol";
+import './interfaces/IToken.sol';
+import './interfaces/IAuction.sol';
+import './interfaces/IStaking.sol';
+import './interfaces/IBPD.sol';
+import './interfaces/IForeignSwap.sol';
 
 contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
@@ -26,8 +26,8 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
     );
 
     /** Role Constants */
-    bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    bytes32 public constant MIGRATOR_ROLE = keccak256('MIGRATOR_ROLE');
+    bytes32 public constant MANAGER_ROLE = keccak256('MANAGER_ROLE');
 
     /** Public */
     uint256 public start;
@@ -57,24 +57,28 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
     /** Variables after initial contract launch must go below here. https://github.com/OpenZeppelin/openzeppelin-sdk/issues/37 */
     /** End Variables after launch */
 
-    uint256 public constant FINAL_MAX_CLAIMABLE_AMOUNT = 10000000000000000000000000000;
+    uint256 public constant FINAL_MAX_CLAIMABLE_AMOUNT =
+        10000000000000000000000000000;
     uint256 public finalClaimedAmount;
 
     /** Roles */
     modifier onlyManager() {
-        require(hasRole(MANAGER_ROLE, _msgSender()), "Caller is not a manager");
+        require(hasRole(MANAGER_ROLE, _msgSender()), 'Caller is not a manager');
         _;
     }
     modifier onlyMigrator() {
-        require(hasRole(MIGRATOR_ROLE, _msgSender()), "Caller is not a migrator");
+        require(
+            hasRole(MIGRATOR_ROLE, _msgSender()),
+            'Caller is not a migrator'
+        );
         _;
     }
 
     /** Init fns*/
-    function initialize(
-        address _manager,
-        address _migrator
-    ) public initializer {
+    function initialize(address _manager, address _migrator)
+        public
+        initializer
+    {
         _setupRole(MANAGER_ROLE, _manager);
         _setupRole(MIGRATOR_ROLE, _migrator);
         init_ = false;
@@ -92,12 +96,10 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
         uint256 _totalSnapshotAmount,
         uint256 _totalSnapshotAddresses
     ) external onlyMigrator {
-        require(!init_, "Init is active");
+        require(!init_, 'Init is active');
         init_ = true;
         /** Setup */
-        if (start == 0) {
-            start = now;
-        }
+        start = now;
         signerAddress = _signer;
         stepTimestamp = _stepTimestamp;
         stakePeriod = _stakePeriod;
@@ -109,67 +111,66 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
         totalSnapshotAmount = _totalSnapshotAmount;
         totalSnapshotAddresses = _totalSnapshotAddresses;
     }
+
     /** End Init Fns */
 
     function getCurrentClaimedAmount()
-    external
-    override
-    view
-    returns (uint256)
+        external
+        view
+        override
+        returns (uint256)
     {
         return claimedAmount;
     }
 
-    function getTotalSnapshotAmount() external override view returns (uint256) {
+    function getTotalSnapshotAmount() external view override returns (uint256) {
         return totalSnapshotAmount;
     }
 
     function getCurrentClaimedAddresses()
-    external
-    override
-    view
-    returns (uint256)
+        external
+        view
+        override
+        returns (uint256)
     {
         return claimedAddresses;
     }
 
     function getTotalSnapshotAddresses()
-    external
-    override
-    view
-    returns (uint256)
+        external
+        view
+        override
+        returns (uint256)
     {
         return totalSnapshotAddresses;
     }
 
     function getMessageHash(uint256 amount, address account)
-    public
-    pure
-    returns (bytes32)
+        public
+        pure
+        returns (bytes32)
     {
         return keccak256(abi.encode(amount, account));
     }
 
     function check(uint256 amount, bytes memory signature)
-    public
-    view
-    returns (bool)
+        public
+        view
+        returns (bool)
     {
         bytes32 messageHash = getMessageHash(amount, address(msg.sender));
-        return ECDSAUpgradeable.recover(messageHash, signature) == signerAddress;
+        return
+            ECDSAUpgradeable.recover(messageHash, signature) == signerAddress;
     }
 
     function getUserClaimableAmountFor(uint256 amount)
-    public
-    view
-    returns (uint256, uint256)
+        public
+        view
+        returns (uint256, uint256)
     {
         if (amount > 0) {
-            (
-            uint256 amountOut,
-            uint256 delta,
-            uint256 deltaAuctionWeekly
-            ) = getClaimableAmount(amount);
+            (uint256 amountOut, uint256 delta, uint256 deltaAuctionWeekly) =
+                getClaimableAmount(amount);
             uint256 deltaPenalized = delta.add(deltaAuctionWeekly);
             return (amountOut, deltaPenalized);
         } else {
@@ -178,23 +179,23 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
     }
 
     function claimFromForeign(uint256 amount, bytes memory signature)
-    public
-    returns (bool)
+        public
+        returns (bool)
     {
         finalClaimedAmount = finalClaimedAmount.add(amount);
-        require(finalClaimedAmount <= FINAL_MAX_CLAIMABLE_AMOUNT, "CLAIM: Cannot claim any more.");
-        require(amount != 0, "CLAIM: amount == 0");
+        require(
+            finalClaimedAmount <= FINAL_MAX_CLAIMABLE_AMOUNT,
+            'CLAIM: Cannot claim any more.'
+        );
+        require(amount != 0, 'CLAIM: amount == 0');
         require(
             check(amount, signature),
-            "CLAIM: cannot claim because signature is not correct"
+            'CLAIM: cannot claim because signature is not correct'
         );
-        require(claimedBalanceOf[msg.sender] == 0, "CLAIM: cannot claim twice");
+        require(claimedBalanceOf[msg.sender] == 0, 'CLAIM: cannot claim twice');
 
-        (
-        uint256 amountOut,
-        uint256 delta,
-        uint256 deltaAuctionWeekly
-        ) = getClaimableAmount(amount);
+        (uint256 amountOut, uint256 delta, uint256 deltaAuctionWeekly) =
+            getClaimableAmount(amount);
 
         uint256 deltaPart = delta.div(stakePeriod);
         uint256 deltaAuctionDaily = deltaPart.mul(stakePeriod.sub(uint256(1)));
@@ -215,7 +216,12 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
         claimedAmount = claimedAmount.add(amount);
         claimedAddresses = claimedAddresses.add(uint256(1));
 
-        emit TokensClaimed(msg.sender, calculateStepsFromStart(), amountOut, deltaPart);
+        emit TokensClaimed(
+            msg.sender,
+            calculateStepsFromStart(),
+            amountOut,
+            deltaPart
+        );
 
         return true;
     }
@@ -224,19 +230,14 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
         return (now.sub(start)).div(stepTimestamp);
     }
 
-    // function calculateStakeEndTime(uint256 startTime) internal view returns (uint256) {
-    //     uint256 stakePeriod = stepTimestamp.mul(stakePeriod);
-    //     return  startTime.add(stakePeriod);
-    // }
-
     function getClaimableAmount(uint256 amount)
-    internal
-    view
-    returns (
-        uint256,
-        uint256,
-        uint256
-    )
+        internal
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
     {
         uint256 deltaAuctionWeekly = 0;
         if (amount > maxClaimAmount) {
@@ -245,7 +246,8 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
         }
 
         uint256 stepsFromStart = calculateStepsFromStart();
-        uint256 daysPassed = stepsFromStart > stakePeriod ? stakePeriod : stepsFromStart;
+        uint256 daysPassed =
+            stepsFromStart > stakePeriod ? stakePeriod : stepsFromStart;
         uint256 delta = amount.mul(daysPassed).div(stakePeriod);
         uint256 amountOut = amount.sub(delta);
 

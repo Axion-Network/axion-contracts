@@ -4,15 +4,15 @@ pragma solidity >=0.4.25 <0.7.0;
 
 /** OpenZeppelin Dependencies */
 // import "@openzeppelin/contracts-upgradeable/contracts/proxy/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol';
 /** Uniswap */
-import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 /** Local Interfaces */
-import "./interfaces/IToken.sol";
-import "./interfaces/IAuction.sol";
-import "./interfaces/IStaking.sol";
-import "./interfaces/IAuctionV1.sol";
+import './interfaces/IToken.sol';
+import './interfaces/IAuction.sol';
+import './interfaces/IStaking.sol';
+import './interfaces/IAuctionV1.sol';
 
 contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
@@ -67,9 +67,9 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     }
 
     /** Roles */
-    bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
-    bytes32 public constant CALLER_ROLE = keccak256("CALLER_ROLE");
+    bytes32 public constant MIGRATOR_ROLE = keccak256('MIGRATOR_ROLE');
+    bytes32 public constant MANAGER_ROLE = keccak256('MANAGER_ROLE');
+    bytes32 public constant CALLER_ROLE = keccak256('CALLER_ROLE');
 
     /** Mapping */
     mapping(uint256 => AuctionReserves) public reservesOf;
@@ -82,7 +82,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     uint256 public lastAuctionEventIdV1;
     uint256 public start;
     uint256 public stepTimestamp;
-    
+
     Options public options;
     Addresses public addresses;
     IAuctionV1 public auctionV1;
@@ -99,7 +99,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     modifier onlyCaller() {
         require(
             hasRole(CALLER_ROLE, _msgSender()),
-            "Caller is not a caller role"
+            'Caller is not a caller role'
         );
         _;
     }
@@ -107,7 +107,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     modifier onlyManager() {
         require(
             hasRole(MANAGER_ROLE, _msgSender()),
-            "Caller is not a manager role"
+            'Caller is not a manager role'
         );
         _;
     }
@@ -115,15 +115,15 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     modifier onlyMigrator() {
         require(
             hasRole(MIGRATOR_ROLE, _msgSender()),
-            "Caller is not a migrator"
+            'Caller is not a migrator'
         );
         _;
     }
 
-    function initialize(
-        address _manager,
-        address _migrator
-    ) public initializer {
+    function initialize(address _manager, address _migrator)
+        public
+        initializer
+    {
         _setupRole(MANAGER_ROLE, _manager);
         _setupRole(MIGRATOR_ROLE, _migrator);
         init_ = false;
@@ -140,7 +140,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         address _subbalancesAddress,
         address _auctionV1Address
     ) external onlyMigrator {
-        require(!init_, "Init is active");
+        require(!init_, 'Init is active');
         init_ = true;
         /** Roles */
         _setupRole(CALLER_ROLE, _nativeSwapAddress);
@@ -152,9 +152,9 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         if (start == 0) {
             start = now;
         }
-        
+
         stepTimestamp = _stepTimestamp;
-        
+
         // Options
         options = Options({
             autoStakeDays: 14,
@@ -164,7 +164,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             discountPercent: 20,
             premiumPercent: 0
         });
-        
+
         // Addresses
         auctionV1 = IAuctionV1(_auctionV1Address);
         addresses = Addresses({
@@ -215,10 +215,8 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         path[0] = IUniswapV2Router02(addresses.uniswap).WETH();
         path[1] = addresses.mainToken;
 
-        uint256 price = IUniswapV2Router02(addresses.uniswap).getAmountsOut(
-            1e18,
-            path
-        )[1];
+        uint256 price =
+            IUniswapV2Router02(addresses.uniswap).getAmountsOut(1e18, path)[1];
 
         return price;
     }
@@ -257,32 +255,36 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     }
 
     /** Externals */
-    function _swapEth(uint256 amountOutMin, uint256 amount, uint256 deadline) private {
+    function _swapEth(
+        uint256 amountOutMin,
+        uint256 amount,
+        uint256 deadline
+    ) private {
         address[] memory path = new address[](2);
 
         path[0] = IUniswapV2Router02(addresses.uniswap).WETH();
         path[1] = addresses.mainToken;
 
-        IUniswapV2Router02(addresses.uniswap).swapExactETHForTokens{value: amount}(
-            amountOutMin,
-            path,
-            addresses.staking,
-            deadline
-        );
+        IUniswapV2Router02(addresses.uniswap).swapExactETHForTokens{
+            value: amount
+        }(amountOutMin, path, addresses.staking, deadline);
     }
 
-    function bid(uint256 amountOutMin, uint256 deadline, address ref, uint256 stakeDays) external payable {
+    function bid(
+        uint256 amountOutMin,
+        uint256 deadline,
+        address ref,
+        uint256 stakeDays
+    ) external payable {
         _saveAuctionData();
         _updatePrice();
 
-        require(_msgSender() != ref, "msg.sender == ref");
-        require(stakeDays >= options.autoStakeDays, "stakeDays < minimum days");
-        require(stakeDays <= 5555, "stakeDays > 5555 days");
+        require(_msgSender() != ref, 'msg.sender == ref');
+        require(stakeDays >= options.autoStakeDays, 'stakeDays < minimum days');
+        require(stakeDays <= 5555, 'stakeDays > 5555 days');
 
-        (
-            uint256 toRecipient,
-            uint256 toUniswap
-        ) = _calculateRecipientAndUniswapAmountsToSend();
+        (uint256 toRecipient, uint256 toUniswap) =
+            _calculateRecipientAndUniswapAmountsToSend();
 
         _swapEth(amountOutMin, toUniswap, deadline);
 
@@ -296,10 +298,11 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             auctionBidOf[stepsFromStart][_msgSender()].ref = address(0);
         }
 
-        auctionBidOf[stepsFromStart][_msgSender()]
-            .eth = auctionBidOf[stepsFromStart][_msgSender()].eth.add(
-            msg.value
-        );
+        auctionBidOf[stepsFromStart][_msgSender()].eth = auctionBidOf[
+            stepsFromStart
+        ][_msgSender()]
+            .eth
+            .add(msg.value);
 
         /** Save the amount of autostake days for this auction */
         autoStakeDaysOf[stepsFromStart][_msgSender()] = stakeDays;
@@ -332,12 +335,21 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             stakeDays = options.autoStakeDays;
         }
 
-        require(stepsFromStart > auctionId, "Auction: Auction is active");
-        require(userBid.eth > 0 && userBid.withdrawn == false, "Auction: Zero bid or withdrawn");
+        require(stepsFromStart > auctionId, 'Auction: Auction is active');
+        require(
+            userBid.eth > 0 && userBid.withdrawn == false,
+            'Auction: Zero bid or withdrawn'
+        );
 
         userBid.withdrawn = true;
 
-        callWithdraw(userBid.ref, userBid.eth, auctionId, stepsFromStart, stakeDays);
+        callWithdraw(
+            userBid.ref,
+            userBid.eth,
+            auctionId,
+            stepsFromStart,
+            stakeDays
+        );
     }
 
     function withdrawV1(uint256 auctionId) external {
@@ -345,19 +357,32 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _updatePrice();
 
         // CHECK LAST ID HERE
-        require(auctionId <= lastAuctionEventIdV1, "Auction: Invalid auction id");
+        require(
+            auctionId <= lastAuctionEventIdV1,
+            'Auction: Invalid auction id'
+        );
 
         uint256 stepsFromStart = calculateStepsFromStart();
-        require(stepsFromStart > auctionId, "Auction: Auction is active");
+        require(stepsFromStart > auctionId, 'Auction: Auction is active');
 
         /** This stops a user from using WithdrawV1 twice, since the bid is put into memory at the end */
         UserBid storage userBid = auctionBidOf[auctionId][_msgSender()];
-        require(userBid.eth == 0 && userBid.withdrawn == false, "Auction: Invalid auction ID");
+        require(
+            userBid.eth == 0 && userBid.withdrawn == false,
+            'Auction: Invalid auction ID'
+        );
 
-        (uint256 eth, address ref) = auctionV1.auctionBetOf(auctionId, _msgSender());
-        require(eth > 0, "Auction: Zero balance in auction/invalid auction ID");
+        (uint256 eth, address ref) =
+            auctionV1.auctionBetOf(auctionId, _msgSender());
+        require(eth > 0, 'Auction: Zero balance in auction/invalid auction ID');
 
-        callWithdraw(ref, eth, auctionId, stepsFromStart, options.autoStakeDays);
+        callWithdraw(
+            ref,
+            eth,
+            auctionId,
+            stepsFromStart,
+            options.autoStakeDays
+        );
 
         auctionBidOf[auctionId][_msgSender()] = UserBid({
             eth: eth,
@@ -368,14 +393,17 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         auctionsOf[_msgSender()].push(auctionId);
     }
 
-    function callWithdraw(address ref, uint256 eth, uint256 auctionId, uint256 stepsFromStart, uint256 stakeDays) internal {
+    function callWithdraw(
+        address ref,
+        uint256 eth,
+        uint256 auctionId,
+        uint256 stepsFromStart,
+        uint256 stakeDays
+    ) internal {
         uint256 payout = _calculatePayout(auctionId, eth);
 
-        uint256 uniswapPayoutWithPercent = _calculatePayoutWithUniswap(
-            auctionId,
-            eth,
-            payout
-        );
+        uint256 uniswapPayoutWithPercent =
+            _calculatePayoutWithUniswap(auctionId, eth, payout);
 
         if (payout > uniswapPayoutWithPercent) {
             uint256 nextWeeklyAuction = calculateNearestWeeklyAuction();
@@ -400,10 +428,8 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         } else {
             IToken(addresses.mainToken).burn(address(this), payout);
 
-            (
-                uint256 toRefMintAmount,
-                uint256 toUserMintAmount
-            ) = _calculateRefAndUserAmountsToMint(payout);
+            (uint256 toRefMintAmount, uint256 toUserMintAmount) =
+                _calculateRefAndUserAmountsToMint(payout);
 
             payout = payout.add(toUserMintAmount);
 
@@ -428,7 +454,8 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         external
         override
         onlyCaller
-    { // Adds a specified amount of axion to tomorrows auction
+    {
+        // Adds a specified amount of axion to tomorrows auction
         uint256 stepsFromStart = calculateStepsFromStart();
         uint256 nextAuctionId = stepsFromStart + 1;
 
@@ -442,8 +469,12 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         override
         onlyCaller
         returns (uint256)
-    {  // Adds a specified amount of axion to a future auction
-        require(daysInFuture <= 365, "AUCTION: Days in future can not be greater then 365");
+    {
+        // Adds a specified amount of axion to a future auction
+        require(
+            daysInFuture <= 365,
+            'AUCTION: Days in future can not be greater then 365'
+        );
 
         uint256 stepsFromStart = calculateStepsFromStart();
         uint256 auctionId = stepsFromStart + daysInFuture;
@@ -457,11 +488,15 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         external
         override
         onlyCaller
-    { // Adds a specified amount of axion to the next nearest weekly auction
+    {
+        // Adds a specified amount of axion to the next nearest weekly auction
         uint256 nearestWeeklyAuction = calculateNearestWeeklyAuction();
 
-        reservesOf[nearestWeeklyAuction]
-            .token = reservesOf[nearestWeeklyAuction].token.add(amount);
+        reservesOf[nearestWeeklyAuction].token = reservesOf[
+            nearestWeeklyAuction
+        ]
+            .token
+            .add(amount);
     }
 
     /** Calculate functions */
@@ -479,14 +514,13 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         uint256 amount,
         uint256 payout
     ) internal view returns (uint256) {
-        uint256 uniswapPayout = reservesOf[auctionId]
-            .uniswapMiddlePrice
-            .mul(amount)
-            .div(1e18);
+        uint256 uniswapPayout =
+            reservesOf[auctionId].uniswapMiddlePrice.mul(amount).div(1e18);
 
-        uint256 uniswapPayoutWithPercent = uniswapPayout
-            .add(uniswapPayout.mul(options.discountPercent).div(100))
-            .sub(uniswapPayout.mul(options.premiumPercent).div(100));
+        uint256 uniswapPayoutWithPercent =
+            uniswapPayout
+                .add(uniswapPayout.mul(options.discountPercent).div(100))
+                .sub(uniswapPayout.mul(options.premiumPercent).div(100));
 
         if (payout > uniswapPayoutWithPercent) {
             return uniswapPayoutWithPercent;
@@ -533,7 +567,11 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         AuctionReserves memory reserves = reservesOf[lastAuctionEventId];
 
         if (lastAuctionEventId < stepsFromStart) {
-            emit AuctionIsOver(reserves.eth, reserves.token, lastAuctionEventId);
+            emit AuctionIsOver(
+                reserves.eth,
+                reserves.token,
+                lastAuctionEventId
+            );
             lastAuctionEventId = stepsFromStart;
         }
     }

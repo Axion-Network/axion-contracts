@@ -10,6 +10,7 @@ import {
   TEST_SIGNER,
   TOTAL_SNAPSHOT_ADDRESS,
   TOTAL_SNAPSHOT_AMOUNT,
+  TEST_SIGNER_PRIV,
 } from '../utils/constants';
 import { TestUtil } from '../utils/TestUtil';
 
@@ -83,6 +84,146 @@ describe('Foreign Swap', () => {
       expect(
         await nativeswap.hasRole(ROLES.MANAGER, setToManager.address)
       ).to.eq(true); // Ensure manager roles is the setters
+    });
+  });
+
+  describe('free claim', async () => {
+    it('should check signature and return true', async () => {
+      const [setter, recipient, account1] = await ethers.getSigners();
+      const { foreignswap } = await initTestSmartContracts({
+        setter: setter,
+        recipient: recipient,
+      });
+
+      const testSignature = TestUtil.sign(
+        TEST_SIGNER_PRIV,
+        ['uint256', 'address'],
+        [MAX_CLAIM_AMOUNT.toString(), account1.address]
+      );
+
+      const checkResult = await foreignswap
+        .connect(account1)
+        .check(MAX_CLAIM_AMOUNT, testSignature);
+
+      expect(checkResult).to.be.true;
+    });
+    it('should get user claimable amount', async () => {
+      const [setter, recipient, account1] = await ethers.getSigners();
+      const { foreignswap } = await initTestSmartContracts({
+        setter: setter,
+        recipient: recipient,
+      });
+
+      let userClaimableAmt = await foreignswap
+        .connect(account1)
+        .getUserClaimableAmountFor(MAX_CLAIM_AMOUNT);
+
+      expect(userClaimableAmt[0].toString()).to.be.eq('10000000');
+      expect(userClaimableAmt[1].toString()).to.be.eq('0');
+    });
+  });
+
+  describe('claim', async () => {
+    xit('should claim', async () => {
+      const [setter, recipient, account1] = await ethers.getSigners();
+      const { foreignswap, token } = await initTestSmartContracts({
+        setter: setter,
+        recipient: recipient,
+      });
+
+      const testSignature = TestUtil.sign(
+        TEST_SIGNER_PRIV,
+        ['uint256', 'address'],
+        [MAX_CLAIM_AMOUNT.toString(), account1.address]
+      );
+
+      // const checkResult = await foreignswap
+      //   .connect(account1)
+      //   .check(MAX_CLAIM_AMOUNT, testSignature);
+
+      // expect(checkResult).to.be.true;
+      await foreignswap
+        .connect(account1)
+        .claimFromForeign(MAX_CLAIM_AMOUNT, testSignature);
+    });
+  });
+
+  describe('penalties & auction', async () => {
+    it('should penalize for late claims - inner boundary', async () => {
+      const [setter, recipient, account1] = await ethers.getSigners();
+      const { foreignswap } = await initTestSmartContracts({
+        setter: setter,
+        recipient: recipient,
+      });
+
+      let userClaimableAmt = await foreignswap
+        .connect(account1)
+        .getUserClaimableAmountFor(MAX_CLAIM_AMOUNT);
+
+      let daysFromStart, claimable;
+
+      /** Inner Boundary Test */
+      daysFromStart = 7;
+      await TestUtil.increaseTime(SECONDS_IN_DAY * daysFromStart); // Set block to 7 days in future
+      userClaimableAmt = await foreignswap
+        .connect(account1)
+        .getUserClaimableAmountFor(MAX_CLAIM_AMOUNT);
+      claimable = TestUtil.claimableAmount(daysFromStart, MAX_CLAIM_AMOUNT);
+
+      expect(userClaimableAmt[0].toString()).to.be.eq(claimable[0].toString());
+      expect(userClaimableAmt[1].toString()).to.be.eq(claimable[1].toString());
+      expect(0).to.be.eq(claimable[2]);
+    });
+
+    it('should penalize for late claims - boundary test', async () => {
+      const [setter, recipient, account1] = await ethers.getSigners();
+      const { foreignswap } = await initTestSmartContracts({
+        setter: setter,
+        recipient: recipient,
+      });
+
+      let userClaimableAmt = await foreignswap
+        .connect(account1)
+        .getUserClaimableAmountFor(MAX_CLAIM_AMOUNT);
+
+      let daysFromStart, claimable;
+
+      daysFromStart = 177;
+      await TestUtil.increaseTime(SECONDS_IN_DAY * daysFromStart);
+
+      userClaimableAmt = await foreignswap.getUserClaimableAmountFor(
+        MAX_CLAIM_AMOUNT
+      );
+      claimable = TestUtil.claimableAmount(daysFromStart, MAX_CLAIM_AMOUNT);
+
+      expect(userClaimableAmt[0].toString()).to.be.eq(claimable[0].toString());
+      expect(userClaimableAmt[1].toString()).to.be.eq(claimable[1].toString());
+      expect(0).to.be.eq(claimable[2]);
+    });
+    it('should penalize for late claims - outer boundary test', async () => {
+      const [setter, recipient, account1] = await ethers.getSigners();
+      const { foreignswap } = await initTestSmartContracts({
+        setter: setter,
+        recipient: recipient,
+      });
+
+      let userClaimableAmt = await foreignswap
+        .connect(account1)
+        .getUserClaimableAmountFor(MAX_CLAIM_AMOUNT);
+
+      let daysFromStart, claimable;
+
+      daysFromStart = 350;
+      await TestUtil.increaseTime(SECONDS_IN_DAY * daysFromStart);
+
+      userClaimableAmt = await foreignswap
+        .connect(account1)
+        .getUserClaimableAmountFor(MAX_CLAIM_AMOUNT);
+      claimable = TestUtil.claimableAmount(daysFromStart, MAX_CLAIM_AMOUNT);
+
+      expect(userClaimableAmt[0].toString()).to.be.eq(claimable[0].toString());
+      expect(userClaimableAmt[1].toString()).to.be.eq(claimable[1].toString());
+      expect(0).to.be.eq(claimable[2]);
     });
   });
 });
