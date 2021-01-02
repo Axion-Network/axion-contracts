@@ -1,5 +1,4 @@
 import { ethers, upgrades } from 'hardhat';
-import { BigNumber } from 'ethers';
 import {
   Auction,
   AuctionManager,
@@ -15,17 +14,15 @@ import {
 import { ContractFactory } from '../../libs/ContractFactory';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
-const DAY = 86400;
-const STAKE_PERIOD = 350;
-
-const V1Contracts = '0x0000000000000000000000000000000000000000';
-const TEST_SIGNER = ethers.utils.getAddress(
-  '0xCC64d26Dab6c7B971d26846A4B2132985fe8C358'
-);
-
-const MAX_CLAIM_AMOUNT = BigNumber.from(10 ** 7);
-const TOTAL_SNAPSHOT_AMOUNT = BigNumber.from(10 ** 10);
-const TOTAL_SNAPSHOT_ADDRESS = BigNumber.from(10);
+import {
+  SECONDS_IN_DAY,
+  STAKE_PERIOD,
+  V1Contracts,
+  TEST_SIGNER,
+  MAX_CLAIM_AMOUNT,
+  TOTAL_SNAPSHOT_AMOUNT,
+  TOTAL_SNAPSHOT_ADDRESS,
+} from './constants';
 
 interface InitAddresses {
   setter: SignerWithAddress;
@@ -208,7 +205,7 @@ export async function initTestSmartContracts({
 
   await nativeswap.init(
     STAKE_PERIOD,
-    DAY,
+    SECONDS_IN_DAY,
     swaptoken.address,
     usedTokenAddress,
     usedAuctionAddress
@@ -218,7 +215,7 @@ export async function initTestSmartContracts({
 
   await foreignswap.init(
     testSigner ? testSigner : TEST_SIGNER,
-    DAY,
+    SECONDS_IN_DAY,
     STAKE_PERIOD,
     maxClaimAmount ? maxClaimAmount : MAX_CLAIM_AMOUNT,
     usedTokenAddress,
@@ -230,7 +227,7 @@ export async function initTestSmartContracts({
   );
 
   await auction.init(
-    DAY,
+    SECONDS_IN_DAY,
     usedTokenAddress,
     usedStakingAddress,
     uniswap.address,
@@ -248,7 +245,7 @@ export async function initTestSmartContracts({
     usedAuctionAddress,
     V1Contracts,
     usedStakingAddress,
-    DAY,
+    SECONDS_IN_DAY,
     STAKE_PERIOD
   );
 
