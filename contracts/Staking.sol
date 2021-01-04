@@ -129,7 +129,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address _subBalancesAddress,
         address _foreignSwapAddress,
         address _stakingV1Address,
-        uint256 _stepTimestamp
+        uint256 _stepTimestamp,
+        uint256 _lastSessionIdV1
     ) external onlyMigrator {
         require(!init_, "Staking: init is active");
         init_ = true;
@@ -144,6 +145,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         });
         
         stakingV1 = IStakingV1(_stakingV1Address);
+        lastSessionIdV1 = _lastSessionIdV1;
 
         stepTimestamp = _stepTimestamp;
 

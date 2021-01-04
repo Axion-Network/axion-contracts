@@ -64,7 +64,28 @@ describe.only('Fix Share Rates & Stakes', () => {
     expect(await subbalances.currentSharesTotalSupply().then(Number)).to.be.eq(shares2) // expect subbalances shares total supply === account 1
   })
 
-  it('should fix a v1 stake that has been withdrawn because people are dumbshits', () => {
+  it.only('should fix a v1 stake that has been withdrawn because people are dumbshits', async () => {
+    const [setter, recipient, account1] = await ethers.getSigners();
+    const { staking, token } = await initTestSmartContracts({
+      setter: setter,
+      recipient: recipient,
+      v1Staking: true,
+    });
+
+    /** Add a 1.27 stakes */
+    await token.connect(setter).setupRole(ROLES.MINTER, setter.address); // setup role
+    await token.connect(setter).mint(account1.address, '100') // mint 100 for account 1
+    // await staking.connect(account1).stake('100', 365); // set a 1.27 stake
+
+
+    // const contractsLayer2 = await initTestSmartContracts({
+    //   setter: setter,
+    //   recipient: recipient,
+    //   stakingV1: staking.address,
+    //   lastSessionIdV1: '1'
+    // });
+
+    // await contractsLayer2.staking.fixV1Stake(account1.address, '1');
 
   })
 });

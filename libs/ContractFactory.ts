@@ -13,6 +13,8 @@ import {
   ForeignSwap__factory,
   NativeSwap,
   NativeSwap__factory,
+  StakingV1,
+  StakingV1__factory,
   Staking,
   Staking__factory,
   SubBalances,
@@ -30,6 +32,7 @@ enum AxionContract {
   ForeignSwap = 'ForeignSwap',
   NativeSwap = 'NativeSwap',
   Staking = 'Staking',
+  StakingV1 = 'StakingV1',
   SubBalances = 'SubBalances',
   Token = 'Token',
   UniswapV2Router02Mock = 'UniswapV2Router02Mock',
@@ -98,6 +101,15 @@ export class ContractFactory {
 
   static getStakingAt(address: string): Promise<Staking> {
     return ethers.getContractAt(AxionContract.Staking, address) as Promise<Staking>;
+  }
+
+  // StakingV1
+  static getStakingFactoryV1(): Promise<StakingV1__factory> {
+    return ethers.getContractFactory(AxionContract.StakingV1) as Promise<Staking__factory>;
+  }
+
+  static getStakingAtV1(address: string): Promise<StakingV1> {
+    return ethers.getContractAt(AxionContract.StakingV1, address) as Promise<Staking>;
   }
 
   // Sub Balances

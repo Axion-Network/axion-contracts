@@ -6,6 +6,7 @@ import {
   ForeignSwap,
   NativeSwap,
   Staking,
+  StakingV1,
   SubBalances,
   TERC20,
   Token,
@@ -24,7 +25,7 @@ import {
   TOTAL_SNAPSHOT_ADDRESS,
 } from './constants';
 
-interface InitAddresses {
+interface InitOptions {
   setter: SignerWithAddress;
   recipient: SignerWithAddress;
   fakeAuction?: SignerWithAddress;
@@ -35,6 +36,9 @@ interface InitAddresses {
   testSigner?: string;
   /** If this value is passed Token and SwapToken will be minted to this address */
   fakeBank?: SignerWithAddress;
+  stakingV1?: string;
+  lastSessionIdV1?: string;
+  v1Staking?: boolean;
 }
 
 interface AxionContracts {
@@ -60,7 +64,10 @@ export async function initTestSmartContracts({
   maxClaimAmount,
   testSigner,
   fakeToken,
-}: InitAddresses): Promise<AxionContracts> {
+  stakingV1,
+  lastSessionIdV1,
+  v1Staking
+}: InitOptions): Promise<AxionContracts> {
   /** None proxy */
   const uniswap = await ContractFactory.getUniswapV2Router02MockFactory().then(
     (factory) => factory.deploy()
@@ -145,14 +152,20 @@ export async function initTestSmartContracts({
     }
   )) as SubBalances;
 
-  const staking = (await upgrades.deployProxy(
-    await ContractFactory.getStakingFactory(),
-    [setter.address, setter.address],
-    {
-      unsafeAllowCustomTypes: true,
-      unsafeAllowLinkedLibraries: true,
-    }
-  )) as Staking;
+  let staking;
+  if(v1Staking) {
+    staking = await new StakingV1();
+  }
+  else {
+    staking = (await upgrades.deployProxy(
+      await ContractFactory.getStakingFactory(),
+      [setter.address, setter.address],
+      {
+        unsafeAllowCustomTypes: true,
+        unsafeAllowLinkedLibraries: true,
+      }
+    )) as Staking;
+  }
 
   // ok....
   const usedStakingAddress = fakeStaking
@@ -175,14 +188,26 @@ export async function initTestSmartContracts({
     }
   )) as AuctionManager;
 
-  await staking.init(
-    usedTokenAddress,
-    usedAuctionAddress,
-    usedSubBalancesAddress,
-    foreignswap.address,
-    V1Contracts,
-    SECONDS_IN_DAY
-  );
+  if(v1Staking){
+    await staking.init(
+      token.address, 
+      auction.address, 
+      subbalances.address, 
+      foreignswap, 
+      SECONDS_IN_DAY
+    );
+  }
+  else {
+    await staking.init(
+      usedTokenAddress,
+      usedAuctionAddress,
+      usedSubBalancesAddress,
+      foreignswap.address,
+      stakingV1 ? stakingV1 : V1Contracts,
+      SECONDS_IN_DAY,
+      lastSessionIdV1 ? lastSessionIdV1 : '0'
+    );
+  }
 
   await token.initSwapperAndSwapToken(swaptoken.address, nativeswap.address);
 
