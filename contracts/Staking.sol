@@ -572,7 +572,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         Session storage session = sessionDataOf[_staker][_stakeId]; // Get Session
         sharesTotalSupply = sharesTotalSupply.sub(session.shares); // Subtract shares total share supply
         ISubBalances(addresses.subBalances).subFromShareTotalSupply(session.shares); // Subtract shares subbalances total share supply
-        session.shares = _getStakersSharesAmount(amount, start, end); // update shares
+        session.shares = _getStakersSharesAmount(session.amount, session.start, session.end); // update shares
         sharesTotalSupply = sharesTotalSupply.add(session.shares); // Add to total share suuply
         ISubBalances(addresses.subBalances).addToShareTotalSupply(session.shares); // Subtract shares subbalances total share supply
     }
@@ -585,46 +585,49 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
      * This functoin can not be ran by just anyone.
      */
     function fixV1Stake(
-        address fixAddress,
-        uint256 amount,
-        uint256 stakingDays,
-        uint256 start
+        address _sender,
+        uint256 _sessionId
     ) external onlyManager {
-        if (now >= nextPayoutCall) makePayout();
+        if (now >= nextPayoutCall) makePayout(); // Keep this line similiar to stake functionality
 
-        // Staking days must be greater then 0 and less then or equal to 5555.
-        require(stakingDays != 0, 'stakingDays < 1');
-        require(stakingDays <= 5555, 'stakingDays > 5555');
+        require(_sessionId <= lastSessionIdV1, "Staking: Invalid sessionId"); // Require that the sessionId we are looking for is > v1Id
 
-        uint256 start = start;
-        uint256 end = now.add(stakingDays.mul(stepTimestamp));
+        // Ensure that the session does not exist
+        Session storage session = sessionDataOf[_sender][_sessionId];
+        require(
+            session.shares == 0 && session.withdrawn == false,
+            "Staking: Stake already fixed and or withdrawn"
+        );
 
-        lastSessionId = lastSessionId.add(1);
-        uint256 sessionId = lastSessionId;
-        uint256 shares = _getStakersSharesAmount(amount, start, end);
+        // Find the v1 stake && ensure the stake has been withdrawn
+        (uint256 amount, uint256 start, uint256 end, uint256 shares, uint256 firstPayout) 
+            = stakingV1.sessionDataOf(_sender, _sessionId);
+        require(shares == 0, "Staking: Stake has not been withdrawn");
+
+        // Get # of staking days
+        uint256 stakingDays = (end.sub(start)).div(stepTimestamp);
+
         sharesTotalSupply = sharesTotalSupply.add(shares);
 
-        sessionDataOf[fixAddress][sessionId] = Session({
+        sessionDataOf[_sender][_sessionId] = Session({
             amount: amount,
             start: start,
             end: end,
             shares: shares,
-            firstPayout: payouts.length,
+            firstPayout: firstPayout,
             lastPayout: payouts.length + stakingDays,
             withdrawn: false,
             payout: 0
         });
 
-        sessionsOf[fixAddress].push(sessionId);
+        sessionsOf[_sender].push(_sessionId);
 
         ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
-            fixAddress,
-            sessionId,
+            _sender,
+            _sessionId,
             start,
             end,
             shares
         );
-
-        emit Stake(fixAddress, sessionId, amount, start, end, shares);
     }
 }

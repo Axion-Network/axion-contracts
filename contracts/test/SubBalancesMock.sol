@@ -29,4 +29,7 @@ contract SubBalancesMock is ISubBalances {
         uint256 actualEnd,
         uint256 shares
     ) external override {}
+
+    function addToShareTotalSupply(uint256 amount) external override {}
+    function subFromShareTotalSupply(uint256 amount) external override {}
 }

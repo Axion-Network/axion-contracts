@@ -454,9 +454,9 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
 
     /** Fix share rate for users */
     function addToShareTotalSupply(uint256 amount) external override onlyStaker {
-        currentShacurrentSharesTotalSupply.add(amount);
+        currentSharesTotalSupply.add(amount);
     }
     function subFromShareTotalSupply(uint256 amount) external override onlyStaker {
-        currentShacurrentSharesTotalSupply.sub(amount);
+        currentSharesTotalSupply.sub(amount);
     }
 }

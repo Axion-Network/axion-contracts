@@ -27,4 +27,7 @@ interface ISubBalances {
         uint256 actualEnd,
         uint256 shares
     ) external;
+
+    function addToShareTotalSupply(uint256 amount) external;
+    function subFromShareTotalSupply(uint256 amount) external;
 }
