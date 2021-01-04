@@ -15,7 +15,6 @@ import "./interfaces/IBPD.sol";
 import "./interfaces/ISubBalances.sol";
 import "./interfaces/ISubBalancesV1.sol";
 
-
 contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
 	using SafeMathUpgradeable for uint256;
 
@@ -454,9 +453,9 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
 
     /** Fix share rate for users */
     function addToShareTotalSupply(uint256 amount) external override onlyStaker {
-        currentSharesTotalSupply.add(amount);
+        currentSharesTotalSupply = currentSharesTotalSupply.add(amount);
     }
     function subFromShareTotalSupply(uint256 amount) external override onlyStaker {
-        currentSharesTotalSupply.sub(amount);
+        currentSharesTotalSupply = currentSharesTotalSupply.sub(amount);
     }
 }
