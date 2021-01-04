@@ -556,4 +556,75 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);
     }
+
+    /** Share rate, until Deafdrow comes up with a solution for share rate we must actually fix the share rate approporiately */
+    function setShareRate(uint256 _shareRate) external onlyManager {
+        shareRate = _shareRate;
+    }
+
+    /**
+     * Fix stake
+     * */
+    function fixShareRateOnStake(address _staker, uint256 _stakeId)
+        external
+        onlyManager
+    {
+        Session storage session = sessionDataOf[_staker][_stakeId]; // Get Session
+        sharesTotalSupply = sharesTotalSupply.sub(session.shares); // Subtract shares total share supply
+        ISubBalances(addresses.subBalances).subFromShareTotalSupply(session.shares); // Subtract shares subbalances total share supply
+        session.shares = _getStakersSharesAmount(amount, start, end); // update shares
+        sharesTotalSupply = sharesTotalSupply.add(session.shares); // Add to total share suuply
+        ISubBalances(addresses.subBalances).addToShareTotalSupply(session.shares); // Subtract shares subbalances total share supply
+    }
+
+    /**
+     * Fix v1 unstakers
+     * Unfortunately due to people not undersatnding that we were updating to v2, we need to fix some of our users stakes
+     * This code will be removed as soon as we fix stakes
+     * In order to run this code it will take at minimum 4 devs / core team to accept any stake
+     * This functoin can not be ran by just anyone.
+     */
+    function fixV1Stake(
+        address fixAddress,
+        uint256 amount,
+        uint256 stakingDays,
+        uint256 start
+    ) external onlyManager {
+        if (now >= nextPayoutCall) makePayout();
+
+        // Staking days must be greater then 0 and less then or equal to 5555.
+        require(stakingDays != 0, 'stakingDays < 1');
+        require(stakingDays <= 5555, 'stakingDays > 5555');
+
+        uint256 start = start;
+        uint256 end = now.add(stakingDays.mul(stepTimestamp));
+
+        lastSessionId = lastSessionId.add(1);
+        uint256 sessionId = lastSessionId;
+        uint256 shares = _getStakersSharesAmount(amount, start, end);
+        sharesTotalSupply = sharesTotalSupply.add(shares);
+
+        sessionDataOf[fixAddress][sessionId] = Session({
+            amount: amount,
+            start: start,
+            end: end,
+            shares: shares,
+            firstPayout: payouts.length,
+            lastPayout: payouts.length + stakingDays,
+            withdrawn: false,
+            payout: 0
+        });
+
+        sessionsOf[fixAddress].push(sessionId);
+
+        ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
+            fixAddress,
+            sessionId,
+            start,
+            end,
+            shares
+        );
+
+        emit Stake(fixAddress, sessionId, amount, start, end, shares);
+    }
 }

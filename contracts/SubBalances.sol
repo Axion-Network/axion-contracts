@@ -79,6 +79,10 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         require(hasRole(MIGRATOR_ROLE, _msgSender()), "Caller is not a migrator");
         _;
     }
+    modifier onlyStaker() {
+        require(hasRole(STAKING_ROLE, _msgSender()), "Caller is not a staker");
+        _;
+    }
 
     /** Start Init functins */
     function initialize(
@@ -446,5 +450,13 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     /** Roles management - only for multi sig address */
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);
+    }
+
+    /** Fix share rate for users */
+    function addToShareTotalSupply(uint256 amount) external override onlyStaker {
+        currentShacurrentSharesTotalSupply.add(amount);
+    }
+    function subFromShareTotalSupply(uint256 amount) external override onlyStaker {
+        currentShacurrentSharesTotalSupply.sub(amount);
     }
 }
