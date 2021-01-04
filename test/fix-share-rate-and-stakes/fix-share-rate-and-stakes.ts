@@ -29,7 +29,7 @@ describe.only('Fix Share Rates & Stakes', () => {
     expect(await staking.shareRate()).to.eq("109000000000000000");
   })
 
-  it.only('should correctly update users share rate', async () => {
+  it('should correctly update users share rate', async () => {
     const [setter, recipient, account1] = await ethers.getSigners();
     const { staking, token, subbalances } = await initTestSmartContracts({
       setter: setter,
