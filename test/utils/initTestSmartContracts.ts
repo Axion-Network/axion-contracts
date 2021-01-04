@@ -181,7 +181,7 @@ export async function initTestSmartContracts({
     usedSubBalancesAddress,
     foreignswap.address,
     V1Contracts,
-    '10'
+    SECONDS_IN_DAY
   );
 
   await token.initSwapperAndSwapToken(swaptoken.address, nativeswap.address);

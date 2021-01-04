@@ -15,7 +15,6 @@ import "./interfaces/IStaking.sol";
 import "./interfaces/ISubBalances.sol";
 import "./interfaces/IStakingV1.sol";
 
-
 contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
 

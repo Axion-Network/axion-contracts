@@ -4,15 +4,8 @@ import { ethers } from 'hardhat';
 import { expect } from 'chai';
 
 import {
-  MAX_CLAIM_AMOUNT,
   SECONDS_IN_DAY,
-  STAKE_PERIOD,
-  TEST_SIGNER,
-  TOTAL_SNAPSHOT_ADDRESS,
-  TOTAL_SNAPSHOT_AMOUNT,
-  TEST_SIGNER_PRIV,
 } from '../utils/constants';
-import { TestUtil } from '../utils/TestUtil';
 
 describe.only('Fix Share Rates & Stakes', () => {
   it('should not allow external use of sub balances addToShareTotalSupply and subFromShareTotalSupply', async () => {
@@ -49,7 +42,7 @@ describe.only('Fix Share Rates & Stakes', () => {
 
     await token.connect(setter).mint(account1.address, '100')
 
-    await staking.connect(account1).stake('100', '365');
+    await staking.connect(account1).stake('100', 365);
 
     const data = await staking.sessionDataOf(account1.address, 1);
     const sharerate = getShareRate(data);
@@ -79,6 +72,5 @@ describe.only('Fix Share Rates & Stakes', () => {
 
 const getShareRate  = (data: any) => {
   const stakedays = (data.end.toNumber() - data.start.toNumber()) / SECONDS_IN_DAY;
-
-  return (data.amount.toNumber() * (1819 + 365)) / (1820 * (data.shares.toNumber() / 10))
+  return (data.amount.toNumber() * (1819 + stakedays)) / (1820 * (data.shares.toNumber() / 10))
 }

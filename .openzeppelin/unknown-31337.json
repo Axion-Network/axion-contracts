@@ -99,7 +99,7 @@
           {
             "contract": "Auction",
             "label": "auctionV1",
-            "type": "t_contract(IAuctionV1)12459",
+            "type": "t_contract(IAuctionV1)12427",
             "src": "contracts/Auction.sol:88"
           },
           {
@@ -137,7 +137,7 @@
           "t_struct(Addresses)4395_storage": {
             "label": "struct Auction.Addresses"
           },
-          "t_contract(IAuctionV1)12459": {
+          "t_contract(IAuctionV1)12427": {
             "label": "contract IAuctionV1"
           },
           "t_bool": {
@@ -359,13 +359,13 @@
           {
             "contract": "NativeSwap",
             "label": "mainToken",
-            "type": "t_contract(IToken)12634",
+            "type": "t_contract(IToken)12602",
             "src": "contracts/NativeSwap.sol:34"
           },
           {
             "contract": "NativeSwap",
             "label": "auction",
-            "type": "t_contract(IAuction)12442",
+            "type": "t_contract(IAuction)12410",
             "src": "contracts/NativeSwap.sol:35"
           },
           {
@@ -388,10 +388,10 @@
           "t_contract(IERC20)3199": {
             "label": "contract IERC20"
           },
-          "t_contract(IToken)12634": {
+          "t_contract(IToken)12602": {
             "label": "contract IToken"
           },
-          "t_contract(IAuction)12442": {
+          "t_contract(IAuction)12410": {
             "label": "contract IAuction"
           },
           "t_mapping(t_address,t_uint256)": {
@@ -736,9 +736,9 @@
         }
       }
     },
-    "fb315d4ad0ec47fb31b4010aa172db189c7f9c5b83fd00e252c9454748e6a888": {
-      "address": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
-      "txHash": "0xd864f8cd287967adaf62dab83ad3f53414a65f21ea69cfd0931b9c8e0f2e0258",
+    "a3cd605f27fdbd774c7dc4f3431c267cf28e3a5b724197f36a16620f03dcbb3f": {
+      "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+      "txHash": "0x6d5d8941e3d483e23abf72a613e6b43859254ba9ca837e29feb46274ac76a27e",
       "layout": {
         "storage": [
           {
@@ -772,114 +772,84 @@
             "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:225"
           },
           {
-            "contract": "Staking",
+            "contract": "SubBalances",
             "label": "addresses",
-            "type": "t_struct(Addresses)7526_storage",
-            "src": "contracts/Staking.sol:72"
+            "type": "t_struct(Addresses)9130_storage",
+            "src": "contracts/SubBalances.sol:53"
           },
           {
-            "contract": "Staking",
-            "label": "stakingV1",
-            "type": "t_contract(IStakingV1)12536",
-            "src": "contracts/Staking.sol:73"
+            "contract": "SubBalances",
+            "label": "subBalancesV1",
+            "type": "t_contract(ISubBalancesV1)12585",
+            "src": "contracts/SubBalances.sol:54"
           },
           {
-            "contract": "Staking",
-            "label": "shareRate",
+            "contract": "SubBalances",
+            "label": "startTimestamp",
             "type": "t_uint256",
-            "src": "contracts/Staking.sol:81"
+            "src": "contracts/SubBalances.sol:61"
           },
           {
-            "contract": "Staking",
-            "label": "sharesTotalSupply",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:82"
-          },
-          {
-            "contract": "Staking",
-            "label": "nextPayoutCall",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:83"
-          },
-          {
-            "contract": "Staking",
+            "contract": "SubBalances",
             "label": "stepTimestamp",
             "type": "t_uint256",
-            "src": "contracts/Staking.sol:84"
+            "src": "contracts/SubBalances.sol:62"
           },
           {
-            "contract": "Staking",
-            "label": "startContract",
+            "contract": "SubBalances",
+            "label": "basePeriod",
             "type": "t_uint256",
-            "src": "contracts/Staking.sol:85"
+            "src": "contracts/SubBalances.sol:63"
           },
           {
-            "contract": "Staking",
-            "label": "globalPayout",
+            "contract": "SubBalances",
+            "label": "currentSharesTotalSupply",
             "type": "t_uint256",
-            "src": "contracts/Staking.sol:86"
+            "src": "contracts/SubBalances.sol:64"
           },
           {
-            "contract": "Staking",
-            "label": "globalPayin",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:87"
+            "contract": "SubBalances",
+            "label": "subBalanceList",
+            "type": "t_array(t_struct(SubBalance)9121_storage)5_storage",
+            "src": "contracts/SubBalances.sol:66"
           },
           {
-            "contract": "Staking",
-            "label": "lastSessionId",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:88"
+            "contract": "SubBalances",
+            "label": "periods",
+            "type": "t_array(t_uint256)5_storage",
+            "src": "contracts/SubBalances.sol:67"
           },
           {
-            "contract": "Staking",
-            "label": "lastSessionIdV1",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:89"
+            "contract": "SubBalances",
+            "label": "stakeSessions",
+            "type": "t_mapping(t_uint256,t_struct(StakeSession)9110_storage)",
+            "src": "contracts/SubBalances.sol:68"
           },
           {
-            "contract": "Staking",
-            "label": "sessionDataOf",
-            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)7519_storage))",
-            "src": "contracts/Staking.sol:92"
-          },
-          {
-            "contract": "Staking",
-            "label": "sessionsOf",
-            "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
-            "src": "contracts/Staking.sol:93"
-          },
-          {
-            "contract": "Staking",
-            "label": "payouts",
-            "type": "t_array(t_struct(Payout)7502_storage)dyn_storage",
-            "src": "contracts/Staking.sol:94"
-          },
-          {
-            "contract": "Staking",
+            "contract": "SubBalances",
             "label": "init_",
             "type": "t_bool",
-            "src": "contracts/Staking.sol:97"
+            "src": "contracts/SubBalances.sol:70"
           }
         ],
         "types": {
-          "t_struct(Addresses)7526_storage": {
-            "label": "struct Staking.Addresses"
+          "t_struct(Addresses)9130_storage": {
+            "label": "struct SubBalances.Addresses"
           },
-          "t_contract(IStakingV1)12536": {
-            "label": "contract IStakingV1"
+          "t_contract(ISubBalancesV1)12585": {
+            "label": "contract ISubBalancesV1"
           },
           "t_uint256": {
             "label": "uint256"
           },
-          "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)7519_storage))": {
-            "label": "mapping(address => mapping(uint256 => struct Staking.Session))"
+          "t_array(t_struct(SubBalance)9121_storage)5_storage": {
+            "label": "struct SubBalances.SubBalance[5]"
           },
-          "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
-            "label": "mapping(address => uint256[])"
+          "t_array(t_uint256)5_storage": {
+            "label": "uint256[5]"
           },
-          "t_array(t_struct(Payout)7502_storage)dyn_storage": {
-            "label": "struct Staking.Payout[]"
+          "t_mapping(t_uint256,t_struct(StakeSession)9110_storage)": {
+            "label": "mapping(uint256 => struct SubBalances.StakeSession)"
           },
           "t_bool": {
             "label": "bool"
@@ -896,9 +866,9 @@
         }
       }
     },
-    "c8bea787b2ae0e065fd4663803bdca00213d4074f227ba8b747c7c89f1e9482d": {
-      "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-      "txHash": "0x2f206925f18e61d512617aa0985d8ae82ade125380cbe560e9b879d29bc39cf9",
+    "f5dea3e50c4ff6b9bd090b179b853e24e5a15a8dc988f9d872f73f756345e65a": {
+      "address": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+      "txHash": "0x3efd62b320a75ec2995d123aa247ec891ab3d3394cba54a98d12d12a6c8358f6",
       "layout": {
         "storage": [
           {
@@ -932,84 +902,114 @@
             "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:225"
           },
           {
-            "contract": "SubBalances",
+            "contract": "Staking",
             "label": "addresses",
-            "type": "t_struct(Addresses)9148_storage",
-            "src": "contracts/SubBalances.sol:57"
+            "type": "t_struct(Addresses)7525_storage",
+            "src": "contracts/Staking.sol:69"
           },
           {
-            "contract": "SubBalances",
-            "label": "subBalancesV1",
-            "type": "t_contract(ISubBalancesV1)12617",
-            "src": "contracts/SubBalances.sol:58"
+            "contract": "Staking",
+            "label": "stakingV1",
+            "type": "t_contract(IStakingV1)12504",
+            "src": "contracts/Staking.sol:70"
           },
           {
-            "contract": "SubBalances",
-            "label": "startTimestamp",
+            "contract": "Staking",
+            "label": "shareRate",
             "type": "t_uint256",
-            "src": "contracts/SubBalances.sol:65"
+            "src": "contracts/Staking.sol:78"
           },
           {
-            "contract": "SubBalances",
+            "contract": "Staking",
+            "label": "sharesTotalSupply",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:79"
+          },
+          {
+            "contract": "Staking",
+            "label": "nextPayoutCall",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:80"
+          },
+          {
+            "contract": "Staking",
             "label": "stepTimestamp",
             "type": "t_uint256",
-            "src": "contracts/SubBalances.sol:66"
+            "src": "contracts/Staking.sol:81"
           },
           {
-            "contract": "SubBalances",
-            "label": "basePeriod",
+            "contract": "Staking",
+            "label": "startContract",
             "type": "t_uint256",
-            "src": "contracts/SubBalances.sol:67"
+            "src": "contracts/Staking.sol:82"
           },
           {
-            "contract": "SubBalances",
-            "label": "currentSharesTotalSupply",
+            "contract": "Staking",
+            "label": "globalPayout",
             "type": "t_uint256",
-            "src": "contracts/SubBalances.sol:68"
+            "src": "contracts/Staking.sol:83"
           },
           {
-            "contract": "SubBalances",
-            "label": "subBalanceList",
-            "type": "t_array(t_struct(SubBalance)9139_storage)5_storage",
-            "src": "contracts/SubBalances.sol:70"
+            "contract": "Staking",
+            "label": "globalPayin",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:84"
           },
           {
-            "contract": "SubBalances",
-            "label": "periods",
-            "type": "t_array(t_uint256)5_storage",
-            "src": "contracts/SubBalances.sol:71"
+            "contract": "Staking",
+            "label": "lastSessionId",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:85"
           },
           {
-            "contract": "SubBalances",
-            "label": "stakeSessions",
-            "type": "t_mapping(t_uint256,t_struct(StakeSession)9128_storage)",
-            "src": "contracts/SubBalances.sol:72"
+            "contract": "Staking",
+            "label": "lastSessionIdV1",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:86"
           },
           {
-            "contract": "SubBalances",
+            "contract": "Staking",
+            "label": "sessionDataOf",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)7518_storage))",
+            "src": "contracts/Staking.sol:89"
+          },
+          {
+            "contract": "Staking",
+            "label": "sessionsOf",
+            "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
+            "src": "contracts/Staking.sol:90"
+          },
+          {
+            "contract": "Staking",
+            "label": "payouts",
+            "type": "t_array(t_struct(Payout)7501_storage)dyn_storage",
+            "src": "contracts/Staking.sol:91"
+          },
+          {
+            "contract": "Staking",
             "label": "init_",
             "type": "t_bool",
-            "src": "contracts/SubBalances.sol:74"
+            "src": "contracts/Staking.sol:94"
           }
         ],
         "types": {
-          "t_struct(Addresses)9148_storage": {
-            "label": "struct SubBalances.Addresses"
+          "t_struct(Addresses)7525_storage": {
+            "label": "struct Staking.Addresses"
           },
-          "t_contract(ISubBalancesV1)12617": {
-            "label": "contract ISubBalancesV1"
+          "t_contract(IStakingV1)12504": {
+            "label": "contract IStakingV1"
           },
           "t_uint256": {
             "label": "uint256"
           },
-          "t_array(t_struct(SubBalance)9139_storage)5_storage": {
-            "label": "struct SubBalances.SubBalance[5]"
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)7518_storage))": {
+            "label": "mapping(address => mapping(uint256 => struct Staking.Session))"
           },
-          "t_array(t_uint256)5_storage": {
-            "label": "uint256[5]"
+          "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
+            "label": "mapping(address => uint256[])"
           },
-          "t_mapping(t_uint256,t_struct(StakeSession)9128_storage)": {
-            "label": "mapping(uint256 => struct SubBalances.StakeSession)"
+          "t_array(t_struct(Payout)7501_storage)dyn_storage": {
+            "label": "struct Staking.Payout[]"
           },
           "t_bool": {
             "label": "bool"
