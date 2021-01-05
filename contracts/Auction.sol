@@ -94,6 +94,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
     /** Store autoStake duration (auctionID, address) */
     mapping(uint256 => mapping(address => uint256)) public autoStakeDaysOf;
+    uint8[7] public auctionTypes;
 
     /** modifiers */
     modifier onlyCaller() {
@@ -505,6 +506,20 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         return stepsFromStart.add(uint256(7).sub(stepsFromStart.mod(7)));
     }
 
+    /** 
+    * @dev 
+    * friday = 0, saturday = 1, sunday = 2 etc...
+    */
+    function getCurrentDay() public view returns (uint256) {
+        uint256 stepsFromStart = calculateStepsFromStart();
+        return stepsFromStart.mod(7);
+    }
+
+    function getTodaysAuctionType() public view returns (uint256) {
+        uint256 day = getCurrentDay();
+        return auctionTypes[day];
+    }
+
     function calculateStepsFromStart() public view returns (uint256) {
         return now.sub(start).div(stepTimestamp);
     }
@@ -579,5 +594,14 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     /** Roles management - only for multi sig address */
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);
+    }
+
+
+    function setupAuctionTypes(uint8[7] calldata _auctionTypes) external onlyManager {
+        auctionTypes = _auctionTypes;
+    }
+
+    function setAuctionType(uint8 _day, uint8 _type) external onlyManager {
+        auctionTypes[_day] = _type;
     }
 }

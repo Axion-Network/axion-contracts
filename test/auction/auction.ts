@@ -13,9 +13,12 @@ import { ContractFactory } from '../../libs/ContractFactory';
 import { TestUtil } from '../utils/TestUtil';
 
 /** Helper Vars */
-const DAY = 86400;
-const AUTOSTAKE_MIN = 60;
-const DEADLINE = ethers.utils.parseEther('10000000');
+import {
+  DAY,
+  AUTOSTAKE_MIN,
+  DEADLINE,
+  DEFAULT_AUCTION_TYPES
+} from '../utils/constants';
 
 describe('Auction', () => {
   let token: Token;
@@ -48,6 +51,31 @@ describe('Auction', () => {
       expect(addresses.uniswap).to.eq(uniswap.address);
     });
   });
+
+  describe.only('test', () => {
+    it('should get correct day of week && correct auction type', async () => {
+
+      await auction.setupAuctionTypes(DEFAULT_AUCTION_TYPES);
+
+      TestUtil.increaseTime(86400 * 18) // 18 days in future
+
+      let day = await auction.getCurrentDay() // get current day
+      const auctionType = await auction.getTodaysAuctionType(); // get aution type
+      
+      expect(day.toString()).to.be.eq('4'); // 4th day of the week friday + 4 = Teusday
+      expect(auctionType.toString()).to.be.eq('1'); // auction type 1 = VC Auction
+
+      /** Set back to friday */
+      TestUtil.increaseTime(86400 * 3)
+      day = await auction.getCurrentDay() // get current day
+      expect(day.toString()).to.be.eq('0'); // 4th day of the week friday + 4 = Teusday
+
+      /** Set to thusrday */
+      TestUtil.increaseTime(86400 * 6)
+      day = await auction.getCurrentDay() // get current day
+      expect(day.toString()).to.be.eq('6'); // 4th day of the week friday + 4 = Teusday
+    })
+  })
 
   describe('bid', () => {
     it(`should correctly send bids with a custom autostake duration, and fail if not between ${AUTOSTAKE_MIN} and 5555 days`, async () => {
