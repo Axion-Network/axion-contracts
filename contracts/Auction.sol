@@ -96,6 +96,13 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     mapping(uint256 => mapping(address => uint256)) public autoStakeDaysOf;
     uint8[7] public auctionTypes;
 
+    /** Venture struct && mapping */
+    struct Venture {
+        address coin;
+        uint8 percentage;
+    }
+    mapping(uint8 => Venture[]) public tokensOfTheDay;
+
     /** modifiers */
     modifier onlyCaller() {
         require(
@@ -353,47 +360,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         );
     }
 
-    function withdrawV1(uint256 auctionId) external {
-        _saveAuctionData();
-        _updatePrice();
-
-        // CHECK LAST ID HERE
-        require(
-            auctionId <= lastAuctionEventIdV1,
-            'Auction: Invalid auction id'
-        );
-
-        uint256 stepsFromStart = calculateStepsFromStart();
-        require(stepsFromStart > auctionId, 'Auction: Auction is active');
-
-        /** This stops a user from using WithdrawV1 twice, since the bid is put into memory at the end */
-        UserBid storage userBid = auctionBidOf[auctionId][_msgSender()];
-        require(
-            userBid.eth == 0 && userBid.withdrawn == false,
-            'Auction: Invalid auction ID'
-        );
-
-        (uint256 eth, address ref) =
-            auctionV1.auctionBetOf(auctionId, _msgSender());
-        require(eth > 0, 'Auction: Zero balance in auction/invalid auction ID');
-
-        callWithdraw(
-            ref,
-            eth,
-            auctionId,
-            stepsFromStart,
-            options.autoStakeDays
-        );
-
-        auctionBidOf[auctionId][_msgSender()] = UserBid({
-            eth: eth,
-            ref: ref,
-            withdrawn: true
-        });
-
-        auctionsOf[_msgSender()].push(auctionId);
-    }
-
     function callWithdraw(
         address ref,
         uint256 eth,
@@ -604,4 +570,26 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     function setAuctionType(uint8 _day, uint8 _type) external onlyManager {
         auctionTypes[_day] = _type;
     }
+
+    function setTokenOfDay(uint8 day, address[] calldata coins, uint8[] calldata percentages) external onlyManager {
+        delete tokensOfTheDay[day];
+
+        uint8 percent = 0;
+        for(uint8 i; i < coins.length; i++) {
+            tokensOfTheDay[day].push(Venture({
+                coin: coins[i],
+                percentage: percentages[i]
+            }));
+            
+            percent = percentages[i] + percent;
+        }
+
+        require(percent == 100, "AUCTION: Percentage for venture day must equal 100");
+    }
 }
+
+    // struct Venture {
+    //     address coin;
+    //     uint8 percentage;
+    // }
+    // mapping(uint8 => Venture[]) public tokensOfTheDay;

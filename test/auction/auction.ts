@@ -8,6 +8,7 @@ import {
   Staking,
   UniswapV2Router02Mock,
   Auction20201219,
+  TERC20,
 } from '../../typechain';
 import { ContractFactory } from '../../libs/ContractFactory';
 import { TestUtil } from '../utils/TestUtil';
@@ -22,6 +23,7 @@ import {
 
 describe('Auction', () => {
   let token: Token;
+  let swaptoken: TERC20;
   let auction: Auction;
   let staking: Staking;
   let uniswap: UniswapV2Router02Mock;
@@ -32,7 +34,7 @@ describe('Auction', () => {
       setter,
       recipient,
     });
-
+    swaptoken = contracts.swaptoken;
     token = contracts.token;
     auction = contracts.auction;
     staking = contracts.staking;
@@ -52,7 +54,7 @@ describe('Auction', () => {
     });
   });
 
-  describe.only('test', () => {
+  describe.only('venture auction', () => {
     it('should get correct day of week && correct auction type', async () => {
 
       await auction.setupAuctionTypes(DEFAULT_AUCTION_TYPES);
@@ -74,6 +76,29 @@ describe('Auction', () => {
       TestUtil.increaseTime(86400 * 6)
       day = await auction.getCurrentDay() // get current day
       expect(day.toString()).to.be.eq('6'); // 4th day of the week friday + 4 = Teusday
+    })
+
+    it('should not set token of day if percentage does not equal 100', async () => {
+      await expect(auction.setTokenOfDay(0, [token.address], [90])).to.be.revertedWith("Percentage for venture day must equal 100");
+    })
+
+    it("should set token of the day with correct percentages", async () => {
+      let tokenOfDay0, tokenOfDay1; // Create token of day holders
+
+      await auction.setTokenOfDay(0, [token.address], [100]) // Set token of day to axn 100%
+      tokenOfDay0 = await auction.tokensOfTheDay(0,0); // Get token of day
+      
+      expect(tokenOfDay0.coin).to.be.eq(token.address) // Expect first token to be axn
+      expect(tokenOfDay0.percentage).to.be.eq(100) // expect first percent to be 100
+
+      await auction.setTokenOfDay(5, [token.address, swaptoken.address], [65, 35])
+      tokenOfDay0 = await auction.tokensOfTheDay(5,0);
+      tokenOfDay1 = await auction.tokensOfTheDay(5,1);
+
+      expect(tokenOfDay0.coin).to.be.eq(token.address)
+      expect(tokenOfDay0.percentage).to.be.eq(65)
+      expect(tokenOfDay1.coin).to.be.eq(swaptoken.address)
+      expect(tokenOfDay1.percentage).to.be.eq(35)
     })
   })
 

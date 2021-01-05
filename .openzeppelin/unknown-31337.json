@@ -202,13 +202,13 @@
           {
             "contract": "NativeSwap",
             "label": "mainToken",
-            "type": "t_contract(IToken)12399",
+            "type": "t_contract(IToken)12372",
             "src": "contracts/NativeSwap.sol:34"
           },
           {
             "contract": "NativeSwap",
             "label": "auction",
-            "type": "t_contract(IAuction)12217",
+            "type": "t_contract(IAuction)12190",
             "src": "contracts/NativeSwap.sol:35"
           },
           {
@@ -231,10 +231,10 @@
           "t_contract(IERC20)3199": {
             "label": "contract IERC20"
           },
-          "t_contract(IToken)12399": {
+          "t_contract(IToken)12372": {
             "label": "contract IToken"
           },
-          "t_contract(IAuction)12217": {
+          "t_contract(IAuction)12190": {
             "label": "contract IAuction"
           },
           "t_mapping(t_address,t_uint256)": {
@@ -541,13 +541,13 @@
           {
             "contract": "SubBalances",
             "label": "addresses",
-            "type": "t_struct(Addresses)8983_storage",
+            "type": "t_struct(Addresses)8956_storage",
             "src": "contracts/SubBalances.sol:54"
           },
           {
             "contract": "SubBalances",
             "label": "subBalancesV1",
-            "type": "t_contract(ISubBalancesV1)12382",
+            "type": "t_contract(ISubBalancesV1)12355",
             "src": "contracts/SubBalances.sol:55"
           },
           {
@@ -577,7 +577,7 @@
           {
             "contract": "SubBalances",
             "label": "subBalanceList",
-            "type": "t_array(t_struct(SubBalance)8974_storage)5_storage",
+            "type": "t_array(t_struct(SubBalance)8947_storage)5_storage",
             "src": "contracts/SubBalances.sol:67"
           },
           {
@@ -589,7 +589,7 @@
           {
             "contract": "SubBalances",
             "label": "stakeSessions",
-            "type": "t_mapping(t_uint256,t_struct(StakeSession)8963_storage)",
+            "type": "t_mapping(t_uint256,t_struct(StakeSession)8936_storage)",
             "src": "contracts/SubBalances.sol:69"
           },
           {
@@ -600,22 +600,22 @@
           }
         ],
         "types": {
-          "t_struct(Addresses)8983_storage": {
+          "t_struct(Addresses)8956_storage": {
             "label": "struct SubBalances.Addresses"
           },
-          "t_contract(ISubBalancesV1)12382": {
+          "t_contract(ISubBalancesV1)12355": {
             "label": "contract ISubBalancesV1"
           },
           "t_uint256": {
             "label": "uint256"
           },
-          "t_array(t_struct(SubBalance)8974_storage)5_storage": {
+          "t_array(t_struct(SubBalance)8947_storage)5_storage": {
             "label": "struct SubBalances.SubBalance[5]"
           },
           "t_array(t_uint256)5_storage": {
             "label": "uint256[5]"
           },
-          "t_mapping(t_uint256,t_struct(StakeSession)8963_storage)": {
+          "t_mapping(t_uint256,t_struct(StakeSession)8936_storage)": {
             "label": "mapping(uint256 => struct SubBalances.StakeSession)"
           },
           "t_bool": {
@@ -671,13 +671,13 @@
           {
             "contract": "Staking",
             "label": "addresses",
-            "type": "t_struct(Addresses)7591_storage",
+            "type": "t_struct(Addresses)7564_storage",
             "src": "contracts/Staking.sol:70"
           },
           {
             "contract": "Staking",
             "label": "stakingV1",
-            "type": "t_contract(IStakingV1)12311",
+            "type": "t_contract(IStakingV1)12284",
             "src": "contracts/Staking.sol:71"
           },
           {
@@ -737,7 +737,7 @@
           {
             "contract": "Staking",
             "label": "sessionDataOf",
-            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)7584_storage))",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)7557_storage))",
             "src": "contracts/Staking.sol:90"
           },
           {
@@ -749,7 +749,7 @@
           {
             "contract": "Staking",
             "label": "payouts",
-            "type": "t_array(t_struct(Payout)7567_storage)dyn_storage",
+            "type": "t_array(t_struct(Payout)7540_storage)dyn_storage",
             "src": "contracts/Staking.sol:92"
           },
           {
@@ -760,22 +760,22 @@
           }
         ],
         "types": {
-          "t_struct(Addresses)7591_storage": {
+          "t_struct(Addresses)7564_storage": {
             "label": "struct Staking.Addresses"
           },
-          "t_contract(IStakingV1)12311": {
+          "t_contract(IStakingV1)12284": {
             "label": "contract IStakingV1"
           },
           "t_uint256": {
             "label": "uint256"
           },
-          "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)7584_storage))": {
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)7557_storage))": {
             "label": "mapping(address => mapping(uint256 => struct Staking.Session))"
           },
           "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
             "label": "mapping(address => uint256[])"
           },
-          "t_array(t_struct(Payout)7567_storage)dyn_storage": {
+          "t_array(t_struct(Payout)7540_storage)dyn_storage": {
             "label": "struct Staking.Payout[]"
           },
           "t_bool": {
@@ -843,7 +843,7 @@
           {
             "contract": "AuctionManager",
             "label": "addresses",
-            "type": "t_struct(Addresses)5895_storage",
+            "type": "t_struct(Addresses)5868_storage",
             "src": "contracts/AuctionManager.sol:47"
           }
         ],
@@ -851,7 +851,7 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_struct(Addresses)5895_storage": {
+          "t_struct(Addresses)5868_storage": {
             "label": "struct AuctionManager.Addresses"
           },
           "t_mapping(t_bytes32,t_struct(RoleData)84_storage)": {
@@ -869,9 +869,9 @@
         }
       }
     },
-    "fcd9067f3551a3aa812bca80b50a4aa92dfc82dadb22e6835b44417d5e40a620": {
+    "c3bda47259af895ff3c71cabd084756141c5f59f6c01a72ae4d1a07ac2d8dab5": {
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0xaf379c1f31738273237886f2b834060569aa4c2bc30e13bb22a3817eccbde6b6",
+      "txHash": "0xb4e827b1bed3462883d49d2ec81da0ce84f7c82bddf63e039849f02cc9afb08c",
       "layout": {
         "storage": [
           {
@@ -967,7 +967,7 @@
           {
             "contract": "Auction",
             "label": "auctionV1",
-            "type": "t_contract(IAuctionV1)12234",
+            "type": "t_contract(IAuctionV1)12207",
             "src": "contracts/Auction.sol:88"
           },
           {
@@ -987,6 +987,12 @@
             "label": "auctionTypes",
             "type": "t_array(t_uint8)7_storage",
             "src": "contracts/Auction.sol:97"
+          },
+          {
+            "contract": "Auction",
+            "label": "tokensOfTheDay",
+            "type": "t_mapping(t_uint8,t_array(t_struct(Venture)4475_storage)dyn_storage)",
+            "src": "contracts/Auction.sol:104"
           }
         ],
         "types": {
@@ -1011,7 +1017,7 @@
           "t_struct(Addresses)4395_storage": {
             "label": "struct Auction.Addresses"
           },
-          "t_contract(IAuctionV1)12234": {
+          "t_contract(IAuctionV1)12207": {
             "label": "contract IAuctionV1"
           },
           "t_bool": {
@@ -1022,6 +1028,9 @@
           },
           "t_array(t_uint8)7_storage": {
             "label": "uint8[7]"
+          },
+          "t_mapping(t_uint8,t_array(t_struct(Venture)4475_storage)dyn_storage)": {
+            "label": "mapping(uint8 => struct Auction.Venture[])"
           },
           "t_mapping(t_bytes32,t_struct(RoleData)84_storage)": {
             "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
