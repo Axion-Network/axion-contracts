@@ -97,6 +97,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     /** Variables after initial contract launch must go below here. https://github.com/OpenZeppelin/openzeppelin-sdk/issues/37 */
     /** End Variables after launch */
 
+    uint256 public totalStakedAmount;
+
     /** Roles */
     modifier onlyManager() {
         require(hasRole(MANAGER_ROLE, _msgSender()), "Caller is not a manager");
@@ -182,6 +184,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 sessionId = lastSessionId;
         uint256 shares = _getStakersSharesAmount(amount, start, end);
         sharesTotalSupply = sharesTotalSupply.add(shares);
+        totalStakedAmount = totalStakedAmount.add(amount);
 
         sessionDataOf[msg.sender][sessionId] = Session({
             amount: amount,
@@ -224,6 +227,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 sessionId = lastSessionId;
         uint256 shares = _getStakersSharesAmount(amount, start, end);
         sharesTotalSupply = sharesTotalSupply.add(shares);
+        totalStakedAmount = totalStakedAmount.add(amount);
 
         sessionDataOf[staker][sessionId] = Session({
             amount: amount,
@@ -392,6 +396,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         sharesTotalSupply = sharesTotalSupply.sub(shares);
+        totalStakedAmount = totalStakedAmount.sub(amount);
 
         (uint256 amountOut, uint256 penalty) = getAmountOutAndPenalty(
             amount,
@@ -487,7 +492,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         uint256 inflation = uint256(8)
-            .mul(currentTokenTotalSupply.add(sharesTotalSupply))
+            .mul(currentTokenTotalSupply.add(totalStakedAmount))
             .div(36500);
 
         return amountTokenInDay.add(inflation);
@@ -513,7 +518,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         IToken(addresses.mainToken).burn(address(this), amountTokenInDay);
 
         uint256 inflation = uint256(8)
-            .mul(currentTokenTotalSupply.add(sharesTotalSupply))
+            .mul(currentTokenTotalSupply.add(totalStakedAmount))
             .div(36500);
 
 
@@ -556,4 +561,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);
     }
+    
+    /** Public Setter Functions */
+    function setTotalStakedAmount(uint256 _totalStakedAmount) external onlyManager {
+        totalStakedAmount = _totalStakedAmount;
+    }
+
 }
