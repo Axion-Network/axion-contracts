@@ -587,9 +587,3 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         require(percent == 100, "AUCTION: Percentage for venture day must equal 100");
     }
 }
-
-    // struct Venture {
-    //     address coin;
-    //     uint8 percentage;
-    // }
-    // mapping(uint8 => Venture[]) public tokensOfTheDay;
