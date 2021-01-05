@@ -701,12 +701,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     //begin the staking part for amountOut resulted from the unstake and stakingDays
 
-        uint256 start = now;
-        uint256 end = now.add(stakingDays.mul(stepTimestamp));
+        start = now;
+        end = now.add(stakingDays.mul(stepTimestamp));
 
         lastSessionId = lastSessionId.add(1);
         uint256 newSessionId = lastSessionId;
-        uint256 shares = _getStakersSharesAmount(amountOut, start, end);
+        shares = _getStakersSharesAmount(amountOut, start, end);
         sharesTotalSupply = sharesTotalSupply.add(shares);
 
         sessionDataOf[msg.sender][newSessionId] = Session({
