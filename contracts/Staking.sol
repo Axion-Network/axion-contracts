@@ -552,6 +552,233 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return (numerator).mul(1e18).div(denominator);
     }
 
+    function reStake(uint256 sessionId, uint256 stakingDays) external {
+        if (now >= nextPayoutCall) makePayout();
+
+        // Staking days must be greater then 0 and less then or equal to 5555.
+        require(stakingDays != 0, "stakingDays < 1");
+        require(stakingDays <= 5555, "stakingDays > 5555");
+
+        //first process the unstake part
+        Session storage session = sessionDataOf[msg.sender][sessionId];
+
+        require(
+            session.shares != 0 
+                && session.withdrawn == false,
+            "Staking: Stake withdrawn/invalid"
+        );
+
+        uint256 actualEnd = now;
+        // only allow matured stakes to be restaked
+        require(session.end <= actualEnd, "Staking: stake not mature");
+
+        //call reUnstakeInternal - modified unstakeInternal to get amountOut        
+        uint256 amountOut = reUnstakeInternal(
+            sessionId,
+            session.amount, 
+            session.start, 
+            session.end,
+            actualEnd,
+            session.shares, 
+            session.firstPayout, 
+            session.lastPayout
+        );
+
+        ISubBalances(addresses.subBalances).callOutcomeStakerTrigger(
+            sessionId,
+            session.start,
+            session.end,
+            actualEnd,
+            session.shares
+        );
+
+        session.end = actualEnd;
+        session.withdrawn = true;
+        session.payout = amountOut;
+        
+        //begin the staking part for amountOut resulted from the unstake and stakingDays
+
+        uint256 start = now;
+        uint256 end = now.add(stakingDays.mul(stepTimestamp));
+
+        lastSessionId = lastSessionId.add(1);
+        uint256 newSessionId = lastSessionId;
+        uint256 shares = _getStakersSharesAmount(amountOut, start, end);
+        sharesTotalSupply = sharesTotalSupply.add(shares);
+
+        sessionDataOf[msg.sender][newSessionId] = Session({
+            amount: amountOut,
+            start: start,
+            end: end,
+            shares: shares,
+            firstPayout: payouts.length,
+            lastPayout: payouts.length + stakingDays,
+            withdrawn: false,
+            payout: 0
+        });
+
+        sessionsOf[msg.sender].push(newSessionId);
+
+        ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
+            msg.sender,
+            newSessionId,
+            start,
+            end,
+            shares
+        );
+
+        emit Stake(msg.sender, newSessionId, amountOut, start, end, shares);
+
+    }
+
+
+    function reStakeV1(uint256 sessionId, uint256 stakingDays) external {
+        if (now >= nextPayoutCall) makePayout();
+
+        //first process the unstake part
+
+        require(sessionId <= lastSessionIdV1, "Staking: Invalid sessionId");
+
+        Session storage session = sessionDataOf[msg.sender][sessionId];
+
+        // Unstaked already
+        require(
+            session.shares == 0 && session.withdrawn == false,
+            "Staking: Stake withdrawn"
+        );
+
+        (uint256 amount, uint256 start, uint256 end, uint256 shares, uint256 firstPayout) 
+            = stakingV1.sessionDataOf(msg.sender, sessionId);
+
+        // Unstaked in v1 / doesn't exist
+        require(
+            shares > 0,
+            "Staking: Stake withdrawn"
+        );
+
+        // Staking days must be greater then 0 and less then or equal to 5555.
+        require(stakingDays != 0, "stakingDays < 1");
+        require(stakingDays <= 5555, "stakingDays > 5555");
+        
+        uint256 actualEnd = now;
+         // only allow matured stakes to be restaked
+        require(end <= actualEnd, "Staking: stake not mature");
+
+        uint256 lastPayout = (end - start) / stepTimestamp + firstPayout;
+        
+        uint256 amountOut = reUnstakeInternal(
+            sessionId, 
+            amount, 
+            start,
+            end,
+            actualEnd,
+            shares, 
+            firstPayout, 
+            lastPayout
+        );
+
+        ISubBalances(addresses.subBalances).callOutcomeStakerTriggerV1(
+            msg.sender,
+            sessionId,
+            start,
+            end,
+            actualEnd,
+            shares
+        );
+
+        sessionDataOf[msg.sender][sessionId] = Session({
+            amount: amount,
+            start: start,
+            end: actualEnd,
+            shares: shares,
+            firstPayout: firstPayout,
+            lastPayout: lastPayout,
+            withdrawn: true,
+            payout: amountOut
+        });
+
+        sessionsOf[msg.sender].push(sessionId);
+
+    //begin the staking part for amountOut resulted from the unstake and stakingDays
+
+        uint256 start = now;
+        uint256 end = now.add(stakingDays.mul(stepTimestamp));
+
+        lastSessionId = lastSessionId.add(1);
+        uint256 newSessionId = lastSessionId;
+        uint256 shares = _getStakersSharesAmount(amountOut, start, end);
+        sharesTotalSupply = sharesTotalSupply.add(shares);
+
+        sessionDataOf[msg.sender][newSessionId] = Session({
+            amount: amountOut,
+            start: start,
+            end: end,
+            shares: shares,
+            firstPayout: payouts.length,
+            lastPayout: payouts.length + stakingDays,
+            withdrawn: false,
+            payout: 0
+        });
+
+        sessionsOf[msg.sender].push(newSessionId);
+
+        ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
+            msg.sender,
+            newSessionId,
+            start,
+            end,
+            shares
+        );
+
+        emit Stake(msg.sender, newSessionId, amountOut, start, end, shares);
+
+    }
+
+    //modified unstakeInternal function used for reStake - difference is we only pay the penalty
+    function reUnstakeInternal(
+        uint256 sessionId, 
+        uint256 amount, 
+        uint256 start, 
+        uint256 end, 
+        uint256 actualEnd,
+        uint256 shares, 
+        uint256 firstPayout,
+        uint256 lastPayout
+    ) internal returns (uint256) {
+        uint256 stakingInterest = calculateStakingInterest(
+            firstPayout,
+            lastPayout,
+            shares
+        );
+
+        sharesTotalSupply = sharesTotalSupply.sub(shares);
+
+        (uint256 amountOut, uint256 penalty) = getAmountOutAndPenalty(
+            amount,
+            start,
+            end,
+            stakingInterest
+        );
+
+        // we only pay penalty, we don't pay amountOut as that is going to be restaked
+        if (penalty != 0) {
+            _initPayout(addresses.auction, penalty);
+            IAuction(addresses.auction).callIncomeDailyTokensTrigger(penalty);
+        }
+        
+        emit Unstake(
+            msg.sender,
+            sessionId,
+            amountOut,
+            start,
+            actualEnd,
+            shares
+        );
+
+        return amountOut;
+    }
+
+
     /** Roles management - only for multi sig address */
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);
