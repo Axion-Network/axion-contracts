@@ -60,14 +60,16 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     
 	uint256 public startTimestamp;
     uint256 public stepTimestamp;
-    uint256 public basePeriod;
-	uint256 public currentSharesTotalSupply;
+    uint256 public basePeriod; // NOT USED
+	uint256 public currentSharesTotalSupply; // NOT USED
 
     SubBalance[5] public subBalanceList;
-    uint256[5] public periods;
+    uint256[5] public periods; // NOT USED
     mapping (uint256 => StakeSession) public stakeSessions;
 
     bool public init_;
+
+    /* New variables must go below here. */
 
     /** No longer needed with initializable */
     modifier onlyManager() {
@@ -126,7 +128,6 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
                 periods[i] = _basePeriod * (i + 1);
                 SubBalance storage subBalance = subBalanceList[i];
                 subBalance.payDayTime = startTimestamp.add(stepTimestamp.mul(periods[i]));
-                // subBalance.payDayEnd = subBalance.payDayStart.add(stepTimestamp);
                 subBalance.requiredStakePeriod = periods[i];
             }
         }
@@ -265,7 +266,6 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         }
     }
 
-
     function callIncomeStakerTrigger(
         address staker,
         uint256 sessionId,
@@ -275,38 +275,30 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     ) external override {
         require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
         require(end > start, "SUBBALANCES: Stake end must be after stake start");
-        uint256 stakeDays = (end - start).div(stepTimestamp);
 
-        // Skipping user if period less that year
-        if (stakeDays >= basePeriod) {
+        // Setting pay day eligibility for user in advance when he stakes
+        bool[5] memory stakerPayDays;
+        for (uint256 i = 0; i < subBalanceList.length; i++) {
+            SubBalance storage subBalance = subBalanceList[i];  
 
-            // Setting pay day eligibility for user in advance when he stakes
-            bool[5] memory stakerPayDays;
-            for (uint256 i = 0; i < subBalanceList.length; i++) {
-                SubBalance storage subBalance = subBalanceList[i];  
+            // Setting eligibility only if payday is not passed and stake end more that this pay day
+            if (subBalance.payDayTime > start && end > subBalance.payDayTime) {
+                stakerPayDays[i] = true;
 
-                // Setting eligibility only if payday is not passed and stake end more that this pay day
-                if (subBalance.payDayTime > start && end > subBalance.payDayTime) {
-                    stakerPayDays[i] = true;
-
-                    subBalance.totalShares = subBalance.totalShares.add(shares);
-                }
+                subBalance.totalShares = subBalance.totalShares.add(shares);
             }
-
-            // Saving user
-            stakeSessions[sessionId] = StakeSession({
-                staker: staker,
-                shares: shares,
-                start: start,
-                end: end,
-                finishTime: 0,
-                payDayEligible: stakerPayDays,
-                withdrawn: false
-            });
         }
 
-        // Adding to shares
-        currentSharesTotalSupply = currentSharesTotalSupply.add(shares);            
+        // Saving user
+        stakeSessions[sessionId] = StakeSession({
+            staker: staker,
+            shares: shares,
+            start: start,
+            end: end,
+            finishTime: 0,
+            payDayEligible: stakerPayDays,
+            withdrawn: false
+        });         
 	}
 
     function callOutcomeStakerTrigger(
@@ -321,22 +313,12 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     {
         require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
         require(end > start, "SUBBALANCES: Stake end must be after stake start");
-        uint256 stakeDays = (end - start).div(stepTimestamp);
 
-        if (stakeDays >= basePeriod) {
-            StakeSession storage stakeSession = stakeSessions[sessionId];
+        StakeSession storage stakeSession = stakeSessions[sessionId];
 
-            stakeSession.finishTime = actualEnd;
-            stakeSession.payDayEligible 
-                = handleBpdEligibility(shares, actualEnd, stakeSession.payDayEligible);
-        }
-
-        // Substract shares from total
-        if (shares > currentSharesTotalSupply) {
-            currentSharesTotalSupply = 0;
-        } else {
-            currentSharesTotalSupply = currentSharesTotalSupply.sub(shares);
-        }
+        stakeSession.finishTime = actualEnd;
+        stakeSession.payDayEligible 
+            = handleBpdEligibility(shares, actualEnd, stakeSession.payDayEligible);
     }
 
     function callOutcomeStakerTriggerV1(
@@ -352,30 +334,20 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     {
         require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
         require(end > start, "SUBBALANCES: Stake end must be after stake start");
-        uint256 stakeDays = (end - start).div(stepTimestamp);
 
-        if (stakeDays >= basePeriod) {
-            bool[5] memory payDayEligible = subBalancesV1.getSessionEligibility(sessionId);
+        bool[5] memory payDayEligible = subBalancesV1.getSessionEligibility(sessionId);
 
-            payDayEligible = handleBpdEligibility(shares, actualEnd, payDayEligible);
+        payDayEligible = handleBpdEligibility(shares, actualEnd, payDayEligible);
 
-            stakeSessions[sessionId] = StakeSession({
-                staker: staker,
-                shares: shares,
-                start: start,
-                end: end,
-                finishTime: actualEnd,
-                payDayEligible: payDayEligible,
-                withdrawn: false
-            });
-        }
-        
-        // Substract shares from total
-        if (shares > currentSharesTotalSupply) {
-            currentSharesTotalSupply = 0;
-        } else {
-            currentSharesTotalSupply = currentSharesTotalSupply.sub(shares);
-        }
+        stakeSessions[sessionId] = StakeSession({
+            staker: staker,
+            shares: shares,
+            start: start,
+            end: end,
+            finishTime: actualEnd,
+            payDayEligible: payDayEligible,
+            withdrawn: false
+        });
     }
 
     function handleBpdEligibility(uint256 shares, uint256 realStakeEnd, bool[5] memory stakePayDays) 
@@ -431,8 +403,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     function _bpdAmountFromRaw(uint256 yearTokenAmount) internal view returns (uint256 totalAmount, uint256 addAmount) {
     	uint256 currentTokenTotalSupply = IERC20Upgradeable(addresses.mainToken).totalSupply();
 
-        uint256 inflation = uint256(8).mul(currentTokenTotalSupply.add(currentSharesTotalSupply)).div(36500);
-
+     	uint256 inflation = uint256(8).mul(currentTokenTotalSupply).div(36500);
         
         uint256 criticalMassCoeff = IForeignSwap(addresses.foreignSwap).getCurrentClaimedAmount().mul(1e18).div(
             IForeignSwap(addresses.foreignSwap).getTotalSnapshotAmount());
