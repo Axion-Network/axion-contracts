@@ -639,7 +639,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sessionsOf[msg.sender].push(newSessionId);
 
-        if (StakingDays >= basePeriod) {
+        if (stakingDays >= basePeriod) {
             ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
                 msg.sender,
                 newSessionId,
@@ -748,7 +748,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sessionsOf[msg.sender].push(newSessionId);
 
-        if (StakingDays >= basePeriod) {
+        if (stakingDays >= basePeriod) {
             ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
                 msg.sender,
                 newSessionId,
