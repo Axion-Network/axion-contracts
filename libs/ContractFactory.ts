@@ -15,6 +15,7 @@ import {
   NativeSwap__factory,
   Staking,
   Staking__factory,
+  StakingV1__factory,
   SubBalances,
   SubBalances__factory,
   SubBalancesMock__factory,
@@ -98,6 +99,10 @@ export class ContractFactory {
   // Staking
   static getStakingFactory(): Promise<Staking__factory> {
     return ethers.getContractFactory(AxionContract.Staking) as Promise<Staking__factory>;
+  }
+
+  static getStakingV1Factory(): Promise<StakingV1__factory> {
+    return ethers.getContractFactory(AxionContract.StakingV1) as Promise<StakingV1__factory>;
   }
 
   static getStakingAt(address: string): Promise<Staking> {

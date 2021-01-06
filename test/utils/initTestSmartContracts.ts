@@ -6,6 +6,7 @@ import {
   ForeignSwap,
   NativeSwap,
   Staking,
+  StakingV1,
   SubBalances,
   TERC20,
   Token,
@@ -17,7 +18,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import {
   SECONDS_IN_DAY,
   STAKE_PERIOD,
-  V1Contracts,
+  ZERO_ADDRESS,
   TEST_SIGNER,
   MAX_CLAIM_AMOUNT,
   TOTAL_SNAPSHOT_AMOUNT,
@@ -39,6 +40,7 @@ interface InitOptions {
   bank?: SignerWithAddress;
   basePeriod?: number;
   secondsInDay?: number;
+  lastSessionIdV1?: number;
 }
 
 interface AxionContracts {
@@ -51,6 +53,7 @@ interface AxionContracts {
   uniswap: UniswapV2Router02Mock;
   subBalances: SubBalances;
   staking: Staking;
+  stakingV1: StakingV1;
   auctionManager: AuctionManager;
 }
 
@@ -67,8 +70,9 @@ export async function initTestSmartContracts({
   stakingV1,
   lastSessionIdV1,
   basePeriod = STAKE_PERIOD,
-  secondsInDay = SECONDS_IN_DAY
-}: InitOptions): Promise<AxionContracts> {
+  secondsInDay = SECONDS_IN_DAY,
+  lastSessionIdV1 = 0
+}: InitAddresses): Promise<AxionContracts> {
   /** None proxy */
   const uniswap = await ContractFactory.getUniswapV2Router02MockFactory().then(
     (factory) => factory.deploy()
@@ -182,14 +186,24 @@ export async function initTestSmartContracts({
     }
   )) as AuctionManager;
 
+  const stakingV1 = await (await ContractFactory.getStakingV1Factory()).deploy();
+
+  await stakingV1.init(
+    usedTokenAddress,
+    usedAuctionAddress,
+    usedSubBalancesAddress,
+    foreignswap.address,
+    secondsInDay
+  );
+
   await staking.init(
     usedTokenAddress,
     usedAuctionAddress,
     usedSubBalancesAddress,
     foreignswap.address,
-    stakingV1 ? stakingV1 : V1Contracts,
-    SECONDS_IN_DAY,
-    lastSessionIdV1 ? lastSessionIdV1 : '0'
+    stakingV1.address,
+    secondsInDay,
+    lastSessionIdV1
   );
 
   await staking.setBasePeriod(basePeriod);
@@ -204,6 +218,7 @@ export async function initTestSmartContracts({
       usedAuctionAddress,
       usedSubBalancesAddress,
       bank ? bank.address : '',
+      stakingV1.address
     ].filter(Boolean)
   );
 
@@ -245,7 +260,7 @@ export async function initTestSmartContracts({
     nativeswap.address,
     foreignswap.address,
     usedSubBalancesAddress,
-    V1Contracts
+    ZERO_ADDRESS
   );
 
   await subBalances.init(
@@ -253,7 +268,7 @@ export async function initTestSmartContracts({
     foreignswap.address,
     bpd.address,
     usedAuctionAddress,
-    V1Contracts,
+    ZERO_ADDRESS,
     usedStakingAddress,
     secondsInDay,
     basePeriod
@@ -269,6 +284,7 @@ export async function initTestSmartContracts({
     uniswap,
     subBalances,
     staking,
+    stakingV1,
     auctionManager,
   };
 }
