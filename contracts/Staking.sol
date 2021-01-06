@@ -568,7 +568,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return (numerator).mul(1e18).div(denominator);
     }
 
-    function reStake(uint256 sessionId, uint256 stakingDays) external {
+    function restake(uint256 sessionId, uint256 stakingDays) external {
         if (now >= nextPayoutCall) makePayout();
 
         // Staking days must be greater then 0 and less then or equal to 5555.
@@ -648,7 +648,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
 
-    function reStakeV1(uint256 sessionId, uint256 stakingDays) external {
+    function restakeV1(uint256 sessionId, uint256 stakingDays) external {
         if (now >= nextPayoutCall) makePayout();
 
         //first process the unstake part
@@ -750,7 +750,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     }
 
-    //modified unstakeInternal function used for reStake - difference is we only pay the penalty
+    //modified unstakeInternal function used for restake - difference is we only pay the penalty
     function reUnstakeInternal(
         uint256 sessionId, 
         uint256 amount, 
