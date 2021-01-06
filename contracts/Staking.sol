@@ -600,13 +600,17 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             session.lastPayout
         );
 
-        ISubBalances(addresses.subBalances).callOutcomeStakerTrigger(
-            sessionId,
-            session.start,
-            session.end,
-            actualEnd,
-            session.shares
-        );
+        uint256 countStakingDays = (session.end - session.start) / stepTimestamp;
+
+        if (countStakingDays >= basePeriod) {
+            ISubBalances(addresses.subBalances).callOutcomeStakerTrigger(
+                sessionId,
+                session.start,
+                session.end,
+                actualEnd,
+                session.shares
+                );
+        }
 
         session.end = actualEnd;
         session.withdrawn = true;
@@ -635,13 +639,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sessionsOf[msg.sender].push(newSessionId);
 
-        ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
-            msg.sender,
-            newSessionId,
-            start,
-            end,
-            shares
-        );
+        if (StakingDays >= basePeriod) {
+            ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
+                msg.sender,
+                newSessionId,
+                start,
+                end,
+                shares
+                );
+        }    
 
         emit Stake(msg.sender, newSessionId, amountOut, start, end, shares);
 
@@ -693,14 +699,18 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             lastPayout
         );
 
-        ISubBalances(addresses.subBalances).callOutcomeStakerTriggerV1(
-            msg.sender,
-            sessionId,
-            start,
-            end,
-            actualEnd,
-            shares
-        );
+        uint256 countStakingDays = (end - start) / stepTimestamp;
+
+        if (countStakingDays >= basePeriod) {
+            ISubBalances(addresses.subBalances).callOutcomeStakerTriggerV1(
+                msg.sender,
+                sessionId,
+                start,
+                end,
+                actualEnd,
+                shares
+                );
+        }
 
         sessionDataOf[msg.sender][sessionId] = Session({
             amount: amount,
@@ -738,13 +748,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sessionsOf[msg.sender].push(newSessionId);
 
-        ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
-            msg.sender,
-            newSessionId,
-            start,
-            end,
-            shares
-        );
+        if (StakingDays >= basePeriod) {
+            ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
+                msg.sender,
+                newSessionId,
+                start,
+                end,
+                shares
+                );
+        }
 
         emit Stake(msg.sender, newSessionId, amountOut, start, end, shares);
 
