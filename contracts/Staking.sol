@@ -77,7 +77,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     /** Public Variables */
     uint256 public shareRate;
-    uint256 public override sharesTotalSupply;
+    uint256 public sharesTotalSupply;
     uint256 public nextPayoutCall;
     uint256 public stepTimestamp;
     uint256 public startContract;

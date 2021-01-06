@@ -8,6 +8,4 @@ interface IStaking {
         uint256 stakingDays,
         address staker
     ) external;
-
-    function sharesTotalSupply() external view returns (uint256);
 }
