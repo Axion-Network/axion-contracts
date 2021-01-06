@@ -132,7 +132,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address _subBalancesAddress,
         address _foreignSwapAddress,
         address _stakingV1Address,
-        uint256 _stepTimestamp
+        uint256 _stepTimestamp,
+        uint256 _lastSessionIdV1
     ) external onlyMigrator {
         require(!init_, "Staking: init is active");
         init_ = true;
@@ -158,6 +159,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         if (shareRate == 0) {
             shareRate = 1e18;
         }
+
+        lastSessionIdV1 = _lastSessionIdV1;
     }
     /** End init functions */
 
@@ -346,8 +349,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         // Unstaked in v1 / doesn't exist
         require(
-            shares > 0,
-            "Staking: Stake withdrawn"
+            shares != 0,
+            "Staking: Stake withdrawn or not set"
         );
 
         uint256 stakingDays = (end - start) / stepTimestamp;
@@ -576,6 +579,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     /** Migrator Setter Functions */
     function setBasePeriod(uint256 _basePeriod) external onlyMigrator {
         basePeriod = _basePeriod;
+    }
+
+    function setSharesTotalSupply(uint256 _sharesTotalSupply) external onlyMigrator {
+        sharesTotalSupply = _sharesTotalSupply;
     }
    
     function setTotalStakedAmount(uint256 _totalStakedAmount) external onlyMigrator {
