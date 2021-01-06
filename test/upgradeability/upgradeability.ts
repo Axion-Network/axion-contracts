@@ -34,7 +34,7 @@ describe('Upgradeability', () => {
     const contracts = await initTestSmartContracts({
       setter,
       recipient,
-      fakeBank,
+      bank: fakeBank,
     });
     // token = contracts.token;
     swaptoken = contracts.swaptoken;
@@ -42,7 +42,7 @@ describe('Upgradeability', () => {
     token = contracts.token;
     nativeswap = contracts.nativeswap;
     auction = contracts.auction;
-    subBalances = contracts.subbalances;
+    subBalances = contracts.subBalances;
     staking = contracts.staking;
     bpd = contracts.bpd;
   });

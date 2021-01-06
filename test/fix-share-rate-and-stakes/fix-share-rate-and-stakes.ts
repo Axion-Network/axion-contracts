@@ -8,16 +8,6 @@ import {
 } from '../utils/constants';
 
 describe.only('Fix Share Rates & Stakes', () => {
-  it('should not allow external use of sub balances addToShareTotalSupply and subFromShareTotalSupply', async () => {
-    const [setter, recipient] = await ethers.getSigners();
-    const { subbalances } = await initTestSmartContracts({
-      setter: setter,
-      recipient: recipient,
-    });
-
-    await expect(subbalances.addToShareTotalSupply('100')).to.be.revertedWith("Caller is not a caller") // Ensure subbalances shares can't be messed with
-    await expect(subbalances.subFromShareTotalSupply('100')).to.be.revertedWith("Caller is not a caller") // Ensure subbalances shares can't be messed with
-  })
   it('should set share rate', async () => {
     const [setter, recipient] = await ethers.getSigners();
     const { staking } = await initTestSmartContracts({
@@ -31,7 +21,7 @@ describe.only('Fix Share Rates & Stakes', () => {
 
   it('should correctly update users share rate', async () => {
     const [setter, recipient, account1] = await ethers.getSigners();
-    const { staking, token, subbalances } = await initTestSmartContracts({
+    const { staking, token, subBalances } = await initTestSmartContracts({
       setter: setter,
       recipient: recipient,
     });
@@ -49,7 +39,6 @@ describe.only('Fix Share Rates & Stakes', () => {
     const shares = data.shares.toNumber(); // get shares from data
     expect(sharerate.toFixed(2)).to.be.eq('1.27'); // expect sharerate to be 1.27
     expect(await staking.sharesTotalSupply().then(Number)).to.be.eq(shares) // expect staking shares total supply === account 1
-    expect(await subbalances.currentSharesTotalSupply().then(Number)).to.be.eq(shares) // expect subbalances shares total supply === account 1
 
     // Update share rate to 1.09 and then update the stake
     await staking.setShareRate('109000000000000000') // set share rate to 1.09 
@@ -61,10 +50,9 @@ describe.only('Fix Share Rates & Stakes', () => {
     const shares2 = data2.shares.toNumber(); // get shares from data
     expect(sharerate2.toFixed(2)).to.be.eq('1.09'); // expect sharerate to be 1.27
     expect(await staking.sharesTotalSupply().then(Number)).to.be.eq(shares2) // expect staking shares total supply === account 1
-    expect(await subbalances.currentSharesTotalSupply().then(Number)).to.be.eq(shares2) // expect subbalances shares total supply === account 1
   })
 
-  it.only('should fix a v1 stake that has been withdrawn because people are dumbshits', async () => {
+  it('should fix a v1 stake that has been withdrawn because people are dumbshits', async () => {
     const [setter, recipient, account1] = await ethers.getSigners();
     const { staking, token } = await initTestSmartContracts({
       setter: setter,

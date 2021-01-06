@@ -93,8 +93,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     /** Booleans */
     bool public init_;
 
-    /** Variables after initial contract launch must go below here. https://github.com/OpenZeppelin/openzeppelin-sdk/issues/37 */
-    /** End Variables after launch */
+    uint256 public basePeriod;
+    uint256 public totalStakedAmount;
+
+    /* New variables must go below here. */
 
     /** Roles */
     modifier onlyManager() {
@@ -183,6 +185,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 sessionId = lastSessionId;
         uint256 shares = _getStakersSharesAmount(amount, start, end);
         sharesTotalSupply = sharesTotalSupply.add(shares);
+        totalStakedAmount = totalStakedAmount.add(amount);
 
         sessionDataOf[msg.sender][sessionId] = Session({
             amount: amount,
@@ -197,13 +200,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sessionsOf[msg.sender].push(sessionId);
 
-        ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
-            msg.sender,
-            sessionId,
-            start,
-            end,
-            shares
-        );
+        if (stakingDays >= basePeriod) {
+            ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
+                msg.sender,
+                sessionId,
+                start,
+                end,
+                shares
+            );
+        }
 
         emit Stake(msg.sender, sessionId, amount, start, end, shares);
     }
@@ -225,6 +230,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 sessionId = lastSessionId;
         uint256 shares = _getStakersSharesAmount(amount, start, end);
         sharesTotalSupply = sharesTotalSupply.add(shares);
+        totalStakedAmount = totalStakedAmount.add(amount);
 
         sessionDataOf[staker][sessionId] = Session({
             amount: amount,
@@ -239,14 +245,16 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sessionsOf[staker].push(sessionId);
 
-        ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
-            staker,
-            sessionId,
-            start,
-            end,
-            shares
-        );
-
+        if (stakingDays >= basePeriod) {
+            ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
+                staker,
+                sessionId,
+                start,
+                end,
+                shares
+            );
+        }
+        
         emit Stake(staker, sessionId, amount, start, end, shares);
     }
 
@@ -304,14 +312,18 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             session.lastPayout
         );
 
-        ISubBalances(addresses.subBalances).callOutcomeStakerTrigger(
-            sessionId,
-            session.start,
-            session.end,
-            actualEnd,
-            session.shares
-        );
+        uint256 stakingDays = (session.end - session.start) / stepTimestamp;
 
+        if (stakingDays >= basePeriod) {
+            ISubBalances(addresses.subBalances).callOutcomeStakerTrigger(
+                sessionId,
+                session.start,
+                session.end,
+                actualEnd,
+                session.shares
+            );
+        }
+        
         session.end = actualEnd;
         session.withdrawn = true;
         session.payout = amountOut;
@@ -339,7 +351,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             "Staking: Stake withdrawn"
         );
 
-        uint256 lastPayout = (end - start) / stepTimestamp + firstPayout;
+        uint256 stakingDays = (end - start) / stepTimestamp;
+        uint256 lastPayout = stakingDays + firstPayout;
 
         uint256 actualEnd = now;
         uint256 amountOut = unstakeInternal(
@@ -353,15 +366,17 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             lastPayout
         );
 
-        ISubBalances(addresses.subBalances).callOutcomeStakerTriggerV1(
-            msg.sender,
-            sessionId,
-            start,
-            end,
-            actualEnd,
-            shares
-        );
-
+        if (stakingDays >= basePeriod) {
+            ISubBalances(addresses.subBalances).callOutcomeStakerTriggerV1(
+                msg.sender,
+                sessionId,
+                start,
+                end,
+                actualEnd,
+                shares
+            );
+        }
+        
         sessionDataOf[msg.sender][sessionId] = Session({
             amount: amount,
             start: start,
@@ -393,6 +408,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         sharesTotalSupply = sharesTotalSupply.sub(shares);
+        totalStakedAmount = totalStakedAmount.sub(amount);
 
         (uint256 amountOut, uint256 penalty) = getAmountOutAndPenalty(
             amount,
@@ -488,7 +504,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         uint256 inflation = uint256(8)
-            .mul(currentTokenTotalSupply.add(sharesTotalSupply))
+            .mul(currentTokenTotalSupply.add(totalStakedAmount))
             .div(36500);
 
         return amountTokenInDay.add(inflation);
@@ -514,7 +530,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         IToken(addresses.mainToken).burn(address(this), amountTokenInDay);
 
         uint256 inflation = uint256(8)
-            .mul(currentTokenTotalSupply.add(sharesTotalSupply))
+            .mul(currentTokenTotalSupply.add(totalStakedAmount))
             .div(36500);
 
 
@@ -558,6 +574,16 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         _setupRole(role, account);
     }
 
+    /** Migrator Setter Functions */
+    function setBasePeriod(uint256 _basePeriod) external onlyMigrator {
+        basePeriod = _basePeriod;
+    }
+   
+    function setTotalStakedAmount(uint256 _totalStakedAmount) external onlyMigrator {
+        totalStakedAmount = _totalStakedAmount;
+    }
+
+
     /** Share rate, until Deafdrow comes up with a solution for share rate we must actually fix the share rate approporiately */
     function setShareRate(uint256 _shareRate) external onlyManager {
         shareRate = _shareRate;
@@ -573,10 +599,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         Session storage session = sessionDataOf[_staker][_stakeId]; // Get Session
         require(session.withdrawn == false, "STAKING: Session has already been withdrawn");
         sharesTotalSupply = sharesTotalSupply.sub(session.shares); // Subtract shares total share supply
-        ISubBalances(addresses.subBalances).subFromShareTotalSupply(session.shares); // Subtract shares subbalances total share supply
         session.shares = _getStakersSharesAmount(session.amount, session.start, session.end); // update shares
         sharesTotalSupply = sharesTotalSupply.add(session.shares); // Add to total share suuply
-        ISubBalances(addresses.subBalances).addToShareTotalSupply(session.shares); // Subtract shares subbalances total share supply
+        totalStakedAmount = totalStakedAmount.add(session.amount); // Add to total Staked amount
     }
 
     /**
