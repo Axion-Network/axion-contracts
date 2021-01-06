@@ -28,13 +28,15 @@ interface InitAddresses {
   setter: SignerWithAddress;
   recipient: SignerWithAddress;
   fakeAuction?: SignerWithAddress;
-  fakeSubBalances?: SignerWithAddress;
+  fakeSubBalances?: string;
   fakeStaking?: SignerWithAddress;
   fakeToken?: SignerWithAddress;
   maxClaimAmount?: string;
   testSigner?: string;
   /** If this value is passed Token and SwapToken will be minted to this address */
-  fakeBank?: SignerWithAddress;
+  bank?: SignerWithAddress;
+  basePeriod?: number;
+  secondsInDay?: number;
 }
 
 interface AxionContracts {
@@ -45,7 +47,7 @@ interface AxionContracts {
   token: Token;
   auction: Auction;
   uniswap: UniswapV2Router02Mock;
-  subbalances: SubBalances;
+  subBalances: SubBalances;
   staking: Staking;
   auctionManager: AuctionManager;
 }
@@ -56,10 +58,12 @@ export async function initTestSmartContracts({
   fakeAuction,
   fakeSubBalances,
   fakeStaking,
-  fakeBank,
+  bank,
   maxClaimAmount,
   testSigner,
   fakeToken,
+  basePeriod = STAKE_PERIOD,
+  secondsInDay = SECONDS_IN_DAY
 }: InitAddresses): Promise<AxionContracts> {
   /** None proxy */
   const uniswap = await ContractFactory.getUniswapV2Router02MockFactory().then(
@@ -67,15 +71,15 @@ export async function initTestSmartContracts({
   );
 
   let swaptoken;
-  if (fakeBank) {
+  if (bank) {
     swaptoken = await ContractFactory.getTERC20Factory().then((factory) =>
       factory
-        .connect(fakeBank)
+        .connect(bank)
         .deploy(
           '2T Token',
           '2T',
           ethers.utils.parseEther('10000000000'),
-          fakeBank.address
+          bank.address
         )
     );
   } else {
@@ -136,7 +140,7 @@ export async function initTestSmartContracts({
     }
   )) as ForeignSwap;
 
-  const subbalances = (await upgrades.deployProxy(
+  const subBalances = (await upgrades.deployProxy(
     await ContractFactory.getSubBalancesFactory(),
     [setter.address, setter.address],
     {
@@ -154,7 +158,6 @@ export async function initTestSmartContracts({
     }
   )) as Staking;
 
-  // ok....
   const usedStakingAddress = fakeStaking
     ? fakeStaking.address
     : staking.address;
@@ -163,8 +166,8 @@ export async function initTestSmartContracts({
     ? fakeAuction.address
     : auction.address;
   const usedSubBalancesAddress = fakeSubBalances
-    ? fakeSubBalances.address
-    : subbalances.address;
+    ? fakeSubBalances
+    : subBalances.address;
 
   const auctionManager = (await upgrades.deployProxy(
     await ContractFactory.getAuctionManagerFactory(),
@@ -181,8 +184,10 @@ export async function initTestSmartContracts({
     usedSubBalancesAddress,
     foreignswap.address,
     V1Contracts,
-    '10'
+    secondsInDay
   );
+
+  await staking.setBasePeriod(basePeriod);
 
   await token.initSwapperAndSwapToken(swaptoken.address, nativeswap.address);
 
@@ -193,19 +198,19 @@ export async function initTestSmartContracts({
       usedStakingAddress,
       usedAuctionAddress,
       usedSubBalancesAddress,
-      fakeBank ? fakeBank.address : '',
+      bank ? bank.address : '',
     ].filter(Boolean)
   );
 
-  if (fakeBank) {
+  if (bank) {
     await token
-      .connect(fakeBank)
-      .mint(fakeBank.address, ethers.utils.parseEther('10000000000'));
+      .connect(bank)
+      .mint(bank.address, ethers.utils.parseEther('10000000000'));
   }
 
   await nativeswap.init(
-    STAKE_PERIOD,
-    SECONDS_IN_DAY,
+    basePeriod,
+    secondsInDay,
     swaptoken.address,
     usedTokenAddress,
     usedAuctionAddress
@@ -215,8 +220,8 @@ export async function initTestSmartContracts({
 
   await foreignswap.init(
     testSigner ? testSigner : TEST_SIGNER,
-    SECONDS_IN_DAY,
-    STAKE_PERIOD,
+    secondsInDay,
+    basePeriod,
     maxClaimAmount ? maxClaimAmount : MAX_CLAIM_AMOUNT,
     usedTokenAddress,
     usedAuctionAddress,
@@ -227,7 +232,7 @@ export async function initTestSmartContracts({
   );
 
   await auction.init(
-    SECONDS_IN_DAY,
+    secondsInDay,
     usedTokenAddress,
     usedStakingAddress,
     uniswap.address,
@@ -238,15 +243,15 @@ export async function initTestSmartContracts({
     V1Contracts
   );
 
-  await subbalances.init(
+  await subBalances.init(
     usedTokenAddress,
     foreignswap.address,
     bpd.address,
     usedAuctionAddress,
     V1Contracts,
     usedStakingAddress,
-    SECONDS_IN_DAY,
-    STAKE_PERIOD
+    secondsInDay,
+    basePeriod
   );
 
   return {
@@ -257,7 +262,7 @@ export async function initTestSmartContracts({
     token,
     auction,
     uniswap,
-    subbalances,
+    subBalances,
     staking,
     auctionManager,
   };

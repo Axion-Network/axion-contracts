@@ -10,4 +10,6 @@ contract StakingMock is IStaking {
         uint256 stakingDays,
         address staker
     ) external override {}
+
+    uint256 public override sharesTotalSupply;
 }

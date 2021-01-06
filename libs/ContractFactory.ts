@@ -16,7 +16,9 @@ import {
   Staking,
   Staking__factory,
   SubBalances,
-  SubBalances__factory, TERC20__factory,
+  SubBalances__factory,
+  SubBalancesMock__factory,
+  TERC20__factory,
   Token,
   Token__factory,
   UniswapV2Router02Mock__factory,
@@ -31,6 +33,7 @@ enum AxionContract {
   NativeSwap = 'NativeSwap',
   Staking = 'Staking',
   SubBalances = 'SubBalances',
+  SubBalancesMock = 'SubBalancesMock',
   Token = 'Token',
   UniswapV2Router02Mock = 'UniswapV2Router02Mock',
   TERC20 = 'TERC20'
@@ -109,6 +112,10 @@ export class ContractFactory {
     return ethers.getContractAt(AxionContract.SubBalances, address) as Promise<SubBalances>;
   }
 
+  static getSubBalancesMockFactory(): Promise<SubBalancesMock__factory> {
+    return ethers.getContractFactory(AxionContract.SubBalancesMock) as Promise<SubBalancesMock__factory>;
+  }
+
   // Token
   static getTokenFactory(): Promise<Token__factory> {
     return ethers.getContractFactory(AxionContract.Token) as Promise<Token__factory>;
@@ -128,7 +135,7 @@ export class ContractFactory {
   // TERC20
   static getTERC20Factory(): Promise<TERC20__factory> {
     return ethers.getContractFactory(
-        AxionContract.TERC20
+      AxionContract.TERC20
     ) as Promise<TERC20__factory>;
   }
 }
