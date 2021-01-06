@@ -36,7 +36,6 @@ interface InitOptions {
   /** If this value is passed Token and SwapToken will be minted to this address */
   stakingV1?: string;
   lastSessionIdV1?: string;
-  v1Staking?: boolean;
   bank?: SignerWithAddress;
   basePeriod?: number;
   secondsInDay?: number;
