@@ -130,7 +130,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address _auctionAddress,
         address _subBalancesAddress,
         address _foreignSwapAddress,
-        uint256 _stepTimestamp
+        address _stakingV1Address,
+        uint256 _stepTimestamp,
+        uint256 _lastSessionIdV1
     ) external onlyMigrator {
         require(!init_, "Staking: init is active");
         init_ = true;
@@ -143,6 +145,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             auction: _auctionAddress,
             subBalances: _subBalancesAddress
         });
+        
+        stakingV1 = IStakingV1(_stakingV1Address);
+        lastSessionIdV1 = _lastSessionIdV1;
 
         stepTimestamp = _stepTimestamp;
 
@@ -635,11 +640,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sharesTotalSupply = sharesTotalSupply.add(shares);
 
+        uint256 updatedShares = _getStakersSharesAmount(amount, start, end);
         sessionDataOf[_sender][_sessionId] = Session({
             amount: amount,
             start: start,
-            end: end,
-            shares: shares,
+            end: end < now ? now : end, // We set end to know so the user accrues no penalties if end < now
+            shares: updatedShares,
             firstPayout: firstPayout,
             lastPayout: payouts.length + stakingDays,
             withdrawn: false,

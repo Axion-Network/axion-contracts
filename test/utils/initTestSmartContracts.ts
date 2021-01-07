@@ -35,12 +35,11 @@ interface InitOptions {
   maxClaimAmount?: string;
   testSigner?: string;
   /** If this value is passed Token and SwapToken will be minted to this address */
-  stakingV1?: string;
-  lastSessionIdV1?: string;
+  // stakingV1?: string;
+  lastSessionIdV1?: number;
   bank?: SignerWithAddress;
   basePeriod?: number;
   secondsInDay?: number;
-  lastSessionIdV1?: number;
 }
 
 interface AxionContracts {
@@ -67,12 +66,12 @@ export async function initTestSmartContracts({
   maxClaimAmount,
   testSigner,
   fakeToken,
-  stakingV1,
-  lastSessionIdV1,
+  // stakingV1,
+  // lastSessionIdV1,
   basePeriod = STAKE_PERIOD,
   secondsInDay = SECONDS_IN_DAY,
   lastSessionIdV1 = 0
-}: InitAddresses): Promise<AxionContracts> {
+}: InitOptions): Promise<AxionContracts> {
   /** None proxy */
   const uniswap = await ContractFactory.getUniswapV2Router02MockFactory().then(
     (factory) => factory.deploy()
