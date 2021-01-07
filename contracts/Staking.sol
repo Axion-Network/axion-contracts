@@ -15,8 +15,6 @@ import "./interfaces/IStaking.sol";
 import "./interfaces/ISubBalances.sol";
 import "./interfaces/IStakingV1.sol";
 
-import "hardhat/console.sol";
-
 contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
 
@@ -644,7 +642,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         uint256 updatedShares = _getStakersSharesAmount(amount, start, end);
         sharesTotalSupply = sharesTotalSupply.add(updatedShares);
-        
+
         sessionDataOf[_sender][_sessionId] = Session({
             amount: amount,
             start: start,
@@ -658,7 +656,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sessionsOf[_sender].push(_sessionId);
 
-        if(stakingDays >= 350) {
+        if(stakingDays >= basePeriod) {
             ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
                 _sender,
                 _sessionId,
