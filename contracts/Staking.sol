@@ -624,8 +624,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address _sender,
         uint256 _sessionId
     ) external onlyManager {
-        if (now >= nextPayoutCall) makePayout(); // Keep this line similiar to stake functionality
-
         require(_sessionId <= lastSessionIdV1, "Staking: Invalid sessionId"); // Require that the sessionId we are looking for is > v1Id
 
         // Ensure that the session does not exist
@@ -643,9 +641,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         // Get # of staking days
         uint256 stakingDays = (end.sub(start)).div(stepTimestamp);
 
-        sharesTotalSupply = sharesTotalSupply.add(shares);
 
         uint256 updatedShares = _getStakersSharesAmount(amount, start, end);
+        sharesTotalSupply = sharesTotalSupply.add(updatedShares);
+        
         sessionDataOf[_sender][_sessionId] = Session({
             amount: amount,
             start: start,
@@ -659,12 +658,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sessionsOf[_sender].push(_sessionId);
 
-        ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
-            _sender,
-            _sessionId,
-            start,
-            end,
-            shares
-        );
+        if(stakingDays >= 350) {
+            ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
+                _sender,
+                _sessionId,
+                start,
+                end,
+                updatedShares
+            );
+        }
     }
 }
