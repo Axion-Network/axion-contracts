@@ -142,7 +142,7 @@ describe('Staking', async () => {
     await expect(
       _stakerStaking
         .stake(amount, 5556))
-          .to.be.revertedWith('stakingDays > 5555');
+          .to.be.revertedWith('Staking: Staking days > 5555');
 
     // Edge case
     await _stakerStaking
@@ -151,7 +151,7 @@ describe('Staking', async () => {
     await expect(
       _stakerStaking
         .stake(amount, 100000))
-          .to.be.revertedWith('stakingDays > 5555');
+          .to.be.revertedWith('Staking: Staking days > 5555');
   });
 
   it('should unstake and not allow second unstake', async () => {
