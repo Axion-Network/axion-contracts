@@ -173,15 +173,22 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function stake(uint256 amount, uint256 stakingDays) external {
-        if (now >= nextPayoutCall) makePayout();
-
-        // Staking days must be greater then 0 and less then or equal to 5555.
         require(stakingDays != 0, "Staking: Staking days < 1");
         require(stakingDays <= 5555, "Staking: Staking days > 5555");
 
-        IToken(addresses.mainToken).burn(msg.sender, amount);
-        
         stakeInternal(amount, stakingDays, msg.sender);
+        IToken(addresses.mainToken).burn(msg.sender, amount);
+    }
+
+    function externalStake(
+        uint256 amount,
+        uint256 stakingDays,
+        address staker
+    ) external override onlyExternalStaker {
+        require(stakingDays != 0, "Staking: Staking days < 1");
+        require(stakingDays <= 5555, "Staking: Staking days > 5555");
+
+        stakeInternal(amount, stakingDays, staker);
     }
 
     function stakeInternal(
@@ -189,6 +196,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 stakingDays,
         address staker
     ) internal {
+        if (now >= nextPayoutCall) makePayout();
+
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
 
@@ -224,19 +233,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         emit Stake(staker, sessionId, amount, start, end, shares);
     }
 
-    function externalStake(
-        uint256 amount,
-        uint256 stakingDays,
-        address staker
-    ) external override onlyExternalStaker {
-        if (now >= nextPayoutCall) makePayout();
-
-        require(stakingDays != 0, "Staking: Staking days < 1");
-        require(stakingDays <= 5555, "Staking: Staking days > 5555");
-
-        stakeInternal(amount, stakingDays, staker);
-    }
-
     function _initPayout(address to, uint256 amount) internal {
         IToken(addresses.mainToken).mint(to, amount);
         globalPayout = globalPayout.add(amount);
@@ -269,8 +265,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function unstake(uint256 sessionId) external {
-        if (now >= nextPayoutCall) makePayout();
-
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
         require(
@@ -292,8 +286,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function unstakeV1(uint256 sessionId) external {
-        if (now >= nextPayoutCall) makePayout();
-
         require(sessionId <= lastSessionIdV1, "Staking: Invalid sessionId");
 
         Session storage session = sessionDataOf[msg.sender][sessionId];
@@ -466,8 +458,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function restake(uint256 sessionId, uint256 stakingDays) external {
-        if (now >= nextPayoutCall) makePayout();
-
         require(stakingDays != 0, "Staking: Staking days < 1");
         require(stakingDays <= 5555, "Staking: Staking days > 5555");
 
@@ -493,8 +483,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function restakeV1(uint256 sessionId, uint256 stakingDays) external {
-        if (now >= nextPayoutCall) makePayout();
-
         require(sessionId <= lastSessionIdV1, "Staking: Invalid sessionId");
         require(stakingDays != 0, "Staking: Staking days < 1");
         require(stakingDays <= 5555, "Staking: Staking days > 5555");
@@ -631,6 +619,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 firstPayout,
         uint256 lastPayout
     ) internal returns (uint256) {
+        if (now >= nextPayoutCall) makePayout();
+
         uint256 stakingInterest = calculateStakingInterest(
             firstPayout,
             lastPayout,
