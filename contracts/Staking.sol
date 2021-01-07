@@ -706,6 +706,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         basePeriod = _basePeriod;
     }
 
+    function setLastSessionId(uint256 _lastSessionId ) external onlyMigrator {
+        lastSessionId = _lastSessionId;
+    }
+
     function setSharesTotalSupply(uint256 _sharesTotalSupply) external onlyMigrator {
         sharesTotalSupply = _sharesTotalSupply;
     }
