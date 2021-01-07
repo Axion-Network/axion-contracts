@@ -499,11 +499,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     function restake(uint256 sessionId, uint256 stakingDays) external {
         if (now >= nextPayoutCall) makePayout();
 
-        // Staking days must be greater then 0 and less then or equal to 5555.
         require(stakingDays != 0, "Staking: Staking days < 1");
         require(stakingDays <= 5555, "Staking: Staking days > 5555");
 
-        //first process the unstake part
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
         require(
@@ -513,7 +511,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         uint256 actualEnd = now;
-        // only allow matured stakes to be restaked
+
         require(session.end <= actualEnd, "Staking: Stake not mature");
      
         uint256 amountOut = unstakeInternal(
@@ -521,8 +519,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             sessionId,
             actualEnd
         );
-        
-        //begin the staking part for amountOut resulted from the unstake and stakingDays
 
         stakeInternal(amountOut, stakingDays);
     }
@@ -530,13 +526,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     function restakeV1(uint256 sessionId, uint256 stakingDays) external {
         if (now >= nextPayoutCall) makePayout();
 
-        //first process the unstake part
-
         require(sessionId <= lastSessionIdV1, "Staking: Invalid sessionId");
+        require(stakingDays != 0, "Staking: Staking days < 1");
+        require(stakingDays <= 5555, "Staking: Staking days > 5555");
 
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
-        // Unstaked already
         require(
             session.shares == 0 && session.withdrawn == false,
             "Staking: Stake withdrawn"
@@ -547,17 +542,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         // Unstaked in v1 / doesn't exist
         require(
-            shares > 0,
+            shares != 0,
             "Staking: Stake withdrawn"
         );
 
-        // Staking days must be greater then 0 and less then or equal to 5555.
-        require(stakingDays != 0, "Staking: Staking days < 1");
-        require(stakingDays <= 5555, "Staking: Staking days > 5555");
-        
         uint256 actualEnd = now;
-         // only allow matured stakes to be restaked
-        require(end <= actualEnd, "Staking: stake not mature");
+
+        require(end <= actualEnd, "Staking: Stake not mature");
 
         uint256 sessionStakingDays = (end - start) / stepTimestamp;
         uint256 lastPayout = sessionStakingDays + firstPayout;
@@ -573,8 +564,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             lastPayout,
             sessionStakingDays
         );
-
-        //begin the staking part for amountOut resulted from the unstake and stakingDays
 
         stakeInternal(amountOut, stakingDays);
     }
