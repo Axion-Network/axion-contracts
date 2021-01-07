@@ -421,7 +421,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             .mul(currentTokenTotalSupply.add(totalStakedAmount))
             .div(36500);
 
-
         globalPayin = globalPayin.add(inflation);
 
         return amountTokenInDay.add(inflation);
