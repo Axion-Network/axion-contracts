@@ -77,7 +77,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     /** Public Variables */
     uint256 public shareRate;
-    uint256 public override sharesTotalSupply;
+    uint256 public sharesTotalSupply;
     uint256 public nextPayoutCall;
     uint256 public stepTimestamp;
     uint256 public startContract;
@@ -132,7 +132,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address _subBalancesAddress,
         address _foreignSwapAddress,
         address _stakingV1Address,
-        uint256 _stepTimestamp
+        uint256 _stepTimestamp,
+        uint256 _lastSessionIdV1
     ) external onlyMigrator {
         require(!init_, "Staking: init is active");
         init_ = true;
@@ -158,6 +159,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         if (shareRate == 0) {
             shareRate = 1e18;
         }
+
+        lastSessionIdV1 = _lastSessionIdV1;
     }
     /** End init functions */
 
@@ -296,7 +299,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         require(
             session.shares != 0 
                 && session.withdrawn == false,
-            "Staking: Stake withdrawn/invalid"
+            "Staking: Stake withdrawn or not set"
         );
 
         uint256 actualEnd = now;
@@ -346,8 +349,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         // Unstaked in v1 / doesn't exist
         require(
-            shares > 0,
-            "Staking: Stake withdrawn"
+            shares != 0,
+            "Staking: Stake withdrawn or not set"
         );
 
         uint256 stakingDays = (end - start) / stepTimestamp;
@@ -815,6 +818,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     /** Migrator Setter Functions */
     function setBasePeriod(uint256 _basePeriod) external onlyMigrator {
         basePeriod = _basePeriod;
+    }
+
+    function setSharesTotalSupply(uint256 _sharesTotalSupply) external onlyMigrator {
+        sharesTotalSupply = _sharesTotalSupply;
     }
    
     function setTotalStakedAmount(uint256 _totalStakedAmount) external onlyMigrator {
