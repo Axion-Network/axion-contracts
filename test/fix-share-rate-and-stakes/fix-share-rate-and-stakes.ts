@@ -85,7 +85,6 @@ describe('Fix Share Rates & Stakes', () => {
     await staking.connect(setter).fixV1Stake(staker.address, sessionId);
     const sessionData = await staking.sessionDataOf(staker.address, sessionId);
 
-    expect(sessionData.end.toNumber()).to.be.eq(sessionDataV1.end.toNumber())
     expect(sessionData.start.toNumber()).to.be.eq(sessionDataV1.start.toNumber())
     expect(sessionData.amount.toNumber()).to.be.eq(sessionDataV1.amount.toNumber())
 
