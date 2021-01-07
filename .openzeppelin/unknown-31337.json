@@ -1037,6 +1037,154 @@
           }
         }
       }
+    },
+    "ab72c8d3fba199d905eb57d122c969f97ec07424683ab22e3e8a9980df8a9c06": {
+      "address": "0x7A28cf37763279F774916b85b5ef8b64AB421f79",
+      "txHash": "0xb0287cf55448aedd582e822bcf6b456ef0f837fd480dfa3418b401ab0dee54be",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "_roles",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)84_storage)",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:225"
+          },
+          {
+            "contract": "Auction20201219",
+            "label": "reservesOf",
+            "type": "t_mapping(t_uint256,t_struct(AuctionReserves)11020_storage)",
+            "src": "contracts/archives/Auction20201229.sol:73"
+          },
+          {
+            "contract": "Auction20201219",
+            "label": "auctionsOf",
+            "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
+            "src": "contracts/archives/Auction20201229.sol:74"
+          },
+          {
+            "contract": "Auction20201219",
+            "label": "auctionBidOf",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserBid)11027_storage))",
+            "src": "contracts/archives/Auction20201229.sol:75"
+          },
+          {
+            "contract": "Auction20201219",
+            "label": "existAuctionsOf",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_bool))",
+            "src": "contracts/archives/Auction20201229.sol:76"
+          },
+          {
+            "contract": "Auction20201219",
+            "label": "lastAuctionEventId",
+            "type": "t_uint256",
+            "src": "contracts/archives/Auction20201229.sol:79"
+          },
+          {
+            "contract": "Auction20201219",
+            "label": "lastAuctionEventIdV1",
+            "type": "t_uint256",
+            "src": "contracts/archives/Auction20201229.sol:80"
+          },
+          {
+            "contract": "Auction20201219",
+            "label": "start",
+            "type": "t_uint256",
+            "src": "contracts/archives/Auction20201229.sol:81"
+          },
+          {
+            "contract": "Auction20201219",
+            "label": "stepTimestamp",
+            "type": "t_uint256",
+            "src": "contracts/archives/Auction20201229.sol:82"
+          },
+          {
+            "contract": "Auction20201219",
+            "label": "options",
+            "type": "t_struct(Options)11049_storage",
+            "src": "contracts/archives/Auction20201229.sol:84"
+          },
+          {
+            "contract": "Auction20201219",
+            "label": "addresses",
+            "type": "t_struct(Addresses)11036_storage",
+            "src": "contracts/archives/Auction20201229.sol:85"
+          },
+          {
+            "contract": "Auction20201219",
+            "label": "auctionV1",
+            "type": "t_contract(IAuctionV1)13728",
+            "src": "contracts/archives/Auction20201229.sol:86"
+          },
+          {
+            "contract": "Auction20201219",
+            "label": "init_",
+            "type": "t_bool",
+            "src": "contracts/archives/Auction20201229.sol:88"
+          }
+        ],
+        "types": {
+          "t_mapping(t_uint256,t_struct(AuctionReserves)11020_storage)": {
+            "label": "mapping(uint256 => struct Auction20201219.AuctionReserves)"
+          },
+          "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
+            "label": "mapping(address => uint256[])"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserBid)11027_storage))": {
+            "label": "mapping(uint256 => mapping(address => struct Auction20201219.UserBid))"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_bool))": {
+            "label": "mapping(uint256 => mapping(address => bool))"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_struct(Options)11049_storage": {
+            "label": "struct Auction20201219.Options"
+          },
+          "t_struct(Addresses)11036_storage": {
+            "label": "struct Auction20201219.Addresses"
+          },
+          "t_contract(IAuctionV1)13728": {
+            "label": "contract IAuctionV1"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)84_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
     }
   },
   "admin": {

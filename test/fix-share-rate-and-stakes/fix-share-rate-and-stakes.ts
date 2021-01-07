@@ -91,7 +91,7 @@ describe('Fix Share Rates & Stakes', () => {
 
   })
 
-  it.only('should fix a v1 stake with no penalty', async () => {
+  it('should fix a v1 stake with no penalty', async () => {
     const length = 10;
 
     const [setter, recipient, staker] = await ethers.getSigners();
