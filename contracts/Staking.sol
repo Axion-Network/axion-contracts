@@ -15,6 +15,8 @@ import "./interfaces/IStaking.sol";
 import "./interfaces/ISubBalances.sol";
 import "./interfaces/IStakingV1.sol";
 
+import "hardhat/console.sol";
+
 contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
 
@@ -148,6 +150,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         
         stakingV1 = IStakingV1(_stakingV1Address);
         lastSessionIdV1 = _lastSessionIdV1;
+        lastSessionId = _lastSessionIdV1;
 
         stepTimestamp = _stepTimestamp;
 
@@ -279,6 +282,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             i < lastIndex;
             i++
         ) {
+
             uint256 payout = payouts[i].payout.mul(shares).div(
                 payouts[i].sharesTotalSupply
             );
@@ -299,6 +303,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 && session.withdrawn == false,
             "Staking: Stake withdrawn/invalid"
         );
+
 
         uint256 actualEnd = now;
         uint256 amountOut = unstakeInternal(
