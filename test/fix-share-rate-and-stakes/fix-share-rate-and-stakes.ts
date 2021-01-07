@@ -132,7 +132,7 @@ describe('Fix Share Rates & Stakes', () => {
     await staking.connect(staker).unstake(sessionId);
   });
 
-  it.only('should correctly update shares total supply', async () => {
+  it('should correctly update shares total supply', async () => {
     const length = 10;
 
     const [setter, recipient, staker] = await ethers.getSigners();
