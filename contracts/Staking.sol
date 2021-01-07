@@ -299,7 +299,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         require(
             session.shares != 0 
                 && session.withdrawn == false,
-            "Staking: Stake withdrawn/invalid"
+            "Staking: Stake withdrawn or not set"
         );
 
 

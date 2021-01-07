@@ -13,8 +13,9 @@ import { BigNumber } from 'ethers';
 import { SECONDS_IN_DAY, STAKE_PERIOD } from '../utils/constants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
+const lastSessionIdV1 = 1;
+
 describe('Staking', async () => {
-  let _setter: SignerWithAddress;
   let _staker: SignerWithAddress;
   let token: Token;
   let staking: Staking;
@@ -31,10 +32,9 @@ describe('Staking', async () => {
       recipient,
       bank: staker,
       fakeSubBalances: subBalancesMock.address,
-      lastSessionIdV1: 1
+      lastSessionIdV1: lastSessionIdV1
     });
 
-    _setter = setter;
     _staker = staker;
     token = contracts.token;
     staking = contracts.staking;
@@ -446,5 +446,23 @@ describe('Staking', async () => {
       .unstakeV1(sessionId);
 
     expect(await subBalancesMock.callOutcomeStakerTriggerV1CalledCount()).to.equal(1); 
+  });
+
+  it('should fail on unstake if shares is 0 or withdrawn', async () => {
+    await expect(
+      staking.connect(_staker).unstake(0))
+        .to.be.revertedWith('Staking: Stake withdrawn or not set');
+  });
+
+  it('should fail on unstakeV1 if sessionId is higher than allowed', async () => {
+    await expect(
+      staking.connect(_staker).unstakeV1(lastSessionIdV1 + 1))
+        .to.be.revertedWith('Staking: Invalid sessionId');
+  });
+
+  it('should fail on unstakeV1 if shares is 0', async () => {
+    await expect(
+      staking.connect(_staker).unstakeV1(lastSessionIdV1))
+        .to.be.revertedWith('Staking: Stake withdrawn or not set');
   });
 });

@@ -6,7 +6,7 @@
   "scripts": {
     "compile": "hardhat compile",
     "coverage": "hardhat coverage && yarn coverage:check",
-    "coverage:check": "istanbul check-coverage --statements 47.6 --branches 28.23 --functions 48.46 --lines 47.74",
+    "coverage:check": "istanbul check-coverage --statements 64 --branches 42 --functions 64 --lines 64",
     "dev": "hardhat node",
     "test": "hardhat test",
     "test:watch": "nodemon -w ./test -e .ts -x yarn test",
