@@ -604,7 +604,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         onlyManager
     {
         Session storage session = sessionDataOf[_staker][_stakeId]; // Get Session
-        require(session.withdrawn == false, "STAKING: Session has already been withdrawn");
+        require(session.withdrawn == false && session.shares != 0, "STAKING: Session has already been withdrawn");
         sharesTotalSupply = sharesTotalSupply.sub(session.shares); // Subtract shares total share supply
         session.shares = _getStakersSharesAmount(session.amount, session.start, session.end); // update shares
         sharesTotalSupply = sharesTotalSupply.add(session.shares); // Add to total share suuply
