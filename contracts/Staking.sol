@@ -181,58 +181,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         IToken(addresses.mainToken).burn(msg.sender, amount);
         
-        stakeInternal(amount, stakingDays);
+        stakeInternal(amount, stakingDays, msg.sender);
     }
 
     function stakeInternal(
         uint256 amount, 
-        uint256 stakingDays
-    ) internal {
-        uint256 start = now;
-        uint256 end = now.add(stakingDays.mul(stepTimestamp));
-
-        lastSessionId = lastSessionId.add(1);
-        uint256 sessionId = lastSessionId;
-        uint256 shares = _getStakersSharesAmount(amount, start, end);
-        sharesTotalSupply = sharesTotalSupply.add(shares);
-        totalStakedAmount = totalStakedAmount.add(amount);
-
-        sessionDataOf[msg.sender][sessionId] = Session({
-            amount: amount,
-            start: start,
-            end: end,
-            shares: shares,
-            firstPayout: payouts.length,
-            lastPayout: payouts.length + stakingDays,
-            withdrawn: false,
-            payout: 0
-        });
-
-        sessionsOf[msg.sender].push(sessionId);
-
-        if (stakingDays >= basePeriod) {
-            ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
-                msg.sender,
-                sessionId,
-                start,
-                end,
-                shares
-            );
-        }
-
-        emit Stake(msg.sender, sessionId, amount, start, end, shares);
-    }
-
-    function externalStake(
-        uint256 amount,
         uint256 stakingDays,
         address staker
-    ) external override onlyExternalStaker {
-        if (now >= nextPayoutCall) makePayout();
-
-        require(stakingDays != 0, "Staking: Staking days < 1");
-        require(stakingDays <= 5555, "Staking: Staking days > 5555");
-
+    ) internal {
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
 
@@ -264,8 +220,21 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 shares
             );
         }
-        
+
         emit Stake(staker, sessionId, amount, start, end, shares);
+    }
+
+    function externalStake(
+        uint256 amount,
+        uint256 stakingDays,
+        address staker
+    ) external override onlyExternalStaker {
+        if (now >= nextPayoutCall) makePayout();
+
+        require(stakingDays != 0, "Staking: Staking days < 1");
+        require(stakingDays <= 5555, "Staking: Staking days > 5555");
+
+        stakeInternal(amount, stakingDays, staker);
     }
 
     function _initPayout(address to, uint256 amount) internal {
@@ -520,7 +489,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             actualEnd
         );
 
-        stakeInternal(amountOut, stakingDays);
+        stakeInternal(amountOut, stakingDays, msg.sender);
     }
 
     function restakeV1(uint256 sessionId, uint256 stakingDays) external {
@@ -565,7 +534,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             sessionStakingDays
         );
 
-        stakeInternal(amountOut, stakingDays);
+        stakeInternal(amountOut, stakingDays, msg.sender);
     }
 
     function unstakeInternal(
