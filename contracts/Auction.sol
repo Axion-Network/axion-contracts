@@ -94,6 +94,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
     /** Store autoStake duration (auctionID, address) */
     mapping(uint256 => mapping(address => uint256)) public autoStakeDaysOf;
+    uint256 public middlePriceDays;
 
     /** modifiers */
     modifier onlyCaller() {
@@ -200,6 +201,10 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         options.premiumPercent = percent;
     }
 
+    function setMiddlePriceDays(uint256 _middleDays) external onlyManager {
+        middlePriceDays = _middleDays;
+    }
+
     /** Public Getter functions */
     function auctionsOf_(address account)
         public
@@ -221,14 +226,14 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         return price;
     }
 
-    function getUniswapMiddlePriceForSevenDays() public view returns (uint256) {
+    function getUniswapMiddlePriceForDays() public view returns (uint256) {
         uint256 stepsFromStart = calculateStepsFromStart();
 
         uint256 index = stepsFromStart;
         uint256 sum;
         uint256 points;
 
-        while (points != 7) {
+        while (points != middlePriceDays) {
             if (reservesOf[index].uniswapLastPrice != 0) {
                 sum = sum.add(reservesOf[index].uniswapLastPrice);
                 points = points.add(1);
@@ -251,7 +256,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         reservesOf[stepsFromStart].uniswapLastPrice = getUniswapLastPrice();
 
         reservesOf[stepsFromStart]
-            .uniswapMiddlePrice = getUniswapMiddlePriceForSevenDays();
+            .uniswapMiddlePrice = getUniswapMiddlePriceForDays();
     }
 
     /** Externals */
