@@ -612,7 +612,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             session.end
         ); // update shares
         sharesTotalSupply = sharesTotalSupply.add(session.shares); // Add to total share suuply
-        totalStakedAmount = totalStakedAmount.add(session.amount); // Add to total Staked amount
     }
 
     /**
