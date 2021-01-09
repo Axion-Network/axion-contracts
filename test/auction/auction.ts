@@ -1,20 +1,18 @@
 import { initTestSmartContracts } from '../utils/initTestSmartContracts';
 import { ROLES } from '../../constants/roles';
-import { ethers, upgrades } from 'hardhat';
+import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import {
   Auction,
   Token,
   Staking,
-  UniswapV2Router02Mock,
-  Auction20201219,
+  UniswapV2Router02Mock
 } from '../../typechain';
-import { ContractFactory } from '../../libs/ContractFactory';
 import { TestUtil } from '../utils/TestUtil';
 
+import { SECONDS_IN_DAY, AUCTIONSTAKE_MIN } from '../utils/constants';
+
 /** Helper Vars */
-const DAY = 86400;
-const AUTOSTAKE_MIN = 60;
 const DEADLINE = ethers.utils.parseEther('10000000');
 
 describe('Auction', () => {
@@ -49,125 +47,70 @@ describe('Auction', () => {
     });
   });
 
-  describe('bid', () => {
-    it(`should correctly send bids with a custom autostake duration, and fail if not between ${AUTOSTAKE_MIN} and 5555 days`, async () => {
-      const [account1, account2] = await ethers.getSigners();
+  describe('withdraw', () => {	
+    it(`should correctly withdraw, and fail if not between ${AUCTIONSTAKE_MIN} and 5555 days`, async () => {	
+      let auctionID = await auction.lastAuctionEventId();	
+      const [account1, account2] = await ethers.getSigners();	
+	
+      await auction	
+        .connect(account1)	
+        .bid(0, DEADLINE, account2.address, {	
+          value: ethers.utils.parseEther('1'),	
+        });	
 
-      // Bid with 1 eth for AUTOSTAKE_MIN days
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
       await auction
         .connect(account1)
-        .bid(0, DEADLINE, account2.address, AUTOSTAKE_MIN, {
-          value: ethers.utils.parseEther('1'),
-        });
-      const auctionID = await auction.lastAuctionEventId();
-      const autoStakeDays = await auction.autoStakeDaysOf(
-        auctionID,
-        account1.address
-      );
-      expect(autoStakeDays.toString()).to.eq(AUTOSTAKE_MIN.toString());
+        .withdraw(auctionID, AUCTIONSTAKE_MIN);
 
-      // Bid with 2 eth for 350 days
-      await auction.connect(account1).bid(0, DEADLINE, account2.address, 350, {
-        value: ethers.utils.parseEther('2'),
-      });
-      const auction350ID = await auction.lastAuctionEventId();
-      const autoStake350Days = await auction.autoStakeDaysOf(
-        auction350ID,
-        account1.address
-      );
-      expect(autoStake350Days.toString()).to.eq('350');
+      let stakeSessionId = await staking.sessionsOf(account1.address, 0);
 
-      // Try to bid with 1 eth for 5556 days
-      await expect(
-        auction.connect(account1).bid(0, DEADLINE, account2.address, 5556, {
-          value: ethers.utils.parseEther('1'),
-        })
-      ).to.be.revertedWith('stakeDays > 5555 days');
+      let stakeSessionData = await staking.sessionDataOf(account1.address, stakeSessionId);
 
-      // Try to bid with 1 eth for 1 day
-      await expect(
-        auction.connect(account1).bid(0, DEADLINE, account2.address, 1, {
-          value: ethers.utils.parseEther('1'),
-        })
-      ).to.be.revertedWith('stakeDays < minimum days');
-    });
+      expect(stakeSessionData.end.sub(stakeSessionData.start).div(SECONDS_IN_DAY)).to.equal(AUCTIONSTAKE_MIN);
 
-    it(`should correctly set autoStake days to ${AUTOSTAKE_MIN} if it has not been set`, async () => {
-      const [
-        setter,
-        recipient,
-        subBalances,
-        v1Contract,
-        nativeSwap,
-        foreignSwap,
-        account1,
-        account2,
-      ] = await ethers.getSigners();
+      auctionID = await auction.lastAuctionEventId();	
 
-      // Deploy the old auction contract (Auction20201229)
-      // Bid with 1 eth (old Auction contract, doesnt have stakeDays param)
-      // If no param is found in the new contract, it should set to default min stakeDays
-      const auction20201219 = (await upgrades.deployProxy(
-        await ContractFactory.getAuction20201219Factory(),
-        [setter.address, setter.address],
-        {
-          unsafeAllowCustomTypes: true,
-          unsafeAllowLinkedLibraries: true,
-        }
-      )) as Auction20201219;
+      await auction.connect(account1).bid(0, DEADLINE, account2.address, {	
+        value: ethers.utils.parseEther('2'),	
+      });	
 
-      await auction20201219.init(
-        DAY,
-        token.address,
-        staking.address,
-        uniswap.address,
-        recipient.address,
-        nativeSwap.address,
-        foreignSwap.address,
-        subBalances.address,
-        v1Contract.address
-      );
-
-      await token.setupRole(ROLES.MINTER, auction20201219.address);
-      await staking.setupRole(ROLES.EXTERNAL_STAKER, auction20201219.address);
-
-      await auction20201219
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+      
+      await auction
         .connect(account1)
-        .bid(0, DEADLINE, account2.address, {
-          value: ethers.utils.parseEther('1'),
-        });
+        .withdraw(auctionID, 350);
 
-      const idWithoutAutostakeDays = await auction20201219.lastAuctionEventId();
+      stakeSessionId = await staking.sessionsOf(account1.address, 1);
 
-      // Upgrade the contract
-      const auctionUpgrade = (await upgrades.upgradeProxy(
-        auction20201219.address,
-        await ContractFactory.getAuctionFactory(),
-        {
-          unsafeAllowCustomTypes: true,
-          unsafeAllowLinkedLibraries: true,
-        }
-      )) as Auction;
+      stakeSessionData = await staking.sessionDataOf(account1.address, stakeSessionId);
 
-      expect(auction20201219.address).to.eq(auctionUpgrade.address);
+      expect(stakeSessionData.end.sub(stakeSessionData.start).div(SECONDS_IN_DAY)).to.equal(350);
 
-      expect(
-        await auctionUpgrade.autoStakeDaysOf(
-          idWithoutAutostakeDays,
-          account1.address
-        )
-      ).to.eq('0');
+      auctionID = await auction.lastAuctionEventId();
 
-      // Withdraw (with stakeDays currently set to 0)
-      await TestUtil.increaseTime(DAY);
-      await auctionUpgrade.connect(account1).withdraw(idWithoutAutostakeDays);
+      await auction.connect(account1).bid(0, DEADLINE, account2.address, {	
+        value: ethers.utils.parseEther('2'),	
+      });	
 
-      const withdrawalEvents = await auctionUpgrade.queryFilter(
-        auctionUpgrade.filters.Withdraval(null, null, null, null, null)
-      );
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+      
+      await expect(	
+        auction.connect(account1).withdraw(auctionID, 5556)	
+      ).to.be.revertedWith('Auction: stakeDays > 5555');
 
-      expect(withdrawalEvents).to.have.lengthOf(1);
-      expect(withdrawalEvents[0].args?.stakeDays).to.eq(14); // 14 is minimum stakeDays (options.autoStakeDays)
-    });
+      auctionID = await auction.lastAuctionEventId();
+	
+      await auction.connect(account1).bid(0, DEADLINE, account2.address, {	
+        value: ethers.utils.parseEther('2'),	
+      });	
+
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+      
+      await expect(	
+        auction.connect(account1).withdraw(auctionID, 1)	
+      ).to.be.revertedWith('Auction: stakeDays < minimum days');
+    });	
   });
 });
