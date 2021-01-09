@@ -2,6 +2,7 @@ import { ethers } from 'hardhat';
 import { BigNumber } from 'ethers';
 export const DAY = 86400;
 export const STAKE_PERIOD = 350;
+export const AUCTIONSTAKE_MIN = 60;
 export const SECONDS_IN_DAY = 86400;
 export const MILLISECONDS_IN_A_SECOND = 1000;
 
