@@ -80,10 +80,6 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         require(hasRole(MIGRATOR_ROLE, _msgSender()), "Caller is not a migrator");
         _;
     }
-    modifier onlyStaker() {
-        require(hasRole(STAKING_ROLE, _msgSender()), "Caller is not a caller");
-        _;
-    }
 
     /** Start Init functins */
     function initialize(

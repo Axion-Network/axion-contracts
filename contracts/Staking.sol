@@ -601,7 +601,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
      * */
     function fixShareRateOnStake(address _staker, uint256 _stakeId)
         external
-        onlyManager
+        onlyMigrator
     {
         Session storage session = sessionDataOf[_staker][_stakeId]; // Get Session
         require(session.withdrawn == false && session.shares != 0, "STAKING: Session has already been withdrawn");
@@ -620,7 +620,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     function fixV1Stake(
         address _sender,
         uint256 _sessionId
-    ) external onlyManager {
+    ) external onlyMigrator {
         require(_sessionId <= lastSessionIdV1, "Staking: Invalid sessionId"); // Require that the sessionId we are looking for is > v1Id
 
         // Ensure that the session does not exist
@@ -648,7 +648,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             end: end < now ? now : end, // We set end to now so the user accrues no penalties if end < now
             shares: updatedShares,
             firstPayout: firstPayout,
-            lastPayout: payouts.length + stakingDays,
+            lastPayout: firstPayout + stakingDays,
             withdrawn: false,
             payout: 0
         });
