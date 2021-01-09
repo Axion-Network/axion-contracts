@@ -201,35 +201,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
 
         lastSessionId = lastSessionId.add(1);
-        uint256 sessionId = lastSessionId;
-        uint256 shares = _getStakersSharesAmount(amount, start, end);
-        sharesTotalSupply = sharesTotalSupply.add(shares);
-        totalStakedAmount = totalStakedAmount.add(amount);
 
-        sessionDataOf[staker][sessionId] = Session({
-            amount: amount,
-            start: start,
-            end: end,
-            shares: shares,
-            firstPayout: payouts.length,
-            lastPayout: payouts.length + stakingDays,
-            withdrawn: false,
-            payout: 0
-        });
-
-        sessionsOf[staker].push(sessionId);
-
-        if (stakingDays >= basePeriod) {
-            ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
-                staker,
-                sessionId,
-                start,
-                end,
-                shares
-            );
-        }
-
-        emit Stake(staker, sessionId, amount, start, end, shares);
+        stakeInternalCommon(lastSessionId, amount, start, end, stakingDays, payouts.length, staker);
     }
 
     function _initPayout(address to, uint256 amount) internal {
@@ -699,19 +672,19 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     /**
      * Fix v1 unstakers
-     * Unfortunately due to people not undersatnding that we were updating to v2, we need to fix some of our users stakes
+     * Unfortunately due to people not understanding that we were updating to v2, we need to fix some of our users stakes
      * This code will be removed as soon as we fix stakes
      * In order to run this code it will take at minimum 4 devs / core team to accept any stake
-     * This functoin can not be ran by just anyone.
+     * This function can not be ran by just anyone.
      */
     function fixV1Stake(
-        address _sender,
+        address _staker,
         uint256 _sessionId
     ) external onlyManager {
         require(_sessionId <= lastSessionIdV1, "Staking: Invalid sessionId"); // Require that the sessionId we are looking for is > v1Id
 
         // Ensure that the session does not exist
-        Session storage session = sessionDataOf[_sender][_sessionId];
+        Session storage session = sessionDataOf[_staker][_sessionId];
         require(
             session.shares == 0 && session.withdrawn == false,
             "Staking: Stake already fixed and or withdrawn"
@@ -719,37 +692,52 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         // Find the v1 stake && ensure the stake has been withdrawn
         (uint256 amount, uint256 start, uint256 end, uint256 shares, uint256 firstPayout) 
-            = stakingV1.sessionDataOf(_sender, _sessionId);
+            = stakingV1.sessionDataOf(_staker, _sessionId);
+            
         require(shares == 0, "Staking: Stake has not been withdrawn");
 
         // Get # of staking days
         uint256 stakingDays = (end.sub(start)).div(stepTimestamp);
 
+        stakeInternalCommon(_sessionId, amount, start, end, stakingDays, firstPayout, _staker);
+    }
 
-        uint256 updatedShares = _getStakersSharesAmount(amount, start, end);
-        sharesTotalSupply = sharesTotalSupply.add(updatedShares);
+    function stakeInternalCommon(
+        uint256 sessionId,
+        uint256 amount, 
+        uint256 start,
+        uint256 end,
+        uint256 stakingDays,
+        uint256 firstPayout,
+        address staker
+    ) internal {
+        uint256 shares = _getStakersSharesAmount(amount, start, end);
+        sharesTotalSupply = sharesTotalSupply.add(shares);
+        totalStakedAmount = totalStakedAmount.add(amount);
 
-        sessionDataOf[_sender][_sessionId] = Session({
+        sessionDataOf[staker][sessionId] = Session({
             amount: amount,
             start: start,
-            end: end < now ? now : end, // We set end to now so the user accrues no penalties if end < now
-            shares: updatedShares,
+            end: end,
+            shares: shares,
             firstPayout: firstPayout,
-            lastPayout: payouts.length + stakingDays,
+            lastPayout: firstPayout + stakingDays,
             withdrawn: false,
             payout: 0
         });
 
-        sessionsOf[_sender].push(_sessionId);
+        sessionsOf[staker].push(sessionId);
 
-        if(stakingDays >= basePeriod) {
+        if (stakingDays >= basePeriod) {
             ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
-                _sender,
-                _sessionId,
+                staker,
+                sessionId,
                 start,
                 end,
-                updatedShares
+                shares
             );
         }
+
+        emit Stake(staker, sessionId, amount, start, end, shares);
     }
 }
