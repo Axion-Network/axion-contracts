@@ -30,6 +30,8 @@ const main = async () => {
       staking,
     } = await getDeployedContracts(networkName);
 
+    console.log(auction.address);
+
     const upgradeAddress = await upgrades.prepareUpgrade(
       auction.address,
       await ContractFactory.getAuctionFactory(),
