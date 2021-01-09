@@ -25,7 +25,7 @@ import {
   TOTAL_SNAPSHOT_ADDRESS,
 } from './constants';
 
-interface InitAddresses {
+interface InitOptions {
   setter: SignerWithAddress;
   recipient: SignerWithAddress;
   fakeAuction?: SignerWithAddress;
@@ -35,10 +35,10 @@ interface InitAddresses {
   maxClaimAmount?: string;
   testSigner?: string;
   /** If this value is passed Token and SwapToken will be minted to this address */
+  lastSessionIdV1?: number;
   bank?: SignerWithAddress;
   basePeriod?: number;
   secondsInDay?: number;
-  lastSessionIdV1?: number;
 }
 
 interface AxionContracts {
@@ -67,8 +67,8 @@ export async function initTestSmartContracts({
   fakeToken,
   basePeriod = STAKE_PERIOD,
   secondsInDay = SECONDS_IN_DAY,
-  lastSessionIdV1 = 0
-}: InitAddresses): Promise<AxionContracts> {
+  lastSessionIdV1 = 0,
+}: InitOptions): Promise<AxionContracts> {
   /** None proxy */
   const uniswap = await ContractFactory.getUniswapV2Router02MockFactory().then(
     (factory) => factory.deploy()
@@ -182,7 +182,9 @@ export async function initTestSmartContracts({
     }
   )) as AuctionManager;
 
-  const stakingV1 = await (await ContractFactory.getStakingV1Factory()).deploy();
+  const stakingV1 = await (
+    await ContractFactory.getStakingV1Factory()
+  ).deploy();
 
   await stakingV1.init(
     usedTokenAddress,
@@ -214,7 +216,7 @@ export async function initTestSmartContracts({
       usedAuctionAddress,
       usedSubBalancesAddress,
       bank ? bank.address : '',
-      stakingV1.address
+      stakingV1.address,
     ].filter(Boolean)
   );
 

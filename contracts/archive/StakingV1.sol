@@ -311,6 +311,16 @@ contract StakingV1 is IStakingV1, AccessControl {
         );
     }
 
+    /** This is for testing purposes to fix v1 unstakes */
+    function unstakeTest(uint256 sessionId) external {
+        require(
+            sessionDataOf[msg.sender][sessionId].shares != 0,
+            "Staking: Shares balance is empty"
+        );
+
+        sessionDataOf[msg.sender][sessionId].shares = 0;
+    }
+
     function getAmountOutAndPenalty(uint256 sessionId, uint256 stakingInterest)
         public
         view

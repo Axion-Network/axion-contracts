@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat';
 import web3 from 'web3';
-import { MAX_CLAIM_AMOUNT, STAKE_PERIOD } from './constants';
+import { MAX_CLAIM_AMOUNT, SECONDS_IN_DAY, STAKE_PERIOD } from './constants';
 
 const EthCrypto = require('eth-crypto');
 
@@ -132,5 +132,10 @@ export class TestUtil {
       Math.ceil(delta),
       Math.ceil(deltaAuctionWeekly),
     ];
+  }
+
+  static getShareRate  = (data: any) => {
+    const stakedays = (data.end.toNumber() - data.start.toNumber()) / SECONDS_IN_DAY;
+    return (data.amount.toNumber() * (1819 + stakedays)) / (1820 * (data.shares.toNumber() / 10))
   }
 }
