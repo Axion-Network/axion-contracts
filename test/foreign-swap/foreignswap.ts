@@ -124,7 +124,7 @@ describe('Foreign Swap', () => {
   });
 
   describe('claim', async () => {
-    xit('should claim', async () => {
+    it('should claim', async () => {
       const [setter, recipient, account1] = await ethers.getSigners();
       const { foreignswap, token } = await initTestSmartContracts({
         setter: setter,
