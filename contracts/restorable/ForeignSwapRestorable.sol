@@ -9,6 +9,26 @@ import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 /** OpenZepplin non-upgradeable Swap Token (hex3t) */
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 /** Local Interfaces */
-import '../NativeSwap.sol';
+import '../ForeignSwap.sol';
 
-contract NativeSwapRestorable is NativeSwap {}
+contract ForeignSwapRestorable is ForeignSwap {
+    /* Setter methods for contract migration */
+    function setStateVariables(
+        uint256 _claimedAmount,
+        uint256 _claimedAddresses,
+        uint256 _start
+    ) external onlyMigrator {
+        claimedAmount = _claimedAmount;
+        claimedAddresses = _claimedAddresses;
+        start = _start;
+    }
+
+    function setClaimedBalanceOf(
+        address[] calldata userAddresses,
+        uint256[] calldata amounts
+    ) external onlyMigrator {
+        for (uint256 idx = 0; idx < userAddresses.length; idx = idx.add(1)) {
+            claimedBalanceOf[userAddresses[idx]] = amounts[idx];
+        }
+    }
+}

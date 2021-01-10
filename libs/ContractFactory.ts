@@ -1,6 +1,7 @@
 import { ethers } from 'hardhat';
 
 import {
+  // V2
   Auction,
   Auction__factory,
   AuctionManager,
@@ -20,6 +21,21 @@ import {
   Token,
   Token__factory,
   UniswapV2Router02Mock__factory,
+  // V2 Restorable
+  AuctionRestorable,
+  AuctionRestorable__factory,
+  BPDRestorable,
+  BPDRestorable__factory,
+  ForeignSwapRestorable,
+  ForeignSwapRestorable__factory,
+  NativeSwapRestorable,
+  NativeSwapRestorable__factory,
+  StakingRestorable,
+  StakingRestorable__factory,
+  SubBalancesRestorable,
+  SubBalancesRestorable__factory,
+  TokenRestorable,
+  TokenRestorable__factory,
 
   // V1
   StakingV1,
@@ -50,6 +66,15 @@ enum AxionContract {
   Token = 'Token',
   UniswapV2Router02Mock = 'UniswapV2Router02Mock',
   TERC20 = 'TERC20',
+
+  // V1
+  StakingRestorable = 'StakingRestorable',
+  AuctionRestorable = 'AuctionRestorable',
+  BPDRestorable = 'BPDRestorable',
+  ForeignSwapRestorable = 'ForeignSwapRestorable',
+  NativeSwapRestorable = 'NativeSwapRestorable',
+  SubBalancesRestorable = 'SubBalancesRestorable',
+  TokenRestorable = 'TokenRestorable',
 
   // V1
   StakingV1 = 'StakingV1',
@@ -268,5 +293,96 @@ export class ContractFactory {
       AxionContract.TokenV1,
       address
     ) as Promise<TokenV1>;
+  }
+
+  // Restore
+  static getStakingRestorableFactory(): Promise<StakingRestorable__factory> {
+    return ethers.getContractFactory(
+      AxionContract.StakingRestorable
+    ) as Promise<StakingRestorable__factory>;
+  }
+  static getStakingRestorableAt(address: string): Promise<StakingRestorable> {
+    return ethers.getContractAt(
+      AxionContract.StakingRestorable,
+      address
+    ) as Promise<StakingRestorable>;
+  }
+
+  static getBPDRestorableFactory(): Promise<BPDRestorable__factory> {
+    return ethers.getContractFactory(
+      AxionContract.BPDRestorable
+    ) as Promise<BPDRestorable__factory>;
+  }
+  static getBPDRestorableAt(address: string): Promise<BPDRestorable> {
+    return ethers.getContractAt(
+      AxionContract.BPDRestorable,
+      address
+    ) as Promise<BPDRestorable>;
+  }
+
+  static getAuctionRestorableFactory(): Promise<AuctionRestorable__factory> {
+    return ethers.getContractFactory(
+      AxionContract.AuctionRestorable
+    ) as Promise<AuctionRestorable__factory>;
+  }
+  static getAuctionRestorableAt(address: string): Promise<AuctionRestorable> {
+    return ethers.getContractAt(
+      AxionContract.AuctionRestorable,
+      address
+    ) as Promise<AuctionRestorable>;
+  }
+
+  static getForeignSwapRestorableFactory(): Promise<ForeignSwapRestorable__factory> {
+    return ethers.getContractFactory(
+      AxionContract.ForeignSwapRestorable
+    ) as Promise<ForeignSwapRestorable__factory>;
+  }
+  static getForeignSwapRestorableAt(
+    address: string
+  ): Promise<ForeignSwapRestorable> {
+    return ethers.getContractAt(
+      AxionContract.ForeignSwapRestorable,
+      address
+    ) as Promise<ForeignSwapRestorable>;
+  }
+
+  static getNativeSwapRestorableFactory(): Promise<NativeSwapRestorable__factory> {
+    return ethers.getContractFactory(
+      AxionContract.NativeSwapRestorable
+    ) as Promise<NativeSwapRestorable__factory>;
+  }
+  static getNativeSwapRestorableAt(
+    address: string
+  ): Promise<NativeSwapRestorable> {
+    return ethers.getContractAt(
+      AxionContract.NativeSwapRestorable,
+      address
+    ) as Promise<NativeSwapRestorable>;
+  }
+
+  static getSubBalancesRestorableFactory(): Promise<SubBalancesRestorable__factory> {
+    return ethers.getContractFactory(
+      AxionContract.SubBalancesRestorable
+    ) as Promise<SubBalancesRestorable__factory>;
+  }
+  static getSubBalancesRestorableAt(
+    address: string
+  ): Promise<SubBalancesRestorable> {
+    return ethers.getContractAt(
+      AxionContract.SubBalancesRestorable,
+      address
+    ) as Promise<SubBalancesRestorable>;
+  }
+
+  static getTokenRestorableFactory(): Promise<TokenRestorable__factory> {
+    return ethers.getContractFactory(
+      AxionContract.TokenRestorable
+    ) as Promise<TokenRestorable__factory>;
+  }
+  static getTokenRestorableAt(address: string): Promise<TokenRestorable> {
+    return ethers.getContractAt(
+      AxionContract.TokenRestorable,
+      address
+    ) as Promise<TokenRestorable>;
   }
 }

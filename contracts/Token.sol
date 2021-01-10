@@ -3,47 +3,55 @@
 pragma solidity >=0.4.25 <0.7.0;
 /** OpenZeppelin Dependencies Upgradeable */
 // import "@openzeppelin/contracts-upgradeable/contracts/proxy/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import '@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 /** OpenZepplin non-upgradeable Swap Token (hex3t) */
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 /** Local Interfaces */
-import "./interfaces/IToken.sol";
+import './interfaces/IToken.sol';
 
-contract Token is IToken, Initializable, ERC20Upgradeable, AccessControlUpgradeable {
+contract Token is
+    IToken,
+    Initializable,
+    ERC20Upgradeable,
+    AccessControlUpgradeable
+{
     using SafeMathUpgradeable for uint256;
 
     /** Role Variables */
-    bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
-    bytes32 private constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
-    bytes32 private constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 private constant SWAPPER_ROLE = keccak256("SWAPPER_ROLE");
-    bytes32 private constant SETTER_ROLE = keccak256("SETTER_ROLE");
+    bytes32 public constant MIGRATOR_ROLE = keccak256('MIGRATOR_ROLE');
+    bytes32 private constant MANAGER_ROLE = keccak256('MANAGER_ROLE');
+    bytes32 private constant MINTER_ROLE = keccak256('MINTER_ROLE');
+    bytes32 private constant SWAPPER_ROLE = keccak256('SWAPPER_ROLE');
+    bytes32 private constant SETTER_ROLE = keccak256('SETTER_ROLE');
 
     IERC20 private swapToken;
     bool private swapIsOver;
-    uint256 private swapTokenBalance;
+    uint256 public swapTokenBalance;
     bool public init_;
 
     /** Role Modifiers */
     modifier onlyMinter() {
-        require(hasRole(MINTER_ROLE, _msgSender()), "Caller is not a minter");
+        require(hasRole(MINTER_ROLE, _msgSender()), 'Caller is not a minter');
         _;
     }
 
     modifier onlySwapper() {
-        require(hasRole(SWAPPER_ROLE, _msgSender()), "Caller is not a swapper");
+        require(hasRole(SWAPPER_ROLE, _msgSender()), 'Caller is not a swapper');
         _;
     }
-    
+
     modifier onlyManager() {
-        require(hasRole(MANAGER_ROLE, _msgSender()), "Caller is not a manager");
+        require(hasRole(MANAGER_ROLE, _msgSender()), 'Caller is not a manager');
         _;
     }
 
     modifier onlyMigrator() {
-        require(hasRole(MIGRATOR_ROLE, _msgSender()), "Caller is not a migrator");
+        require(
+            hasRole(MIGRATOR_ROLE, _msgSender()),
+            'Caller is not a migrator'
+        );
         _;
     }
 
@@ -62,20 +70,17 @@ contract Token is IToken, Initializable, ERC20Upgradeable, AccessControlUpgradea
         swapIsOver = false;
     }
 
-    function initSwapperAndSwapToken(
-        address _swapToken,
-        address _swapper
-    ) external onlyMigrator {
+    function initSwapperAndSwapToken(address _swapToken, address _swapper)
+        external
+        onlyMigrator
+    {
         /** Setup */
         _setupRole(SWAPPER_ROLE, _swapper);
         swapToken = IERC20(_swapToken);
-
     }
 
-    function init(
-        address[] calldata instances
-    ) external onlyMigrator {
-        require(!init_, "NativeSwap: init is active");
+    function init(address[] calldata instances) external onlyMigrator {
+        require(!init_, 'NativeSwap: init is active');
         init_ = true;
 
         for (uint256 index = 0; index < instances.length; index++) {
@@ -83,6 +88,7 @@ contract Token is IToken, Initializable, ERC20Upgradeable, AccessControlUpgradea
         }
         swapIsOver = true;
     }
+
     /** End initialize Functions */
 
     function getMinterRole() external pure returns (bytes32) {
@@ -108,22 +114,22 @@ contract Token is IToken, Initializable, ERC20Upgradeable, AccessControlUpgradea
     function initDeposit(uint256 _amount) external onlySwapper {
         require(
             swapToken.transferFrom(_msgSender(), address(this), _amount),
-            "Token: transferFrom error"
+            'Token: transferFrom error'
         );
         swapTokenBalance = swapTokenBalance.add(_amount);
     }
 
     function initWithdraw(uint256 _amount) external onlySwapper {
-        require(_amount <= swapTokenBalance, "amount > balance");
+        require(_amount <= swapTokenBalance, 'amount > balance');
         swapTokenBalance = swapTokenBalance.sub(_amount);
         swapToken.transfer(_msgSender(), _amount);
     }
 
     function initSwap() external onlySwapper {
-        require(!swapIsOver, "swap is over");
+        require(!swapIsOver, 'swap is over');
         uint256 balance = swapTokenBalance;
         swapTokenBalance = 0;
-        require(balance != 0, "balance <= 0");
+        require(balance != 0, 'balance <= 0');
         _mint(_msgSender(), balance);
     }
 

@@ -11,4 +11,9 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 /** Local Interfaces */
 import '../NativeSwap.sol';
 
-contract NativeSwapRestorable is NativeSwap {}
+contract NativeSwapRestorable is NativeSwap {
+    /* Setter methods for contract migration */
+    function setStart(uint256 _start) external onlyMigrator {
+        start = _start;
+    }
+}
