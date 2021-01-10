@@ -158,17 +158,19 @@ contract ForeignSwapV1 is IForeignSwapV1, AccessControl {
         uint256 deltaPart = delta.div(stakePeriod);
         uint256 deltaAuctionDaily = deltaPart.mul(stakePeriod.sub(uint256(1)));
 
-        IToken(mainToken).mint(auction, deltaAuctionDaily);
-        IAuction(auction).callIncomeDailyTokensTrigger(deltaAuctionDaily);
+        ITokenV1(mainToken).mint(auction, deltaAuctionDaily);
+        IAuctionV1(auction).callIncomeDailyTokensTrigger(deltaAuctionDaily);
 
         if (deltaAuctionWeekly > 0) {
-            IToken(mainToken).mint(auction, deltaAuctionWeekly);
-            IAuction(auction).callIncomeWeeklyTokensTrigger(deltaAuctionWeekly);
+            ITokenV1(mainToken).mint(auction, deltaAuctionWeekly);
+            IAuctionV1(auction).callIncomeWeeklyTokensTrigger(
+                deltaAuctionWeekly
+            );
         }
 
-        IToken(mainToken).mint(bigPayDayPool, deltaPart);
-        IBPD(bigPayDayPool).callIncomeTokensTrigger(deltaPart);
-        IStaking(staking).externalStake(amountOut, stakePeriod, msg.sender);
+        ITokenV1(mainToken).mint(bigPayDayPool, deltaPart);
+        IBPDV1(bigPayDayPool).callIncomeTokensTrigger(deltaPart);
+        IStakingV1(staking).externalStake(amountOut, stakePeriod, msg.sender);
 
         claimedBalanceOf[msg.sender] = amount;
         claimedAmount = claimedAmount.add(amount);

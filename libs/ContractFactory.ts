@@ -194,34 +194,79 @@ export class ContractFactory {
       AxionContract.StakingV1
     ) as Promise<StakingV1__factory>;
   }
+  static getStakingV1At(address: string): Promise<StakingV1> {
+    return ethers.getContractAt(
+      AxionContract.StakingV1,
+      address
+    ) as Promise<StakingV1>;
+  }
+
   static getBPDV1Factory(): Promise<BPDV1__factory> {
     return ethers.getContractFactory(
       AxionContract.BPDV1
     ) as Promise<BPDV1__factory>;
   }
+  static getBPDV1At(address: string): Promise<BPDV1> {
+    return ethers.getContractAt(AxionContract.BPDV1, address) as Promise<BPDV1>;
+  }
+
   static getAuctionV1Factory(): Promise<AuctionV1__factory> {
     return ethers.getContractFactory(
       AxionContract.AuctionV1
-    ) as Promise<StakingV1__factory>;
+    ) as Promise<AuctionV1__factory>;
   }
+  static getAuctionV1At(address: string): Promise<AuctionV1> {
+    return ethers.getContractAt(
+      AxionContract.AuctionV1,
+      address
+    ) as Promise<AuctionV1>;
+  }
+
   static getForeignSwapV1Factory(): Promise<ForeignSwapV1__factory> {
     return ethers.getContractFactory(
       AxionContract.ForeignSwapV1
     ) as Promise<ForeignSwapV1__factory>;
   }
+  static getForeignSwapV1At(address: string): Promise<ForeignSwapV1> {
+    return ethers.getContractAt(
+      AxionContract.ForeignSwapV1,
+      address
+    ) as Promise<ForeignSwapV1>;
+  }
+
   static getNativeSwapV1Factory(): Promise<NativeSwapV1__factory> {
     return ethers.getContractFactory(
       AxionContract.NativeSwapV1
     ) as Promise<NativeSwapV1__factory>;
   }
+  static getNativeSwapV1At(address: string): Promise<NativeSwapV1> {
+    return ethers.getContractAt(
+      AxionContract.NativeSwapV1,
+      address
+    ) as Promise<NativeSwapV1>;
+  }
+
   static getSubBalancesV1Factory(): Promise<SubBalancesV1__factory> {
     return ethers.getContractFactory(
       AxionContract.SubBalancesV1
     ) as Promise<SubBalancesV1__factory>;
   }
+  static getSubBalancesV1At(address: string): Promise<SubBalancesV1> {
+    return ethers.getContractAt(
+      AxionContract.SubBalancesV1,
+      address
+    ) as Promise<SubBalancesV1>;
+  }
+
   static getTokenV1Factory(): Promise<TokenV1__factory> {
     return ethers.getContractFactory(
       AxionContract.TokenV1
     ) as Promise<TokenV1__factory>;
+  }
+  static getTokenV1At(address: string): Promise<TokenV1> {
+    return ethers.getContractAt(
+      AxionContract.TokenV1,
+      address
+    ) as Promise<TokenV1>;
   }
 }

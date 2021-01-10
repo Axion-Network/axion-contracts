@@ -43,8 +43,8 @@ contract NativeSwapV1 {
         period = _period;
         stepTimestamp = _stepTimestamp;
         swapToken = IERC20(_swapToken);
-        mainToken = IToken(_mainToken);
-        auction = IAuction(_auction);
+        mainToken = ITokenV1(_mainToken);
+        auction = IAuctionV1(_auction);
         start = now;
         init_ = true;
     }
