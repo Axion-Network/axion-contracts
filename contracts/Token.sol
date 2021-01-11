@@ -37,11 +37,6 @@ contract Token is
         _;
     }
 
-    modifier onlySwapper() {
-        require(hasRole(SWAPPER_ROLE, _msgSender()), 'Caller is not a swapper');
-        _;
-    }
-
     modifier onlyManager() {
         require(hasRole(MANAGER_ROLE, _msgSender()), 'Caller is not a manager');
         _;
@@ -109,28 +104,6 @@ contract Token is
 
     function getSwapTokenBalance(uint256) external view returns (uint256) {
         return swapTokenBalance;
-    }
-
-    function initDeposit(uint256 _amount) external onlySwapper {
-        require(
-            swapToken.transferFrom(_msgSender(), address(this), _amount),
-            'Token: transferFrom error'
-        );
-        swapTokenBalance = swapTokenBalance.add(_amount);
-    }
-
-    function initWithdraw(uint256 _amount) external onlySwapper {
-        require(_amount <= swapTokenBalance, 'amount > balance');
-        swapTokenBalance = swapTokenBalance.sub(_amount);
-        swapToken.transfer(_msgSender(), _amount);
-    }
-
-    function initSwap() external onlySwapper {
-        require(!swapIsOver, 'swap is over');
-        uint256 balance = swapTokenBalance;
-        swapTokenBalance = 0;
-        require(balance != 0, 'balance <= 0');
-        _mint(_msgSender(), balance);
     }
 
     function mint(address to, uint256 amount) external override onlyMinter {

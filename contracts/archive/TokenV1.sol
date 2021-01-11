@@ -7,6 +7,8 @@ import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import './interfaces/ITokenV1.sol';
 
+import 'hardhat/console.sol';
+
 contract TokenV1 is ITokenV1, ERC20, AccessControl {
     using SafeMath for uint256;
 

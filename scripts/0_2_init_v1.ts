@@ -67,8 +67,6 @@ const main = async () => {
       stakingV1,
     } = await getDeployedContractsV1(networkName);
 
-    console.log('LOOK HERE', auctionV1.address);
-
     const [
       fakeSwapToken,
       fakeUniswap,
@@ -91,64 +89,64 @@ const main = async () => {
       SUB_BALANCES_V1_ADDRESS ?? fakeSubBalancesV1.address;
     // const usedSetter = DEPLOYER_ADDRESS ?? fakeDeployer.address;
 
-    // await tokenV1.init([
-    //   nswapV1.address,
-    //   usedAuctionV1Address,
-    //   usedStakingV1Address,
-    //   fswapV1.address,
-    //   usedSubBalancesV1Address,
-    // ]);
-    // console.log('========== TOKEN INITED ==========');
+    await tokenV1.init([
+      nswapV1.address,
+      usedAuctionV1Address,
+      usedStakingV1Address,
+      fswapV1.address,
+      usedSubBalancesV1Address,
+    ]);
+    console.log('========== TOKEN INITED ==========');
 
-    // await subBalancesV1.init(
-    //   tokenV1.address,
-    //   fswapV1.address,
-    //   bpdV1.address,
-    //   usedAuctionV1Address,
-    //   usedStakingV1Address,
-    //   TIME_IN_DAY ?? '3600',
-    //   STAKE_PERIOD ?? '350'
-    // );
-    // console.log('========== SUB-BALANCES INITED ==========');
+    await subBalancesV1.init(
+      tokenV1.address,
+      fswapV1.address,
+      bpdV1.address,
+      usedAuctionV1Address,
+      usedStakingV1Address,
+      TIME_IN_DAY ?? '3600',
+      STAKE_PERIOD ?? '350'
+    );
+    console.log('========== SUB-BALANCES INITED ==========');
 
-    // await bpdV1.init(tokenV1.address, fswapV1.address, bpdV1.address);
-    // console.log('========== BPD INITED ==========');
+    await bpdV1.init(tokenV1.address, fswapV1.address, bpdV1.address);
+    console.log('========== BPD INITED ==========');
 
-    // await fswapV1.init(
-    //   SIGNER_ADDRESS,
-    //   TIME_IN_DAY ?? '3600',
-    //   STAKE_PERIOD ?? '350',
-    //   MAX_CLAIM_AMOUNT,
-    //   tokenV1.address,
-    //   usedAuctionV1Address,
-    //   usedStakingV1Address,
-    //   bpdV1.address,
-    //   TOTAL_SNAPSHOT_AMOUNT,
-    //   TOTAL_SNAPSHOT_ADDRESS
-    // );
-    // console.log('========== FSWAP INITED ==========');
+    await fswapV1.init(
+      SIGNER_ADDRESS,
+      TIME_IN_DAY ?? '3600',
+      STAKE_PERIOD ?? '350',
+      MAX_CLAIM_AMOUNT,
+      tokenV1.address,
+      usedAuctionV1Address,
+      usedStakingV1Address,
+      bpdV1.address,
+      TOTAL_SNAPSHOT_AMOUNT,
+      TOTAL_SNAPSHOT_ADDRESS
+    );
+    console.log('========== FSWAP INITED ==========');
 
-    // await nswapV1.init(
-    //   STAKE_PERIOD ?? '350',
-    //   TIME_IN_DAY ?? '3600',
-    //   usedSwapTokenAddress,
-    //   tokenV1.addres,
-    //   usedAuctionV1Address
-    // );
-    // console.log('========== NSWAP INITED ==========');
+    await nswapV1.init(
+      STAKE_PERIOD ?? '350',
+      TIME_IN_DAY ?? '3600',
+      usedSwapTokenAddress,
+      tokenV1.address,
+      usedAuctionV1Address
+    );
+    console.log('========== NSWAP INITED ==========');
 
-    // await auctionV1.init(
-    //   TIME_IN_DAY ?? '3600',
-    //   managerAddress,
-    //   tokenV1.address,
-    //   usedStakingV1Address,
-    //   usedUniswapAddress,
-    //   usedRecipientAddress,
-    //   nswapV1.address,
-    //   fswapV1.address,
-    //   usedSubBalancesV1Address
-    // );
-    // console.log('========== NSWAP INITED ==========');
+    await auctionV1.init(
+      TIME_IN_DAY ?? '3600',
+      managerAddress,
+      tokenV1.address,
+      usedStakingV1Address,
+      usedUniswapAddress,
+      usedRecipientAddress,
+      nswapV1.address,
+      fswapV1.address,
+      usedSubBalancesV1Address
+    );
+    console.log('========== AUCTION INITED ==========');
 
     await stakingV1.init(
       tokenV1.address,
@@ -157,14 +155,7 @@ const main = async () => {
       fswapV1.address,
       TIME_IN_DAY ?? '3600'
     );
-    console.log('========== NSWAP INITED ==========');
-
-    const addressFilePath = path.join(
-      __dirname,
-      '..',
-      'deployed-addresses',
-      'v1addresses.json'
-    );
+    console.log('========== STAKING INITED ==========');
 
     console.log('V1 Contracts initialized');
 
