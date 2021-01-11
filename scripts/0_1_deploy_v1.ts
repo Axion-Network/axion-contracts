@@ -74,8 +74,7 @@ const main = async () => {
     const token = await tokenFactory.deploy(
       TOKEN_NAME,
       TOKEN_SYMBOL,
-      usedSwapTokenAddress,
-      deployerAddress
+      usedSwapTokenAddress
     );
     console.log(`======== LAYER 1 TOKEN LAUNCHED ${token.address} ========`);
     const nativeSwapFactory = await ContractFactory.getNativeSwapV1Factory();
@@ -84,7 +83,7 @@ const main = async () => {
       `========== LAYER 1 NATIVE SWAP LAUNCHED ${nswap.address} ==========`
     );
     const foreignSwapFactory = await ContractFactory.getForeignSwapV1Factory();
-    const fswap = await foreignSwapFactory.deploy(deployerAddress);
+    const fswap = await foreignSwapFactory.deploy();
     console.log(
       `========== LAYER 1 FOREIGN SWAP LAUNCHED ${fswap.address} ==========`
     );
@@ -94,10 +93,10 @@ const main = async () => {
       `========== LAYER 1 AUCTION LAUNCHED ${auction.address} ==========`
     );
     const bpdFactory = await ContractFactory.getBPDV1Factory();
-    const bpd = await bpdFactory.deploy(deployerAddress);
+    const bpd = await bpdFactory.deploy();
     console.log(`========== LAYER 1 BPD LAUNCHED ${bpd.address} ==========`);
     const subBalancesFactory = await ContractFactory.getSubBalancesV1Factory();
-    const subBalances = await subBalancesFactory.deploy(deployerAddress);
+    const subBalances = await subBalancesFactory.deploy();
     console.log(
       `========== LAYER 1 SUB BALANCES LAUNCHED ${subBalances.address} ==========`
     );
@@ -105,6 +104,26 @@ const main = async () => {
     const staking = await stakingFactory.deploy();
     console.log(
       `========== LAYER 1 STAKING LAUNCHED AT ${staking.address} ==========`
+    );
+
+    const verifyScriptPath = path.join(
+      __dirname,
+      '..',
+      'verify-contracts',
+      'v1-verify'
+    );
+
+    fs.writeFileSync(
+      verifyScriptPath,
+      `
+        npx hardhat verify --network ropsten ${token.address} Axion AXN ${usedSwapTokenAddress}
+        npx hardhat verify --network ropsten ${nswap.address}
+        npx hardhat verify --network ropsten ${fswap.address}
+        npx hardhat verify --network ropsten ${subBalances.address}
+        npx hardhat verify --network ropsten ${staking.address}
+        npx hardhat verify --network ropsten ${bpd.address}
+        npx hardhat verify --network ropsten ${auction.address}
+      `
     );
 
     const addressFilePath = path.join(

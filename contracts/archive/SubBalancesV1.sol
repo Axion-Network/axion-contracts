@@ -58,15 +58,6 @@ contract SubBalancesV1 is ISubBalancesV1, AccessControl {
     mapping(address => uint256[]) userStakings;
     mapping(uint256 => StakeSession) stakeSessions;
 
-    modifier onlySetter() {
-        require(hasRole(SETTER_ROLE, _msgSender()), 'Caller is not a setter');
-        _;
-    }
-
-    constructor(address _setter) public {
-        _setupRole(SETTER_ROLE, _setter);
-    }
-
     function init(
         address _mainToken,
         address _foreignSwap,
@@ -75,7 +66,7 @@ contract SubBalancesV1 is ISubBalancesV1, AccessControl {
         address _staking,
         uint256 _stepTimestamp,
         uint256 _basePeriod
-    ) public onlySetter {
+    ) public {
         _setupRole(STAKING_ROLE, _staking);
         mainToken = _mainToken;
         foreignSwap = _foreignSwap;
@@ -94,7 +85,6 @@ contract SubBalancesV1 is ISubBalancesV1, AccessControl {
             // subBalance.payDayEnd = subBalance.payDayStart.add(stepTimestamp);
             subBalance.requiredStakePeriod = PERIODS[i];
         }
-        renounceRole(SETTER_ROLE, _msgSender());
     }
 
     function getStartTimes()
@@ -280,10 +270,6 @@ contract SubBalancesV1 is ISubBalancesV1, AccessControl {
         uint256 shares
     ) external override {
         require(
-            hasRole(STAKING_ROLE, _msgSender()),
-            'SUBBALANCES: Caller is not a staking role'
-        );
-        require(
             end > start,
             'SUBBALANCES: Stake end must be after stake start'
         );
@@ -330,11 +316,6 @@ contract SubBalancesV1 is ISubBalancesV1, AccessControl {
         uint256 end,
         uint256 shares
     ) external override {
-        (staker);
-        require(
-            hasRole(STAKING_ROLE, _msgSender()),
-            'SUBBALANCES: Caller is not a staking role'
-        );
         require(
             end > start,
             'SUBBALANCES: Stake end must be after stake start'

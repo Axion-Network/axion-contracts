@@ -24,13 +24,7 @@ contract NativeSwapV1 {
     ITokenV1 public mainToken;
     IAuctionV1 public auction;
 
-    bool public init_;
-
     mapping(address => uint256) public swapTokenBalanceOf;
-
-    constructor() public {
-        init_ = false;
-    }
 
     function init(
         uint256 _period,
@@ -39,14 +33,12 @@ contract NativeSwapV1 {
         address _mainToken,
         address _auction
     ) external {
-        require(!init_, 'init is active');
         period = _period;
         stepTimestamp = _stepTimestamp;
         swapToken = IERC20(_swapToken);
         mainToken = ITokenV1(_mainToken);
         auction = IAuctionV1(_auction);
         start = now;
-        init_ = true;
     }
 
     function deposit(uint256 _amount) external {

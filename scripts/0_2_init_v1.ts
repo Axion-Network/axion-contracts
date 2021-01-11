@@ -71,8 +71,6 @@ const main = async () => {
       fakeSwapToken,
       fakeUniswap,
       fakeRecipient,
-      fakeAuctionV1,
-      fakeStakingV1,
       fakeSubBalancesV1,
     ] = await ethers.getSigners();
 
@@ -83,16 +81,14 @@ const main = async () => {
       SWAP_TOKEN_ADDRESS ?? hex4TokenV1?.address ?? fakeSwapToken.address;
     const usedUniswapAddress = UNISWAP_ADDRESS ?? fakeUniswap.address;
     const usedRecipientAddress = RECIPIENT_ADDRESS ?? fakeRecipient.address;
-    const usedAuctionV1Address = AUCTION_V1_ADDRESS ?? fakeAuctionV1.address;
-    const usedStakingV1Address = STAKING_V1_ADDRESS ?? fakeStakingV1.address;
     const usedSubBalancesV1Address =
       SUB_BALANCES_V1_ADDRESS ?? fakeSubBalancesV1.address;
     // const usedSetter = DEPLOYER_ADDRESS ?? fakeDeployer.address;
 
     await tokenV1.init([
       nswapV1.address,
-      usedAuctionV1Address,
-      usedStakingV1Address,
+      auctionV1.address,
+      stakingV1.address,
       fswapV1.address,
       usedSubBalancesV1Address,
     ]);
@@ -102,8 +98,8 @@ const main = async () => {
       tokenV1.address,
       fswapV1.address,
       bpdV1.address,
-      usedAuctionV1Address,
-      usedStakingV1Address,
+      auctionV1.address,
+      stakingV1.address,
       TIME_IN_DAY ?? '3600',
       STAKE_PERIOD ?? '350'
     );
@@ -118,8 +114,8 @@ const main = async () => {
       STAKE_PERIOD ?? '350',
       MAX_CLAIM_AMOUNT,
       tokenV1.address,
-      usedAuctionV1Address,
-      usedStakingV1Address,
+      auctionV1.address,
+      stakingV1.address,
       bpdV1.address,
       TOTAL_SNAPSHOT_AMOUNT,
       TOTAL_SNAPSHOT_ADDRESS
@@ -131,7 +127,7 @@ const main = async () => {
       TIME_IN_DAY ?? '3600',
       usedSwapTokenAddress,
       tokenV1.address,
-      usedAuctionV1Address
+      auctionV1.address
     );
     console.log('========== NSWAP INITED ==========');
 
@@ -139,7 +135,7 @@ const main = async () => {
       TIME_IN_DAY ?? '3600',
       managerAddress,
       tokenV1.address,
-      usedStakingV1Address,
+      stakingV1.address,
       usedUniswapAddress,
       usedRecipientAddress,
       nswapV1.address,
@@ -150,7 +146,7 @@ const main = async () => {
 
     await stakingV1.init(
       tokenV1.address,
-      usedAuctionV1Address,
+      auctionV1.address,
       usedSubBalancesV1Address,
       fswapV1.address,
       TIME_IN_DAY ?? '3600'

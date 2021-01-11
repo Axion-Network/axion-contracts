@@ -65,7 +65,6 @@ contract StakingV1 is IStakingV1, AccessControl {
     uint256 public startContract;
     uint256 public globalPayout;
     uint256 public globalPayin;
-    bool public init_;
 
     mapping(address => mapping(uint256 => Session))
         public
@@ -81,10 +80,6 @@ contract StakingV1 is IStakingV1, AccessControl {
         _;
     }
 
-    constructor() public {
-        init_ = false;
-    }
-
     function init(
         address _mainToken,
         address _auction,
@@ -92,7 +87,6 @@ contract StakingV1 is IStakingV1, AccessControl {
         address _foreignSwap,
         uint256 _stepTimestamp
     ) external {
-        require(!init_, 'Staking: init is active');
         _setupRole(EXTERNAL_STAKER_ROLE, _foreignSwap);
         _setupRole(EXTERNAL_STAKER_ROLE, _auction);
         mainToken = _mainToken;
@@ -102,7 +96,6 @@ contract StakingV1 is IStakingV1, AccessControl {
         stepTimestamp = _stepTimestamp;
         nextPayoutCall = now.add(_stepTimestamp);
         startContract = now;
-        init_ = true;
     }
 
     function sessionsOf_(address account)
@@ -152,7 +145,7 @@ contract StakingV1 is IStakingV1, AccessControl {
         uint256 amount,
         uint256 stakingDays,
         address staker
-    ) external override onlyExternalStaker {
+    ) external override {
         if (now >= nextPayoutCall) makePayout();
 
         require(stakingDays > 0, 'stakingDays < 1');

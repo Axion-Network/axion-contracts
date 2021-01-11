@@ -27,19 +27,14 @@ contract BPDV1 is IBPDV1, AccessControl {
         _;
     }
 
-    constructor(address _setter) public {
-        _setupRole(SETTER_ROLE, _setter);
-    }
-
     function init(
         address _mainToken,
         address _foreignSwap,
         address _subBalancePool
-    ) public onlySetter {
+    ) public {
         _setupRole(SWAP_ROLE, _foreignSwap);
         _setupRole(SUBBALANCE_ROLE, _subBalancePool);
         mainToken = _mainToken;
-        renounceRole(SETTER_ROLE, _msgSender());
     }
 
     function getPoolYearAmounts()
@@ -68,8 +63,6 @@ contract BPDV1 is IBPDV1, AccessControl {
         external
         override
     {
-        require(hasRole(SWAP_ROLE, _msgSender()), 'Caller is not a swap role');
-
         // Divide income to years
         uint256 part = incomeAmountToken.div(PERCENT_DENOMINATOR);
 
@@ -90,11 +83,6 @@ contract BPDV1 is IBPDV1, AccessControl {
         override
         returns (uint256 transferAmount)
     {
-        require(
-            hasRole(SUBBALANCE_ROLE, _msgSender()),
-            'Caller is not a subbalance role'
-        );
-
         for (uint256 i = 0; i < poolYearAmounts.length; i++) {
             if (poolNumber == i) {
                 require(!poolTransferred[i], 'Already transferred');

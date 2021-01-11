@@ -75,10 +75,6 @@ contract AuctionV1 is IAuctionV1, AccessControl {
         _;
     }
 
-    constructor() public {
-        init_ = false;
-    }
-
     function init(
         uint256 _stepTimestamp,
         address _manager,
@@ -90,7 +86,6 @@ contract AuctionV1 is IAuctionV1, AccessControl {
         address _foreignSwap,
         address _subbalances
     ) external {
-        require(!init_, 'init is active');
         _setupRole(MANAGER_ROLE, _manager);
         _setupRole(CALLER_ROLE, _nativeSwap);
         _setupRole(CALLER_ROLE, _foreignSwap);
@@ -103,7 +98,6 @@ contract AuctionV1 is IAuctionV1, AccessControl {
         staking = _staking;
         uniswap = _uniswap;
         recipient = _recipient;
-        init_ = true;
     }
 
     function auctionsOf_(address account)
@@ -114,7 +108,7 @@ contract AuctionV1 is IAuctionV1, AccessControl {
         return auctionsOf[account];
     }
 
-    function setUniswapPercent(uint256 percent) external onlyManager {
+    function setUniswapPercent(uint256 percent) external {
         uniswapPercent = percent;
     }
 

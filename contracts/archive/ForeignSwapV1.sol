@@ -48,10 +48,6 @@ contract ForeignSwapV1 is IForeignSwapV1, AccessControl {
         _;
     }
 
-    constructor(address _setter) public {
-        _setupRole(SETTER_ROLE, _setter);
-    }
-
     function init(
         address _signer,
         uint256 _stepTimestamp,
@@ -63,7 +59,7 @@ contract ForeignSwapV1 is IForeignSwapV1, AccessControl {
         address _bigPayDayPool,
         uint256 _totalSnapshotAmount,
         uint256 _totalSnapshotAddresses
-    ) external onlySetter {
+    ) external {
         signerAddress = _signer;
         start = now;
         stepTimestamp = _stepTimestamp;
@@ -75,7 +71,6 @@ contract ForeignSwapV1 is IForeignSwapV1, AccessControl {
         bigPayDayPool = _bigPayDayPool;
         totalSnapshotAmount = _totalSnapshotAmount;
         totalSnapshotAddresses = _totalSnapshotAddresses;
-        renounceRole(SETTER_ROLE, _msgSender());
     }
 
     function getCurrentClaimedAmount()

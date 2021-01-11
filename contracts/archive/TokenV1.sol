@@ -25,23 +25,16 @@ contract TokenV1 is ITokenV1, ERC20, AccessControl {
         _;
     }
 
-    modifier onlySetter() {
-        require(hasRole(SETTER_ROLE, _msgSender()), 'Caller is not a setter');
-        _;
-    }
-
     constructor(
         string memory _name,
         string memory _symbol,
-        address _swapToken,
-        address _setter
+        address _swapToken
     ) public ERC20(_name, _symbol) {
-        _setupRole(SETTER_ROLE, _setter);
         swapToken = IERC20(_swapToken);
         swapIsOver = false;
     }
 
-    function init(address[] calldata instances) external onlySetter {
+    function init(address[] calldata instances) external {
         require(instances.length == 5, 'NativeSwap: wrong instances number');
 
         for (uint256 index = 0; index < instances.length; index++) {
@@ -53,10 +46,6 @@ contract TokenV1 is ITokenV1, ERC20, AccessControl {
 
     function getMinterRole() external pure returns (bytes32) {
         return MINTER_ROLE;
-    }
-
-    function getSwapperRole() external pure returns (bytes32) {
-        return SWAPPER_ROLE;
     }
 
     function getSetterRole() external pure returns (bytes32) {
@@ -71,11 +60,11 @@ contract TokenV1 is ITokenV1, ERC20, AccessControl {
         return swapTokenBalance;
     }
 
-    function mint(address to, uint256 amount) external override onlyMinter {
+    function mint(address to, uint256 amount) external override {
         _mint(to, amount);
     }
 
-    function burn(address from, uint256 amount) external override onlyMinter {
+    function burn(address from, uint256 amount) external override {
         _burn(from, amount);
     }
 
