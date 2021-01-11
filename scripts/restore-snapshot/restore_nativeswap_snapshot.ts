@@ -1,6 +1,6 @@
 import { NativeSwap } from '../../typechain';
 
-const nativeSwapSnapshot = require('../../real-snapshots/native-swap-snapshot.json');
+const nativeSwapSnapshot = require('../../snapshots/native-swap-snapshot.json');
 
 export async function restoreNativeSwapSnapshot(nativeSwap: NativeSwap) {
   console.log('restoreNativeSwapSnapshot');

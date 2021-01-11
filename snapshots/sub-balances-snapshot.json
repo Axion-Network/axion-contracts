@@ -1,62 +1,62 @@
 {
   "subBalanceList": [
     {
-      "0": "87112999493439268650984439672",
+      "0": "0",
       "1": "0",
-      "2": "1635491063",
+      "2": "1611588582",
       "3": "350",
       "4": false,
-      "totalShares": "87112999493439268650984439672",
+      "totalShares": "0",
       "totalWithdrawAmount": "0",
-      "payDayTime": "1635491063",
+      "payDayTime": "1611588582",
       "requiredStakePeriod": "350",
       "minted": false
     },
     {
-      "0": "56181256923448643989814180713",
+      "0": "0",
       "1": "0",
-      "2": "1665731063",
+      "2": "1612848582",
       "3": "700",
       "4": false,
-      "totalShares": "56181256923448643989814180713",
+      "totalShares": "0",
       "totalWithdrawAmount": "0",
-      "payDayTime": "1665731063",
+      "payDayTime": "1612848582",
       "requiredStakePeriod": "700",
       "minted": false
     },
     {
-      "0": "47826830336071650266702886017",
+      "0": "0",
       "1": "0",
-      "2": "1695971063",
+      "2": "1614108582",
       "3": "1050",
       "4": false,
-      "totalShares": "47826830336071650266702886017",
+      "totalShares": "0",
       "totalWithdrawAmount": "0",
-      "payDayTime": "1695971063",
+      "payDayTime": "1614108582",
       "requiredStakePeriod": "1050",
       "minted": false
     },
     {
-      "0": "43096758842797507796343095985",
+      "0": "0",
       "1": "0",
-      "2": "1726211063",
+      "2": "1615368582",
       "3": "1400",
       "4": false,
-      "totalShares": "43096758842797507796343095985",
+      "totalShares": "0",
       "totalWithdrawAmount": "0",
-      "payDayTime": "1726211063",
+      "payDayTime": "1615368582",
       "requiredStakePeriod": "1400",
       "minted": false
     },
     {
-      "0": "38838712999665715652175888686",
+      "0": "0",
       "1": "0",
-      "2": "1756451063",
+      "2": "1616628582",
       "3": "1750",
       "4": false,
-      "totalShares": "38838712999665715652175888686",
+      "totalShares": "0",
       "totalWithdrawAmount": "0",
-      "payDayTime": "1756451063",
+      "payDayTime": "1616628582",
       "requiredStakePeriod": "1750",
       "minted": false
     }
@@ -69,6 +69,6 @@
     "1750"
   ],
   "balanceOf": "0",
-  "startTimestamp": "1605251063",
-  "currentSharesTotalSupply": "390154741443608656745850061768"
+  "startTimestamp": "1610328582",
+  "currentSharesTotalSupply": "2137912087912087912087911"
 }

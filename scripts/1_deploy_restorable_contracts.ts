@@ -128,7 +128,7 @@ const main = async () => {
       __dirname,
       '..',
       'verify-contracts',
-      'v1-verify'
+      'V2-verify'
     );
 
     fs.writeFileSync(

@@ -1,6 +1,6 @@
 import { Staking, Token } from '../../typechain';
 
-const stakingSnapshot = require('../../real-snapshots/staking-snapshot.json');
+const stakingSnapshot = require('../../snapshots/staking-snapshot.json');
 
 export async function restoreStakingSnapshot(staking: Staking, token: Token) {
   console.log('restoreStakingSnapshot');
