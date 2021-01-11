@@ -1,7 +1,7 @@
 import { ContractFactory } from '../../libs/ContractFactory';
 const ADDRESSES = require('../../deployed-addresses/addresses.json');
 
-export async function getDeployedContracts(network: string) {
+export async function getRestorableDeployedContracts(network: string) {
   const {
     NETWORK,
     AUCTION_ADDRESS,
@@ -12,7 +12,6 @@ export async function getDeployedContracts(network: string) {
     SUBBALANCES_ADDRESS,
     TOKEN_ADDRESS,
     HEX4T_ADDRESS,
-    AUCTION_MANAGER_ADDRESS,
   } = ADDRESSES;
 
   if (NETWORK !== network) {
@@ -34,31 +33,37 @@ export async function getDeployedContracts(network: string) {
     }
   });
 
-  const auction = await ContractFactory.getAuctionRestorableAt(AUCTION_ADDRESS);
-  const bpd = await ContractFactory.getBPDRestorableAt(BPD_ADDRESS);
-  const foreignSwap = await ContractFactory.getForeignSwapRestorableAt(
+  const auctionRestorable = await ContractFactory.getAuctionRestorableAt(
+    AUCTION_ADDRESS
+  );
+  const bpdRestorable = await ContractFactory.getBPDRestorableAt(BPD_ADDRESS);
+  const foreignSwapRestorable = await ContractFactory.getForeignSwapRestorableAt(
     FOREIGNSWAP_ADDRESS
   );
-  const nativeSwap = await ContractFactory.getNativeSwapRestorableAt(
+  const nativeSwapRestorable = await ContractFactory.getNativeSwapRestorableAt(
     NATIVESWAP_ADDRESS
   );
-  const token = await ContractFactory.getTokenRestorableAt(TOKEN_ADDRESS);
+  const tokenRestorable = await ContractFactory.getTokenRestorableAt(
+    TOKEN_ADDRESS
+  );
   const hex4Token = HEX4T_ADDRESS
     ? await ContractFactory.getTokenRestorableAt(HEX4T_ADDRESS)
     : null;
-  const subBalances = await ContractFactory.getSubBalancesRestorableAt(
+  const subBalancesRestorable = await ContractFactory.getSubBalancesRestorableAt(
     SUBBALANCES_ADDRESS
   );
-  const staking = await ContractFactory.getStakingRestorableAt(STAKING_ADDRESS);
+  const stakingRestorable = await ContractFactory.getStakingRestorableAt(
+    STAKING_ADDRESS
+  );
 
   return {
-    auction,
-    bpd,
-    foreignSwap,
-    nativeSwap,
-    token,
+    auctionRestorable,
+    bpdRestorable,
+    foreignSwapRestorable,
+    nativeSwapRestorable,
+    tokenRestorable,
     hex4Token,
-    subBalances,
-    staking,
+    subBalancesRestorable,
+    stakingRestorable,
   };
 }

@@ -27,7 +27,9 @@ const main = async () => {
 
     await Promise.all(
       ADDRESSES.map(async (address) => {
-        await hex4Token?.mint(address, ethers.utils.parseEther(DROP_AMOUNT));
+        await hex4Token
+          ?.mint(address, ethers.utils.parseEther(DROP_AMOUNT))
+          .catch(console.log);
         console.log(`Finish minting ${DROP_AMOUNT} for ${address}`);
       })
     );

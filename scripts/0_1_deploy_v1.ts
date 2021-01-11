@@ -116,13 +116,13 @@ const main = async () => {
     fs.writeFileSync(
       verifyScriptPath,
       `
-        npx hardhat verify --network ropsten ${token.address} Axion AXN ${usedSwapTokenAddress}
-        npx hardhat verify --network ropsten ${nswap.address}
-        npx hardhat verify --network ropsten ${fswap.address}
-        npx hardhat verify --network ropsten ${subBalances.address}
-        npx hardhat verify --network ropsten ${staking.address}
-        npx hardhat verify --network ropsten ${bpd.address}
-        npx hardhat verify --network ropsten ${auction.address}
+        npx hardhat verify --network ${networkName} ${token.address} Axion AXN ${usedSwapTokenAddress}
+        npx hardhat verify --network ${networkName} ${nswap.address}
+        npx hardhat verify --network ${networkName} ${fswap.address}
+        npx hardhat verify --network ${networkName} ${subBalances.address}
+        npx hardhat verify --network ${networkName} ${staking.address}
+        npx hardhat verify --network ${networkName} ${bpd.address}
+        npx hardhat verify --network ${networkName} ${auction.address}
       `
     );
 

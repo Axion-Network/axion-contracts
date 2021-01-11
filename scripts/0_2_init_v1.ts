@@ -81,8 +81,6 @@ const main = async () => {
       SWAP_TOKEN_ADDRESS ?? hex4TokenV1?.address ?? fakeSwapToken.address;
     const usedUniswapAddress = UNISWAP_ADDRESS ?? fakeUniswap.address;
     const usedRecipientAddress = RECIPIENT_ADDRESS ?? fakeRecipient.address;
-    const usedSubBalancesV1Address =
-      SUB_BALANCES_V1_ADDRESS ?? fakeSubBalancesV1.address;
     // const usedSetter = DEPLOYER_ADDRESS ?? fakeDeployer.address;
 
     await tokenV1.init([
@@ -90,7 +88,7 @@ const main = async () => {
       auctionV1.address,
       stakingV1.address,
       fswapV1.address,
-      usedSubBalancesV1Address,
+      subBalancesV1.address,
     ]);
     console.log('========== TOKEN INITED ==========');
 
@@ -140,14 +138,14 @@ const main = async () => {
       usedRecipientAddress,
       nswapV1.address,
       fswapV1.address,
-      usedSubBalancesV1Address
+      subBalancesV1.address
     );
     console.log('========== AUCTION INITED ==========');
 
     await stakingV1.init(
       tokenV1.address,
       auctionV1.address,
-      usedSubBalancesV1Address,
+      subBalancesV1.address,
       fswapV1.address,
       TIME_IN_DAY ?? '3600'
     );

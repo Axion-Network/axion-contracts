@@ -124,6 +124,26 @@ const main = async () => {
     )) as StakingRestorable;
     console.log('Deployed: Staking', staking.address);
 
+    const verifyScriptPath = path.join(
+      __dirname,
+      '..',
+      'verify-contracts',
+      'v1-verify'
+    );
+
+    fs.writeFileSync(
+      verifyScriptPath,
+      `
+        npx hardhat verify --network ${networkName} ${token.address}
+        npx hardhat verify --network ${networkName} ${nativeswap.address}
+        npx hardhat verify --network ${networkName} ${foreignswap.address}
+        npx hardhat verify --network ${networkName} ${subbalances.address}
+        npx hardhat verify --network ${networkName} ${staking.address}
+        npx hardhat verify --network ${networkName} ${bpd.address}
+        npx hardhat verify --network ${networkName} ${auction.address}
+      `
+    );
+
     const addressFilePath = path.join(
       __dirname,
       '..',

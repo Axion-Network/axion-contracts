@@ -316,6 +316,7 @@ contract SubBalancesV1 is ISubBalancesV1, AccessControl {
         uint256 end,
         uint256 shares
     ) external override {
+        (staker);
         require(
             end > start,
             'SUBBALANCES: Stake end must be after stake start'
