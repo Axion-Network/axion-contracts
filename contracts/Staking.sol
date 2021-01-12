@@ -4,16 +4,16 @@ pragma solidity >=0.4.25 <0.7.0;
 
 /** OpenZeppelin Dependencies */
 // import "@openzeppelin/contracts-upgradeable/contracts/proxy/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import '@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
 /** Local Interfaces */
-import "./interfaces/IToken.sol";
-import "./interfaces/IAuction.sol";
-import "./interfaces/IStaking.sol";
-import "./interfaces/ISubBalances.sol";
-import "./interfaces/IStakingV1.sol";
+import './interfaces/IToken.sol';
+import './interfaces/IAuction.sol';
+import './interfaces/IStaking.sol';
+import './interfaces/ISubBalances.sol';
+import './interfaces/IStakingV1.sol';
 
 contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
@@ -70,9 +70,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     IStakingV1 public stakingV1;
 
     /** Roles */
-    bytes32 public constant MIGRATOR_ROLE = keccak256("MIGRATOR_ROLE");
-    bytes32 public constant EXTERNAL_STAKER_ROLE = keccak256("EXTERNAL_STAKER_ROLE");
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    bytes32 public constant MIGRATOR_ROLE = keccak256('MIGRATOR_ROLE');
+    bytes32 public constant EXTERNAL_STAKER_ROLE =
+        keccak256('EXTERNAL_STAKER_ROLE');
+    bytes32 public constant MANAGER_ROLE = keccak256('MANAGER_ROLE');
 
     /** Public Variables */
     uint256 public shareRate;
@@ -89,7 +90,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     mapping(address => mapping(uint256 => Session)) public sessionDataOf;
     mapping(address => uint256[]) public sessionsOf;
     Payout[] public payouts;
-    
+
     /** Booleans */
     bool public init_;
 
@@ -100,31 +101,34 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     /** Roles */
     modifier onlyManager() {
-        require(hasRole(MANAGER_ROLE, _msgSender()), "Caller is not a manager");
+        require(hasRole(MANAGER_ROLE, _msgSender()), 'Caller is not a manager');
         _;
     }
     modifier onlyMigrator() {
-        require(hasRole(MIGRATOR_ROLE, _msgSender()), "Caller is not a migrator");
+        require(
+            hasRole(MIGRATOR_ROLE, _msgSender()),
+            'Caller is not a migrator'
+        );
         _;
     }
     modifier onlyExternalStaker() {
         require(
             hasRole(EXTERNAL_STAKER_ROLE, _msgSender()),
-            "Caller is not a external staker"
+            'Caller is not a external staker'
         );
         _;
     }
 
     /** Init functions */
-    function initialize(
-        address _manager,
-        address _migrator
-    ) public initializer {
+    function initialize(address _manager, address _migrator)
+        public
+        initializer
+    {
         _setupRole(MANAGER_ROLE, _manager);
         _setupRole(MIGRATOR_ROLE, _migrator);
         init_ = false;
     }
-    
+
     function init(
         address _mainTokenAddress,
         address _auctionAddress,
@@ -134,7 +138,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 _stepTimestamp,
         uint256 _lastSessionIdV1
     ) external onlyMigrator {
-        require(!init_, "Staking: init is active");
+        require(!init_, 'Staking: init is active');
         init_ = true;
         /** Setup */
         _setupRole(EXTERNAL_STAKER_ROLE, _foreignSwapAddress);
@@ -145,9 +149,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             auction: _auctionAddress,
             subBalances: _subBalancesAddress
         });
-        
+
         stakingV1 = IStakingV1(_stakingV1Address);
-        lastSessionIdV1 = _lastSessionIdV1;
         lastSessionId = _lastSessionIdV1;
 
         stepTimestamp = _stepTimestamp;
@@ -156,11 +159,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             startContract = now;
             nextPayoutCall = startContract.add(_stepTimestamp);
         }
-
+        if (_lastSessionIdV1 != 0) {
+            lastSessionIdV1 = _lastSessionIdV1;
+        }
         if (shareRate == 0) {
             shareRate = 1e18;
         }
     }
+
     /** End init functions */
 
     function sessionsOf_(address account)
@@ -172,8 +178,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function stake(uint256 amount, uint256 stakingDays) external {
-        require(stakingDays != 0, "Staking: Staking days < 1");
-        require(stakingDays <= 5555, "Staking: Staking days > 5555");
+        require(stakingDays != 0, 'Staking: Staking days < 1');
+        require(stakingDays <= 5555, 'Staking: Staking days > 5555');
 
         stakeInternal(amount, stakingDays, msg.sender);
         IToken(addresses.mainToken).burn(msg.sender, amount);
@@ -184,14 +190,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 stakingDays,
         address staker
     ) external override onlyExternalStaker {
-        require(stakingDays != 0, "Staking: Staking days < 1");
-        require(stakingDays <= 5555, "Staking: Staking days > 5555");
+        require(stakingDays != 0, 'Staking: Staking days < 1');
+        require(stakingDays <= 5555, 'Staking: Staking days > 5555');
 
         stakeInternal(amount, stakingDays, staker);
     }
 
     function stakeInternal(
-        uint256 amount, 
+        uint256 amount,
         uint256 stakingDays,
         address staker
     ) internal {
@@ -202,7 +208,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         lastSessionId = lastSessionId.add(1);
 
-        stakeInternalCommon(lastSessionId, amount, start, end, stakingDays, payouts.length, staker);
+        stakeInternalCommon(
+            lastSessionId,
+            amount,
+            start,
+            end,
+            stakingDays,
+            payouts.length,
+            staker
+        );
     }
 
     function _initPayout(address to, uint256 amount) internal {
@@ -216,20 +230,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 shares
     ) public view returns (uint256) {
         uint256 stakingInterest;
-        uint256 lastIndex = MathUpgradeable.min(
-            payouts.length, 
-            lastPayout
-        );
+        uint256 lastIndex = MathUpgradeable.min(payouts.length, lastPayout);
 
-        for (
-            uint256 i = firstPayout;
-            i < lastIndex;
-            i++
-        ) {
-
-            uint256 payout = payouts[i].payout.mul(shares).div(
-                payouts[i].sharesTotalSupply
-            );
+        for (uint256 i = firstPayout; i < lastIndex; i++) {
+            uint256 payout =
+                payouts[i].payout.mul(shares).div(payouts[i].sharesTotalSupply);
 
             stakingInterest = stakingInterest.add(payout);
         }
@@ -241,70 +246,68 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
         require(
-            session.shares != 0 
-                && session.withdrawn == false,
-            "Staking: Stake withdrawn or not set"
+            session.shares != 0 && session.withdrawn == false,
+            'Staking: Stake withdrawn or not set'
         );
-
 
         uint256 actualEnd = now;
 
-        uint256 amountOut = unstakeInternal(
-            session,
-            sessionId, 
-            actualEnd
-        );
-        
+        uint256 amountOut = unstakeInternal(session, sessionId, actualEnd);
+
         // To account
         _initPayout(msg.sender, amountOut);
     }
 
     function unstakeV1(uint256 sessionId) external {
-        require(sessionId <= lastSessionIdV1, "Staking: Invalid sessionId");
+        require(sessionId <= lastSessionIdV1, 'Staking: Invalid sessionId');
 
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
         // Unstaked already
         require(
             session.shares == 0 && session.withdrawn == false,
-            "Staking: Stake withdrawn"
+            'Staking: Stake withdrawn'
         );
 
-        (uint256 amount, uint256 start, uint256 end, uint256 shares, uint256 firstPayout) 
-            = stakingV1.sessionDataOf(msg.sender, sessionId);
+        (
+            uint256 amount,
+            uint256 start,
+            uint256 end,
+            uint256 shares,
+            uint256 firstPayout
+        ) = stakingV1.sessionDataOf(msg.sender, sessionId);
 
         // Unstaked in v1 / doesn't exist
-        require(
-            shares != 0,
-            "Staking: Stake withdrawn or not set"
-        );
+        require(shares != 0, 'Staking: Stake withdrawn or not set');
 
         uint256 stakingDays = (end - start) / stepTimestamp;
         uint256 lastPayout = stakingDays + firstPayout;
 
         uint256 actualEnd = now;
 
-        uint256 amountOut = unstakeV1Internal(
-            sessionId, 
-            amount, 
-            start,
-            end,
-            actualEnd,
-            shares, 
-            firstPayout, 
-            lastPayout,
-            stakingDays
-        );
-        
+        uint256 amountOut =
+            unstakeV1Internal(
+                sessionId,
+                amount,
+                start,
+                end,
+                actualEnd,
+                shares,
+                firstPayout,
+                lastPayout,
+                stakingDays
+            );
+
         // To account
         _initPayout(msg.sender, amountOut);
     }
 
-    function getAmountOutAndPenalty(uint256 amount, uint256 start, uint256 end, uint256 stakingInterest)
-        public
-        view
-        returns (uint256, uint256)
-    {
+    function getAmountOutAndPenalty(
+        uint256 amount,
+        uint256 start,
+        uint256 end,
+        uint256 stakingInterest
+    ) public view returns (uint256, uint256) {
         uint256 stakingSeconds = end.sub(start);
         uint256 stakingDays = stakingSeconds.div(stepTimestamp);
         uint256 secondsStaked = now.sub(start);
@@ -313,27 +316,23 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         // Early
         if (stakingDays > daysStaked) {
-            uint256 payOutAmount = amountAndInterest.mul(secondsStaked).div(
-                stakingSeconds
-            );
+            uint256 payOutAmount =
+                amountAndInterest.mul(secondsStaked).div(stakingSeconds);
 
             uint256 earlyUnstakePenalty = amountAndInterest.sub(payOutAmount);
 
             return (payOutAmount, earlyUnstakePenalty);
             // In time
-        } else if (
-            daysStaked < stakingDays.add(14)
-        ) {
+        } else if (daysStaked < stakingDays.add(14)) {
             return (amountAndInterest, 0);
             // Late
-        } else if (
-            daysStaked < stakingDays.add(714)
-        ) {
+        } else if (daysStaked < stakingDays.add(714)) {
             uint256 daysAfterStaking = daysStaked - stakingDays;
 
-            uint256 payOutAmount = amountAndInterest
-                .mul(uint256(714).sub(daysAfterStaking))
-                .div(700);
+            uint256 payOutAmount =
+                amountAndInterest.mul(uint256(714).sub(daysAfterStaking)).div(
+                    700
+                );
 
             uint256 lateUnstakePenalty = amountAndInterest.sub(payOutAmount);
 
@@ -345,7 +344,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function makePayout() public {
-        require(now >= nextPayoutCall, "Staking: Wrong payout time");
+        require(now >= nextPayoutCall, 'Staking: Wrong payout time');
 
         uint256 payout = _getPayout();
 
@@ -359,21 +358,25 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function readPayout() external view returns (uint256) {
-        uint256 amountTokenInDay = IERC20Upgradeable(addresses.mainToken).balanceOf(address(this));
+        uint256 amountTokenInDay =
+            IERC20Upgradeable(addresses.mainToken).balanceOf(address(this));
 
-        uint256 currentTokenTotalSupply = (IERC20Upgradeable(addresses.mainToken).totalSupply()).add(
-            globalPayin
-        );
+        uint256 currentTokenTotalSupply =
+            (IERC20Upgradeable(addresses.mainToken).totalSupply()).add(
+                globalPayin
+            );
 
-        uint256 inflation = uint256(8)
-            .mul(currentTokenTotalSupply.add(totalStakedAmount))
-            .div(36500);
+        uint256 inflation =
+            uint256(8).mul(currentTokenTotalSupply.add(totalStakedAmount)).div(
+                36500
+            );
 
         return amountTokenInDay.add(inflation);
     }
 
     function _getPayout() internal returns (uint256) {
-        uint256 amountTokenInDay = IERC20Upgradeable(addresses.mainToken).balanceOf(address(this));
+        uint256 amountTokenInDay =
+            IERC20Upgradeable(addresses.mainToken).balanceOf(address(this));
 
         globalPayin = globalPayin.add(amountTokenInDay);
 
@@ -385,15 +388,17 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             globalPayout = 0;
         }
 
-        uint256 currentTokenTotalSupply = (IERC20Upgradeable(addresses.mainToken).totalSupply()).add(
-            globalPayin
-        );
+        uint256 currentTokenTotalSupply =
+            (IERC20Upgradeable(addresses.mainToken).totalSupply()).add(
+                globalPayin
+            );
 
         IToken(addresses.mainToken).burn(address(this), amountTokenInDay);
 
-        uint256 inflation = uint256(8)
-            .mul(currentTokenTotalSupply.add(totalStakedAmount))
-            .div(36500);
+        uint256 inflation =
+            uint256(8).mul(currentTokenTotalSupply.add(totalStakedAmount)).div(
+                36500
+            );
 
         globalPayin = globalPayin.add(inflation);
 
@@ -421,9 +426,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     ) internal view returns (uint256) {
         uint256 stakingDays = (end.sub(start)).div(stepTimestamp);
 
-        uint256 numerator = (amount.add(stakingInterest)).mul(
-            uint256(1819).add(stakingDays)
-        );
+        uint256 numerator =
+            (amount.add(stakingInterest)).mul(uint256(1819).add(stakingDays));
 
         uint256 denominator = uint256(1820).mul(shares);
 
@@ -431,69 +435,67 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function restake(uint256 sessionId, uint256 stakingDays) external {
-        require(stakingDays != 0, "Staking: Staking days < 1");
-        require(stakingDays <= 5555, "Staking: Staking days > 5555");
+        require(stakingDays != 0, 'Staking: Staking days < 1');
+        require(stakingDays <= 5555, 'Staking: Staking days > 5555');
 
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
         require(
-            session.shares != 0 
-                && session.withdrawn == false,
-            "Staking: Stake withdrawn/invalid"
+            session.shares != 0 && session.withdrawn == false,
+            'Staking: Stake withdrawn/invalid'
         );
 
         uint256 actualEnd = now;
 
-        require(session.end <= actualEnd, "Staking: Stake not mature");
-     
-        uint256 amountOut = unstakeInternal(
-            session, 
-            sessionId,
-            actualEnd
-        );
+        require(session.end <= actualEnd, 'Staking: Stake not mature');
+
+        uint256 amountOut = unstakeInternal(session, sessionId, actualEnd);
 
         stakeInternal(amountOut, stakingDays, msg.sender);
     }
 
     function restakeV1(uint256 sessionId, uint256 stakingDays) external {
-        require(sessionId <= lastSessionIdV1, "Staking: Invalid sessionId");
-        require(stakingDays != 0, "Staking: Staking days < 1");
-        require(stakingDays <= 5555, "Staking: Staking days > 5555");
+        require(sessionId <= lastSessionIdV1, 'Staking: Invalid sessionId');
+        require(stakingDays != 0, 'Staking: Staking days < 1');
+        require(stakingDays <= 5555, 'Staking: Staking days > 5555');
 
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
         require(
             session.shares == 0 && session.withdrawn == false,
-            "Staking: Stake withdrawn"
+            'Staking: Stake withdrawn'
         );
 
-        (uint256 amount, uint256 start, uint256 end, uint256 shares, uint256 firstPayout) 
-            = stakingV1.sessionDataOf(msg.sender, sessionId);
+        (
+            uint256 amount,
+            uint256 start,
+            uint256 end,
+            uint256 shares,
+            uint256 firstPayout
+        ) = stakingV1.sessionDataOf(msg.sender, sessionId);
 
         // Unstaked in v1 / doesn't exist
-        require(
-            shares != 0,
-            "Staking: Stake withdrawn"
-        );
+        require(shares != 0, 'Staking: Stake withdrawn');
 
         uint256 actualEnd = now;
 
-        require(end <= actualEnd, "Staking: Stake not mature");
+        require(end <= actualEnd, 'Staking: Stake not mature');
 
         uint256 sessionStakingDays = (end - start) / stepTimestamp;
         uint256 lastPayout = sessionStakingDays + firstPayout;
-        
-        uint256 amountOut = unstakeV1Internal(
-            sessionId, 
-            amount, 
-            start,
-            end,
-            actualEnd,
-            shares, 
-            firstPayout, 
-            lastPayout,
-            sessionStakingDays
-        );
+
+        uint256 amountOut =
+            unstakeV1Internal(
+                sessionId,
+                amount,
+                start,
+                end,
+                actualEnd,
+                shares,
+                firstPayout,
+                lastPayout,
+                sessionStakingDays
+            );
 
         stakeInternal(amountOut, stakingDays, msg.sender);
     }
@@ -503,16 +505,17 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 sessionId,
         uint256 actualEnd
     ) internal returns (uint256) {
-        uint256 amountOut = unstakeInternalCommon(
-            sessionId,
-            session.amount,
-            session.start,
-            session.end,
-            actualEnd,
-            session.shares,
-            session.firstPayout,
-            session.lastPayout
-        );
+        uint256 amountOut =
+            unstakeInternalCommon(
+                sessionId,
+                session.amount,
+                session.start,
+                session.end,
+                actualEnd,
+                session.shares,
+                session.firstPayout,
+                session.lastPayout
+            );
 
         uint256 stakingDays = (session.end - session.start) / stepTimestamp;
 
@@ -534,26 +537,27 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function unstakeV1Internal(
-        uint256 sessionId, 
+        uint256 sessionId,
         uint256 amount,
-        uint256 start, 
-        uint256 end, 
+        uint256 start,
+        uint256 end,
         uint256 actualEnd,
-        uint256 shares, 
+        uint256 shares,
         uint256 firstPayout,
         uint256 lastPayout,
         uint256 stakingDays
     ) internal returns (uint256) {
-        uint256 amountOut = unstakeInternalCommon(
-            sessionId,
-            amount,
-            start,
-            end,
-            actualEnd,
-            shares,
-            firstPayout,
-            lastPayout
-        );
+        uint256 amountOut =
+            unstakeInternalCommon(
+                sessionId,
+                amount,
+                start,
+                end,
+                actualEnd,
+                shares,
+                firstPayout,
+                lastPayout
+            );
 
         if (stakingDays >= basePeriod) {
             ISubBalances(addresses.subBalances).callOutcomeStakerTriggerV1(
@@ -583,39 +587,32 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function unstakeInternalCommon(
-        uint256 sessionId, 
-        uint256 amount, 
-        uint256 start, 
-        uint256 end, 
+        uint256 sessionId,
+        uint256 amount,
+        uint256 start,
+        uint256 end,
         uint256 actualEnd,
-        uint256 shares, 
+        uint256 shares,
         uint256 firstPayout,
         uint256 lastPayout
     ) internal returns (uint256) {
         if (now >= nextPayoutCall) makePayout();
 
-        uint256 stakingInterest = calculateStakingInterest(
-            firstPayout,
-            lastPayout,
-            shares
-        );
+        uint256 stakingInterest =
+            calculateStakingInterest(firstPayout, lastPayout, shares);
 
         sharesTotalSupply = sharesTotalSupply.sub(shares);
         totalStakedAmount = totalStakedAmount.sub(amount);
 
-        (uint256 amountOut, uint256 penalty) = getAmountOutAndPenalty(
-            amount,
-            start,
-            end,
-            stakingInterest
-        );
+        (uint256 amountOut, uint256 penalty) =
+            getAmountOutAndPenalty(amount, start, end, stakingInterest);
 
         // To auction
         if (penalty != 0) {
             _initPayout(addresses.auction, penalty);
             IAuction(addresses.auction).callIncomeDailyTokensTrigger(penalty);
         }
-        
+
         emit Unstake(
             msg.sender,
             sessionId,
@@ -638,20 +635,25 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         basePeriod = _basePeriod;
     }
 
-    function setLastSessionId(uint256 _lastSessionId ) external onlyMigrator {
+    function setLastSessionId(uint256 _lastSessionId) external onlyMigrator {
         lastSessionId = _lastSessionId;
     }
 
-    function setSharesTotalSupply(uint256 _sharesTotalSupply) external onlyMigrator {
+    function setSharesTotalSupply(uint256 _sharesTotalSupply)
+        external
+        onlyMigrator
+    {
         sharesTotalSupply = _sharesTotalSupply;
     }
-   
-    function setTotalStakedAmount(uint256 _totalStakedAmount) external onlyMigrator {
+
+    function setTotalStakedAmount(uint256 _totalStakedAmount)
+        external
+        onlyMigrator
+    {
         totalStakedAmount = _totalStakedAmount;
     }
 
-
-    /** Share rate, until Deafdrow comes up with a solution for share rate we must actually fix the share rate approporiately */
+    /** Temporary */
     function setShareRate(uint256 _shareRate) external onlyManager {
         shareRate = _shareRate;
     }
@@ -664,9 +666,16 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         onlyMigrator
     {
         Session storage session = sessionDataOf[_staker][_stakeId]; // Get Session
-        require(session.withdrawn == false && session.shares != 0, "STAKING: Session has already been withdrawn");
+        require(
+            session.withdrawn == false && session.shares != 0,
+            'STAKING: Session has already been withdrawn'
+        );
         sharesTotalSupply = sharesTotalSupply.sub(session.shares); // Subtract shares total share supply
-        session.shares = _getStakersSharesAmount(session.amount, session.start, session.end); // update shares
+        session.shares = _getStakersSharesAmount(
+            session.amount,
+            session.start,
+            session.end
+        ); // update shares
         sharesTotalSupply = sharesTotalSupply.add(session.shares); // Add to total share suuply
     }
 
@@ -677,34 +686,47 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
      * In order to run this code it will take at minimum 4 devs / core team to accept any stake
      * This function can not be ran by just anyone.
      */
-    function fixV1Stake(
-        address _staker,
-        uint256 _sessionId
-    ) external onlyMigrator {
-        require(_sessionId <= lastSessionIdV1, "Staking: Invalid sessionId"); // Require that the sessionId we are looking for is > v1Id
+    function fixV1Stake(address _staker, uint256 _sessionId)
+        external
+        onlyMigrator
+    {
+        require(_sessionId <= lastSessionIdV1, 'Staking: Invalid sessionId'); // Require that the sessionId we are looking for is > v1Id
 
         // Ensure that the session does not exist
         Session storage session = sessionDataOf[_staker][_sessionId];
         require(
             session.shares == 0 && session.withdrawn == false,
-            "Staking: Stake already fixed and or withdrawn"
+            'Staking: Stake already fixed and or withdrawn'
         );
 
-        // Find the v1 stake && ensure the stake has been withdrawn
-        (uint256 amount, uint256 start, uint256 end, uint256 shares, uint256 firstPayout) 
-            = stakingV1.sessionDataOf(_staker, _sessionId);
-            
-        require(shares == 0, "Staking: Stake has not been withdrawn");
+        // Find the v1 stake && ensure the stake has not been withdrawn
+        (
+            uint256 amount,
+            uint256 start,
+            uint256 end,
+            uint256 shares,
+            uint256 firstPayout
+        ) = stakingV1.sessionDataOf(_staker, _sessionId);
+
+        require(shares == 0, 'Staking: Stake has not been withdrawn');
 
         // Get # of staking days
         uint256 stakingDays = (end.sub(start)).div(stepTimestamp);
 
-        stakeInternalCommon(_sessionId, amount, start, end, stakingDays, firstPayout, _staker);
+        stakeInternalCommon(
+            _sessionId,
+            amount,
+            start,
+            end < now ? now : end,
+            stakingDays,
+            firstPayout,
+            _staker
+        );
     }
 
     function stakeInternalCommon(
         uint256 sessionId,
-        uint256 amount, 
+        uint256 amount,
         uint256 start,
         uint256 end,
         uint256 stakingDays,

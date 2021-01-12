@@ -99,7 +99,9 @@ contract ForeignSwap is IForeignSwap, Initializable, AccessControlUpgradeable {
         require(!init_, 'Init is active');
         init_ = true;
         /** Setup */
-        start = now;
+        if (start == 0) {
+            start = now;
+        }
         signerAddress = _signer;
         stepTimestamp = _stepTimestamp;
         stakePeriod = _stakePeriod;

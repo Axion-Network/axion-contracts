@@ -169,7 +169,7 @@ describe('Fix Share Rates & Stakes', () => {
 
     expect(await staking.sharesTotalSupply().then(String)).to.be.eq('100');
     await staking.connect(setter).fixV1Stake(staker.address, sessionId);
-    expect(await staking.sharesTotalSupply().then(String)).to.be.eq('200');
+    expect(await staking.sharesTotalSupply().then(String)).to.be.eq('201');
   });
 
   it('should not fix a stake which has already been fixed', async () => {

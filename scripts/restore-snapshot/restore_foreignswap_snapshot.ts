@@ -1,6 +1,6 @@
 import { ForeignSwap } from '../../typechain';
 
-const foreignSwapSnapshot = require('../../real-snapshots/foreign-swap-snapshot.json');
+const foreignSwapSnapshot = require('../../snapshots/foreign-swap-snapshot.json');
 
 export async function restoreForeignSwapSnapshot(foreignSwap: ForeignSwap) {
   console.log('restoreForeignSwapSnapshot');

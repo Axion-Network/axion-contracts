@@ -323,7 +323,10 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _saveAuctionData();
         _updatePrice();
 
-        require(stakeDays >= options.autoStakeDays, 'Auction: stakeDays < minimum days');
+        require(
+            stakeDays >= options.autoStakeDays,
+            'Auction: stakeDays < minimum days'
+        );
         require(stakeDays <= 5555, 'Auction: stakeDays > 5555');
 
         uint256 stepsFromStart = calculateStepsFromStart();
@@ -357,7 +360,10 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             'Auction: Invalid auction id'
         );
 
-        require(stakeDays >= options.autoStakeDays, 'Auction: stakeDays < minimum days');
+        require(
+            stakeDays >= options.autoStakeDays,
+            'Auction: stakeDays < minimum days'
+        );
         require(stakeDays <= 5555, 'Auction: stakeDays > 5555');
 
         uint256 stepsFromStart = calculateStepsFromStart();
@@ -374,13 +380,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             auctionV1.auctionBetOf(auctionId, _msgSender());
         require(eth > 0, 'Auction: Zero balance in auction/invalid auction ID');
 
-        withdrawInternal(
-            ref,
-            eth,
-            auctionId,
-            stepsFromStart,
-            stakeDays
-        );
+        withdrawInternal(ref, eth, auctionId, stepsFromStart, stakeDays);
 
         auctionBidOf[auctionId][_msgSender()] = UserBid({
             eth: eth,
@@ -439,11 +439,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
             emit Withdraval(msg.sender, payout, stepsFromStart, now, stakeDays);
 
-            IStaking(addresses.staking).externalStake(
-                toRefMintAmount,
-                options.autoStakeDays,
-                ref
-            );
+            IStaking(addresses.staking).externalStake(toRefMintAmount, 14, ref);
         }
     }
 

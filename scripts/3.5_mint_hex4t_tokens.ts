@@ -11,12 +11,7 @@ import { ethers } from 'ethers';
 const SCRIPT_NAME = 'MINT FAKE TOKEN';
 
 /* Settings */
-const ADDRESSES = [
-  '0x058D55E9BDBDc42637f9fAc4f4F86D7002D5CD4C',
-  '0xcaaD2020967F0f314Fb8A150413F7f9fC26c0f73',
-  '0x317fc875A47CAD5B8D3d3b47307E8868C2FC1539',
-  '0xbE42d298d31b2551aE9E6e88B838A3ba5Dc1D6CD',
-];
+const ADDRESSES = ['0xcaaD2020967F0f314Fb8A150413F7f9fC26c0f73'];
 const DROP_AMOUNT = '500000000';
 
 const main = async () => {
@@ -32,7 +27,9 @@ const main = async () => {
 
     await Promise.all(
       ADDRESSES.map(async (address) => {
-        await hex4Token?.mint(address, ethers.utils.parseEther(DROP_AMOUNT));
+        await hex4Token
+          ?.mint(address, ethers.utils.parseEther(DROP_AMOUNT))
+          .catch(console.log);
         console.log(`Finish minting ${DROP_AMOUNT} for ${address}`);
       })
     );

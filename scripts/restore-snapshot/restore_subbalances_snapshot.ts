@@ -1,6 +1,6 @@
 import { SubBalances } from '../../typechain';
 
-const subBalancesSnapshot = require('../../real-snapshots/sub-balances-snapshot.json');
+const subBalancesSnapshot = require('../../snapshots/sub-balances-snapshot.json');
 import _ from 'lodash';
 
 export async function restoreSubBalancesSnapshot(subBalances: SubBalances) {
