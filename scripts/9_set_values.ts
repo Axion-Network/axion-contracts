@@ -19,21 +19,10 @@ const main = async () => {
     );
     console.log(`Running on network: ${networkName}`);
 
-    const {
-      auction,
-      bpd,
-      foreignSwap,
-      nativeSwap,
-      token,
-      hex4Token,
-      subBalances,
-      staking,
-    } = await getDeployedContracts(networkName);
+    const { staking } = await getDeployedContracts(networkName);
 
-    await staking.setBasePeriod(350);
-    await staking.setTotalStakedAmount(
-      2349238409238409283904820394820348293482093489230
-    );
+    await staking.setBasePeriod('350');
+    await staking.setTotalStakedAmount('40230769230769230769230767');
 
     console.log(
       `============================ ${SCRIPT_NAME}: DONE ===============================`

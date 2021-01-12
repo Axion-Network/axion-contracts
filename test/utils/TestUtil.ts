@@ -5,7 +5,6 @@ import { MAX_CLAIM_AMOUNT, SECONDS_IN_DAY, STAKE_PERIOD } from './constants';
 const EthCrypto = require('eth-crypto');
 
 const decimals_div = 1e18;
-const seconds_in_day = 86400;
 const apy = 0.08; // annual percentage yield
 const daily_compound_rate = 0.00021087439837685906; // (1+p)^365=1.08 --> p = 1.08^(1/365)-1
 const MAX_HEX_FREECLAIM = 10e6;
@@ -33,59 +32,83 @@ export class TestUtil {
   }
 
   static async timeout(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   static calcShares(amount: any, stakingDays: any, shareRate: any) {
     let sd = stakingDays > 1820 ? 1820 : stakingDays;
-    return amount * (1819 + sd) / (1820 * shareRate);
+    return (amount * (1819 + sd)) / (1820 * shareRate);
   }
 
-  static calcSharesFromStakeEvent(amount: any, start: any, end: any, shareRate: any) {
+  static calcSharesFromStakeEvent(
+    amount: any,
+    start: any,
+    end: any,
+    shareRate: any
+  ) {
     amount /= decimals_div;
-    let stakingDays = (end - start) / seconds_in_day;
+    let stakingDays = (end - start) / SECONDS_IN_DAY;
     return TestUtil.calcShares(amount, stakingDays, shareRate);
   }
 
   static calcPayoutNoRewards(amountStaked: any, shares: any, stakingDays: any) {
-    let earnings_by_inflation = shares * Math.pow(1 + daily_compound_rate, stakingDays);
-    return (amountStaked + earnings_by_inflation);
+    let earnings_by_inflation =
+      shares * Math.pow(1 + daily_compound_rate, stakingDays);
+    return amountStaked + earnings_by_inflation;
   }
 
   static calcLateClaimPenalty(daysSinceMainnetStart: any, claim: any) {
-    let daysPenalised = daysSinceMainnetStart > 350 ? 350 : daysSinceMainnetStart; // after 350 days there is no eligible claim left
-    let lateConvertPenalty = 1 - (daysPenalised / 350); // both hex and hex2t has same late claim penalty
+    let daysPenalised =
+      daysSinceMainnetStart > 350 ? 350 : daysSinceMainnetStart; // after 350 days there is no eligible claim left
+    let lateConvertPenalty = 1 - daysPenalised / 350; // both hex and hex2t has same late claim penalty
     let eligibleAmount = claim * lateConvertPenalty;
     return eligibleAmount;
   }
 
-  static calcHEXFreeClaimPenalty(daysSinceMainnetStart: any, hexWalletAmount: any) {
-    let maxAmount = hexWalletAmount > MAX_HEX_FREECLAIM ? MAX_HEX_FREECLAIM : hexWalletAmount; // freeclaim limited to 10M
-    let bigPenaltyAmount = maxAmount < MAX_HEX_FREECLAIM ? 0 : hexWalletAmount - maxAmount; // everything above 10M is sent to auction / bpd
-    let eligibleClaimAmount = TestUtil.calcLateClaimPenalty(daysSinceMainnetStart, maxAmount); // this is the amount eligible after late claim penalty
+  static calcHEXFreeClaimPenalty(
+    daysSinceMainnetStart: any,
+    hexWalletAmount: any
+  ) {
+    let maxAmount =
+      hexWalletAmount > MAX_HEX_FREECLAIM ? MAX_HEX_FREECLAIM : hexWalletAmount; // freeclaim limited to 10M
+    let bigPenaltyAmount =
+      maxAmount < MAX_HEX_FREECLAIM ? 0 : hexWalletAmount - maxAmount; // everything above 10M is sent to auction / bpd
+    let eligibleClaimAmount = TestUtil.calcLateClaimPenalty(
+      daysSinceMainnetStart,
+      maxAmount
+    ); // this is the amount eligible after late claim penalty
     let claimPenaltyToAuction = maxAmount - eligibleClaimAmount; // this is late claim penalty also sent to auction
     return { bigPenaltyAmount, eligibleClaimAmount, claimPenaltyToAuction };
   }
 
   // NOTE: with shares, it is meant principal + earnings
-  static calcEarlyUnstakePenalty(shares: any, stakingDays: any, daysSinceStakeStarted: any) {
-    if (daysSinceStakeStarted > stakingDays) { // not an early unstake
+  static calcEarlyUnstakePenalty(
+    shares: any,
+    stakingDays: any,
+    daysSinceStakeStarted: any
+  ) {
+    if (daysSinceStakeStarted > stakingDays) {
+      // not an early unstake
       return shares;
     }
 
     let stakingProgress = daysSinceStakeStarted / stakingDays;
     return stakingProgress * shares;
-
   }
 
   // NOTE: with shares, it is meant principal + earnings
-  static calcLateUnstakePenalty(shares: any, stakingDays: any, daysSinceStakeStarted: any) {
+  static calcLateUnstakePenalty(
+    shares: any,
+    stakingDays: any,
+    daysSinceStakeStarted: any
+  ) {
     if (daysSinceStakeStarted < stakingDays) {
       return shares;
     }
 
     let daysSinceStakeEnded = daysSinceStakeStarted - stakingDays;
-    if (daysSinceStakeEnded <= LATE_STAKE_GRACEPERIOD) { // grace period of 14 days
+    if (daysSinceStakeEnded <= LATE_STAKE_GRACEPERIOD) {
+      // grace period of 14 days
       return shares;
     }
     let numPenaltyDays = daysSinceStakeEnded - LATE_STAKE_GRACEPERIOD;
@@ -134,8 +157,12 @@ export class TestUtil {
     ];
   }
 
-  static getShareRate  = (data: any) => {
-    const stakedays = (data.end.toNumber() - data.start.toNumber()) / SECONDS_IN_DAY;
-    return (data.amount.toNumber() * (1819 + stakedays)) / (1820 * (data.shares.toNumber() / 10))
-  }
+  static getShareRate = (data: any) => {
+    const stakedays =
+      (data.end.toNumber() - data.start.toNumber()) / SECONDS_IN_DAY;
+    return (
+      (data.amount.toNumber() * (1819 + stakedays)) /
+      (1820 * (data.shares.toNumber() / 10))
+    );
+  };
 }

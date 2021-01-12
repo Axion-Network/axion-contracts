@@ -653,7 +653,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         totalStakedAmount = _totalStakedAmount;
     }
 
-    /** Share rate, until Deafdrow comes up with a solution for share rate we must actually fix the share rate approporiately */
+    /** Temporary */
     function setShareRate(uint256 _shareRate) external onlyManager {
         shareRate = _shareRate;
     }
@@ -699,7 +699,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             'Staking: Stake already fixed and or withdrawn'
         );
 
-        // Find the v1 stake && ensure the stake has been withdrawn
+        // Find the v1 stake && ensure the stake has not been withdrawn
         (
             uint256 amount,
             uint256 start,
@@ -717,7 +717,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             _sessionId,
             amount,
             start,
-            end,
+            end < now ? now : end,
             stakingDays,
             firstPayout,
             _staker
