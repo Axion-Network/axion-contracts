@@ -51,4 +51,92 @@ contract StakingRestorable is Staking {
             sessionsOf[_wallets[idx]].push(_sessionIds[idx]);
         }
     }
+
+    function setBasePeriod(uint256 _basePeriod) external onlyMigrator {
+        basePeriod = _basePeriod;
+    }
+
+    function setLastSessionId(uint256 _lastSessionId) external onlyMigrator {
+        lastSessionId = _lastSessionId;
+    }
+
+    function setSharesTotalSupply(uint256 _sharesTotalSupply)
+        external
+        onlyMigrator
+    {
+        sharesTotalSupply = _sharesTotalSupply;
+    }
+
+    function setTotalStakedAmount(uint256 _totalStakedAmount)
+        external
+        onlyMigrator
+    {
+        totalStakedAmount = _totalStakedAmount;
+    }
+
+    /**
+     * Fix stake
+     * */
+    function fixShareRateOnStake(address _staker, uint256 _stakeId)
+        external
+        onlyMigrator
+    {
+        Session storage session = sessionDataOf[_staker][_stakeId]; // Get Session
+        require(
+            session.withdrawn == false && session.shares != 0,
+            'STAKING: Session has already been withdrawn'
+        );
+        sharesTotalSupply = sharesTotalSupply.sub(session.shares); // Subtract shares total share supply
+        session.shares = _getStakersSharesAmount(
+            session.amount,
+            session.start,
+            session.end
+        ); // update shares
+        sharesTotalSupply = sharesTotalSupply.add(session.shares); // Add to total share suuply
+    }
+
+    /**
+     * Fix v1 unstakers
+     * Unfortunately due to people not understanding that we were updating to v2, we need to fix some of our users stakes
+     * This code will be removed as soon as we fix stakes
+     * In order to run this code it will take at minimum 4 devs / core team to accept any stake
+     * This function can not be ran by just anyone.
+     */
+    function fixV1Stake(address _staker, uint256 _sessionId)
+        external
+        onlyMigrator
+    {
+        require(_sessionId <= lastSessionIdV1, 'Staking: Invalid sessionId'); // Require that the sessionId we are looking for is > v1Id
+
+        // Ensure that the session does not exist
+        Session storage session = sessionDataOf[_staker][_sessionId];
+        require(
+            session.shares == 0 && session.withdrawn == false,
+            'Staking: Stake already fixed and or withdrawn'
+        );
+
+        // Find the v1 stake && ensure the stake has not been withdrawn
+        (
+            uint256 amount,
+            uint256 start,
+            uint256 end,
+            uint256 shares,
+            uint256 firstPayout
+        ) = stakingV1.sessionDataOf(_staker, _sessionId);
+
+        require(shares == 0, 'Staking: Stake has not been withdrawn');
+
+        // Get # of staking days
+        uint256 stakingDays = (end.sub(start)).div(stepTimestamp);
+
+        stakeInternalCommon(
+            _sessionId,
+            amount,
+            start,
+            end < now ? now : end,
+            stakingDays,
+            firstPayout,
+            _staker
+        );
+    }
 }

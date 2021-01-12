@@ -28,12 +28,12 @@ const main = async () => {
     //   1
     // );
     // console.log('Shares before', sessionV2.shares.toString());
-    await staking.setupRole(
-      ROLES.MANAGER,
-      '0x98C8088802EE7ED7459a59A1090CB6Fc14FDe9b9'
-    );
-    await staking.setShareRate('127000000000000000');
-    console.log('Share Rate', await staking.shareRate().then(String));
+    // await staking.setupRole(
+    //   ROLES.MANAGER,
+    //   '0x98C8088802EE7ED7459a59A1090CB6Fc14FDe9b9'
+    // );
+    // await staking.setShareRate('127000000000000000');
+    // console.log('Share Rate', await staking.shareRate().then(String));
 
     // await staking.fixShareRateOnStake(
     //   '0x058D55E9BDBDc42637f9fAc4f4F86D7002D5CD4C',
