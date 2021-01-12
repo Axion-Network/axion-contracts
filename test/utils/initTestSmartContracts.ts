@@ -1,15 +1,15 @@
 import { ethers, upgrades } from 'hardhat';
 import {
-  Auction,
+  AuctionRestorable,
   AuctionManager,
-  BPD,
-  ForeignSwap,
-  NativeSwap,
-  Staking,
+  BPDRestorable,
+  ForeignSwapRestorable,
+  NativeSwapRestorable,
+  StakingRestorable,
   StakingV1,
-  SubBalances,
+  SubBalancesRestorable,
   TERC20,
-  Token,
+  TokenRestorable,
   UniswapV2Router02Mock,
 } from '../../typechain';
 import { ContractFactory } from '../../libs/ContractFactory';
@@ -42,15 +42,15 @@ interface InitOptions {
 }
 
 interface AxionContracts {
-  nativeswap: NativeSwap;
-  bpd: BPD;
+  nativeswap: NativeSwapRestorable;
+  bpd: BPDRestorable;
   swaptoken: TERC20;
-  foreignswap: ForeignSwap;
-  token: Token;
-  auction: Auction;
+  foreignswap: ForeignSwapRestorable;
+  token: TokenRestorable;
+  auction: AuctionRestorable;
   uniswap: UniswapV2Router02Mock;
-  subBalances: SubBalances;
-  staking: Staking;
+  subBalances: SubBalancesRestorable;
+  staking: StakingRestorable;
   stakingV1: StakingV1;
   auctionManager: AuctionManager;
 }
@@ -100,67 +100,67 @@ export async function initTestSmartContracts({
   /** All contracts init function had manager as first address then migrator as second address */
   /** Proxies */
   const auction = (await upgrades.deployProxy(
-    await ContractFactory.getAuctionFactory(),
+    await ContractFactory.getAuctionRestorableFactory(),
     [setter.address, setter.address],
     {
       unsafeAllowCustomTypes: true,
       unsafeAllowLinkedLibraries: true,
     }
-  )) as Auction;
+  )) as AuctionRestorable;
 
   const token = (await upgrades.deployProxy(
-    await ContractFactory.getTokenFactory(),
+    await ContractFactory.getTokenRestorableFactory(),
     [setter.address, setter.address, 'Axion Token', 'AXN'],
     {
       unsafeAllowCustomTypes: true,
       unsafeAllowLinkedLibraries: true,
     }
-  )) as Token;
+  )) as TokenRestorable;
 
   const nativeswap = (await upgrades.deployProxy(
-    await ContractFactory.getNativeSwapFactory(),
+    await ContractFactory.getNativeSwapRestorableFactory(),
     [setter.address, setter.address],
     {
       unsafeAllowCustomTypes: true,
       unsafeAllowLinkedLibraries: true,
     }
-  )) as NativeSwap;
+  )) as NativeSwapRestorable;
 
   const bpd = (await upgrades.deployProxy(
-    await ContractFactory.getBPDFactory(),
+    await ContractFactory.getBPDRestorableFactory(),
     [setter.address, setter.address],
     {
       unsafeAllowCustomTypes: true,
       unsafeAllowLinkedLibraries: true,
     }
-  )) as BPD;
+  )) as BPDRestorable;
 
   const foreignswap = (await upgrades.deployProxy(
-    await ContractFactory.getForeignSwapFactory(),
+    await ContractFactory.getForeignSwapRestorableFactory(),
     [setter.address, setter.address],
     {
       unsafeAllowCustomTypes: true,
       unsafeAllowLinkedLibraries: true,
     }
-  )) as ForeignSwap;
+  )) as ForeignSwapRestorable;
 
   const subBalances = (await upgrades.deployProxy(
-    await ContractFactory.getSubBalancesFactory(),
+    await ContractFactory.getSubBalancesRestorableFactory(),
     [setter.address, setter.address],
     {
       unsafeAllowCustomTypes: true,
       unsafeAllowLinkedLibraries: true,
     }
-  )) as SubBalances;
+  )) as SubBalancesRestorable;
 
   const staking = (await upgrades.deployProxy(
-    await ContractFactory.getStakingFactory(),
+    await ContractFactory.getStakingRestorableFactory(),
     [setter.address, setter.address],
     {
       unsafeAllowCustomTypes: true,
       unsafeAllowLinkedLibraries: true,
     }
-  )) as Staking;
+  )) as StakingRestorable;
 
   const usedStakingAddress = fakeStaking
     ? fakeStaking.address

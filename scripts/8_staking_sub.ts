@@ -53,6 +53,17 @@ const main = async () => {
 
     console.log(`NEW IMPLEMENTATION ADDRESS ${subBalancesUpgrade}`);
 
+    const auctionUpgrade = await upgrades.prepareUpgrade(
+      auction.address,
+      await ContractFactory.getAuctionFactory(),
+      {
+        unsafeAllowCustomTypes: true,
+        unsafeAllowLinkedLibraries: true,
+      }
+    );
+
+    console.log(`NEW IMPLEMENTATION ADDRESS ${auctionUpgrade}`);
+
     console.log(
       `============================ ${SCRIPT_NAME}: DONE ===============================`
     );
