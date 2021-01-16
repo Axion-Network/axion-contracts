@@ -599,15 +599,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         shareRate = _shareRate;
     }
 
-    function sessionsOf_(address account)
-        external
-        view
-        returns (uint256[] memory)
-    {
-        return sessionsOf[account];
-    }
-
-    /** Init functions */
     function initialize(address _manager, address _migrator)
         external
         initializer
@@ -654,5 +645,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             shareRate = 1e18;
         }
     }
-    /** End init functions */
+
+    function sessionsOf_(address account)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return sessionsOf[account];
+    }
 }
