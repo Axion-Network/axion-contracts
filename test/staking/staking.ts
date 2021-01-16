@@ -137,8 +137,6 @@ describe('Staking', async () => {
     // Change node time and swap
     await TestUtil.increaseTime(SECONDS_IN_DAY);
 
-    await staking.makePayout();
-
     const sessionId = await staking.sessionsOf(_staker.address, 0);
     const sessionData = await staking.sessionDataOf(_staker.address, sessionId);
 
@@ -178,8 +176,6 @@ describe('Staking', async () => {
 
     // Forward to the end of the staking period
     await TestUtil.increaseTime(SECONDS_IN_DAY * length);
-
-    await staking.makePayout();
     
     const sessionId = await staking.sessionsOf(_staker.address, 0);
 
@@ -285,8 +281,6 @@ describe('Staking', async () => {
     for (let i = 0; i < stakingDays; i++) {
       await TestUtil.increaseTime(SECONDS_IN_DAY);
 
-      await staking.makePayout();
-
       const interest = await staking.calculateStakingInterest(
         session.firstPayout, session.lastPayout, session.shares);
 
@@ -297,8 +291,6 @@ describe('Staking', async () => {
 
     // DAY 11
     await TestUtil.increaseTime(SECONDS_IN_DAY);
-
-    await staking.makePayout();
 
     const interest = await staking.calculateStakingInterest(
       session.firstPayout, session.lastPayout, session.shares);
@@ -326,8 +318,6 @@ describe('Staking', async () => {
     let previousPenalty = BigNumber.from("1");
 
     await TestUtil.increaseTime(SECONDS_IN_DAY);
-
-    await staking.makePayout();
 
     for (let i = 1; i <= 4; i++){
       await TestUtil.increaseTime(SECONDS_IN_DAY * (0.2));

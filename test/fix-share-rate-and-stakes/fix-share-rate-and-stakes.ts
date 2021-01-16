@@ -122,8 +122,6 @@ describe('Fix Share Rates & Stakes', () => {
     const days = length + 18;
     for (let i = 0; i < days; i++) {
       await TestUtil.increaseTime(SECONDS_IN_DAY);
-
-      await staking.makePayout();
     }
 
     await stakingV1.connect(staker).unstakeTest(sessionId);
@@ -161,8 +159,6 @@ describe('Fix Share Rates & Stakes', () => {
     const days = length + 18;
     for (let i = 0; i < days; i++) {
       await TestUtil.increaseTime(SECONDS_IN_DAY);
-
-      await staking.makePayout();
     }
 
     await stakingV1.connect(staker).unstakeTest(sessionId);
