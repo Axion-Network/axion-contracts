@@ -139,4 +139,8 @@ contract StakingRestorable is Staking {
             _staker
         );
     }
+
+    function makePayoutExternal() external {
+        makePayout();
+    }
 }
