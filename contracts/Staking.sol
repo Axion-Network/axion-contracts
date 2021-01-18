@@ -40,7 +40,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     event MakePayout(
         uint256 indexed value,
         uint256 indexed sharesTotalSupply,
-        uint256 indexed sharePayout,
+        uint256 sharePayout,
         uint256 indexed time
     );
 
