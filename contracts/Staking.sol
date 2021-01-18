@@ -40,6 +40,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     event MakePayout(
         uint256 indexed value,
         uint256 indexed sharesTotalSupply,
+        uint256 indexed sharePayout,
         uint256 indexed time
     );
 
@@ -97,6 +98,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     uint256 public basePeriod;
     uint256 public totalStakedAmount;
 
+    uint256[] public payoutPerShare; // times 1e12
     /* New variables must go below here. */
 
     /** Roles */
@@ -231,14 +233,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     ) public view returns (uint256) {
         uint256 stakingInterest;
         uint256 lastIndex = MathUpgradeable.min(payouts.length, lastPayout);
-
-        for (uint256 i = firstPayout; i < lastIndex; i++) {
-            uint256 payout =
-                payouts[i].payout.mul(shares).div(payouts[i].sharesTotalSupply);
-
-            stakingInterest = stakingInterest.add(payout);
-        }
-
+     
+        uint256 startInterest = shares.mul(payoutPerShare[firstPayout]).div(1e12);
+        uint256 lastInterest = shares.mul(payoutPerShare[lastIndex]).div(1e12);
+        stakingInterest = lastInterest.sub(startInterest);
+ 
         return stakingInterest;
     }
 
@@ -352,9 +351,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             Payout({payout: payout, sharesTotalSupply: sharesTotalSupply})
         );
 
+        uint256 _payoutPerShare = payout.mul(1e12).div(sharesTotalSupply);
+
+        uint256 payoutsLength = payouts.length;
+        uint256 sharePayout = payoutPerShare[payoutsLength-1].add(payout.mul(1e12).div(sharesTotalSupply));
+        payoutPerShare.push(sharePayout);
+
         nextPayoutCall = nextPayoutCall.add(stepTimestamp);
 
-        emit MakePayout(payout, sharesTotalSupply, now);
+        emit MakePayout(payout, sharesTotalSupply, sharePayout, now);
     }
 
     function readPayout() external view returns (uint256) {
@@ -633,6 +638,21 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     /** Temporary */
     function setShareRate(uint256 _shareRate) external onlyManager {
         shareRate = _shareRate;
+    }
+
+    /**init payoutPerShare array - can be removed after */
+    function initPayoutPerShare () external onlyManager {
+        require(payoutPerShare.length == 0,'already initialized');
+
+        uint256 sharePayout = payouts[0].payout.mul(1e12).div(payouts[0].sharesTotalSupply);
+        payoutPerShare.push(sharePayout);
+
+        for (uint256 i = 1; i < payouts.length ; i++)
+        {
+            sharePayout = payoutPerShare[i-1].add(payouts[i].payout.mul(1e12).div(payouts[i].sharesTotalSupply));
+            payoutPerShare.push(sharePayout);
+        }
+
     }
 
     function stakeInternalCommon(
