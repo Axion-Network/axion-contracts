@@ -233,7 +233,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     ) public view returns (uint256) {
         uint256 stakingInterest;
         uint256 lastIndex = MathUpgradeable.min(payouts.length, lastPayout);
-     
         uint256 startInterest = shares.mul(payoutPerShare[firstPayout]).div(1e12);
         uint256 lastInterest = shares.mul(payoutPerShare[lastIndex]).div(1e12);
         stakingInterest = lastInterest.sub(startInterest);
@@ -352,7 +351,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         uint256 _payoutPerShare = payout.mul(1e12).div(sharesTotalSupply);
-
         uint256 payoutsLength = payouts.length;
         uint256 sharePayout = payoutPerShare[payoutsLength-1].add(payout.mul(1e12).div(sharesTotalSupply));
         payoutPerShare.push(sharePayout);
