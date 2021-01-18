@@ -633,7 +633,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         shareRate = _shareRate;
     }
 
-    /**init payoutPerShare array - can be removed after */
+    /**automated init payoutPerShare array - can be removed if we use the manual setPayoutPerShare */
     function initPayoutPerShare () external onlyManager {
         require(payoutPerShare.length == 0,'already initialized');
 
@@ -646,6 +646,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             payoutPerShare.push(sharePayout);
         }
 
+    }
+    /** manually initialize payoutPerShare from precalculated values, cheaper gas */
+    function setPayoutPerShare (uint256[] calldata shareAmounts) external onlyManager{
+        require(payoutPerShare.length.add(shareAmounts.length) <= payouts.length, 'already initialized');
+
+        for (uint256 i = 0; i < shareAmounts.length; i++) {
+            payoutPerShare.push(shareAmounts[i]);
+        }
     }
 
     function stakeInternalCommon(
