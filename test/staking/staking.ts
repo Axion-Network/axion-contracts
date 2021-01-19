@@ -288,7 +288,7 @@ describe('Staking', async () => {
       await staking.makePayoutExternal();
 
       const interest = await staking.calculateStakingInterest(
-        session.firstPayout, session.lastPayout, session.shares);
+        session.firstPayout, stakingDays, session.shares);
 
       expect(interest).to.not.equal(previousInterest);
 
@@ -301,7 +301,7 @@ describe('Staking', async () => {
     await staking.makePayoutExternal();
 
     const interest = await staking.calculateStakingInterest(
-      session.firstPayout, session.lastPayout, session.shares);
+      session.firstPayout, stakingDays, session.shares);
 
     expect(interest).to.equal(previousInterest);
   });
@@ -333,7 +333,7 @@ describe('Staking', async () => {
       await TestUtil.increaseTime(SECONDS_IN_DAY * (0.2));
   
       const stakingInterest = await staking.calculateStakingInterest(
-        sessionData.firstPayout, sessionData.lastPayout, sessionData.shares);
+        sessionData.firstPayout, stakingDays, sessionData.shares);
 
       const result = await staking.getAmountOutAndPenalty(
         sessionData.amount, sessionData.start, sessionData.end, stakingInterest);

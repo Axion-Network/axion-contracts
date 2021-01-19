@@ -447,10 +447,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     ) internal returns (uint256) {
         if (now >= nextPayoutCall) makePayout();
 
-        uint256 lastPayout = stakingDays + firstPayout;
-
         uint256 stakingInterest =
-            calculateStakingInterest(firstPayout, lastPayout, shares);
+            calculateStakingInterest(firstPayout, stakingDays, shares);
 
         sharesTotalSupply = sharesTotalSupply.sub(shares);
         totalStakedAmount = totalStakedAmount.sub(amount);
@@ -519,10 +517,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     function calculateStakingInterest(
         uint256 firstPayout,
-        uint256 lastPayout,
+        uint256 stakingDays,
         uint256 shares
     ) public view returns (uint256) {
         uint256 stakingInterest;
+        uint256 lastPayout = stakingDays + firstPayout;
         uint256 lastIndex = MathUpgradeable.min(payouts.length, lastPayout);
 
         for (uint256 i = firstPayout; i < lastIndex; i++) {
