@@ -451,7 +451,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         uint256 amountOut = unstakeInternal(session, sessionId, actualEnd);
 
-        if(topup>0){
+        if (topup>0) {
         IToken(addresses.mainToken).burn(msg.sender, topup);
         amountOut = amountOut.add(topup);
         }
@@ -502,11 +502,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 sessionStakingDays
             );
 
-        if(topup>0){
+        if (topup>0) {
         IToken(addresses.mainToken).burn(msg.sender, topup);
         amountOut = amountOut.add(topup);
         }
-        
+
         stakeInternal(amountOut, stakingDays, msg.sender);
     }
 
