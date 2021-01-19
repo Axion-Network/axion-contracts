@@ -253,9 +253,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         require(end <= actualEnd, 'Staking: Stake not mature');
 
-        uint256 sessionStakingDays = (end - start) / stepTimestamp;
-        uint256 lastPayout = sessionStakingDays + firstPayout;
-
         uint256 amountOut =
             unstakeV1Internal(
                 sessionId,
@@ -264,9 +261,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 end,
                 actualEnd,
                 shares,
-                firstPayout,
-                lastPayout,
-                sessionStakingDays
+                firstPayout
             );
 
         stakeInternal(amountOut, stakingDays, msg.sender);
@@ -310,9 +305,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         // Unstaked in v1 / doesn't exist
         require(shares != 0, 'Staking: Stake withdrawn or not set');
 
-        uint256 stakingDays = (end - start) / stepTimestamp;
-        uint256 lastPayout = stakingDays + firstPayout;
-
         uint256 actualEnd = now;
 
         uint256 amountOut =
@@ -323,9 +315,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 end,
                 actualEnd,
                 shares,
-                firstPayout,
-                lastPayout,
-                stakingDays
+                firstPayout
             );
 
         // To account
@@ -359,6 +349,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 sessionId,
         uint256 actualEnd
     ) internal returns (uint256) {
+        uint256 stakingDays = (session.end - session.start) / stepTimestamp;
+
         uint256 amountOut =
             unstakeInternalCommon(
                 sessionId,
@@ -368,10 +360,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 actualEnd,
                 session.shares,
                 session.firstPayout,
-                session.lastPayout
+                stakingDays
             );
-
-        uint256 stakingDays = (session.end - session.start) / stepTimestamp;
 
         if (stakingDays >= basePeriod) {
             ISubBalances(addresses.subBalances).callOutcomeStakerTrigger(
@@ -386,7 +376,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         session.end = actualEnd;
         session.withdrawn = true;
         session.payout = amountOut;
+        session.firstPayout = 0;
 
+        if (session.lastPayout != 0) {
+            session.lastPayout = 0;
+        }
+        
         return amountOut;
     }
 
@@ -397,10 +392,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 end,
         uint256 actualEnd,
         uint256 shares,
-        uint256 firstPayout,
-        uint256 lastPayout,
-        uint256 stakingDays
+        uint256 firstPayout
     ) internal returns (uint256) {
+        uint256 stakingDays = (end - start) / stepTimestamp;
+
         uint256 amountOut =
             unstakeInternalCommon(
                 sessionId,
@@ -410,7 +405,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 actualEnd,
                 shares,
                 firstPayout,
-                lastPayout
+                stakingDays
             );
 
         if (stakingDays >= basePeriod) {
@@ -430,7 +425,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             end: actualEnd,
             shares: shares,
             firstPayout: firstPayout,
-            lastPayout: lastPayout,
+            lastPayout: 0,
             withdrawn: true,
             payout: amountOut
         });
@@ -448,9 +443,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 actualEnd,
         uint256 shares,
         uint256 firstPayout,
-        uint256 lastPayout
+        uint256 stakingDays
     ) internal returns (uint256) {
         if (now >= nextPayoutCall) makePayout();
+
+        uint256 lastPayout = stakingDays + firstPayout;
 
         uint256 stakingInterest =
             calculateStakingInterest(firstPayout, lastPayout, shares);
@@ -557,7 +554,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             end: end,
             shares: shares,
             firstPayout: firstPayout,
-            lastPayout: firstPayout + stakingDays,
+            lastPayout: 0,
             withdrawn: false,
             payout: 0
         });
