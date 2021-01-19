@@ -434,7 +434,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return (numerator).mul(1e18).div(denominator);
     }
 
-    function restake(uint256 sessionId, uint256 stakingDays) external {
+    function restake(uint256 sessionId, uint256 stakingDays, uint256 topup) external {
         require(stakingDays != 0, 'Staking: Staking days < 1');
         require(stakingDays <= 5555, 'Staking: Staking days > 5555');
 
@@ -451,10 +451,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         uint256 amountOut = unstakeInternal(session, sessionId, actualEnd);
 
+        if(topup>0){
+        IToken(addresses.mainToken).burn(msg.sender, topup);
+        amountOut = amountOut.add(topup);
+        }
+
         stakeInternal(amountOut, stakingDays, msg.sender);
     }
 
-    function restakeV1(uint256 sessionId, uint256 stakingDays) external {
+    function restakeV1(uint256 sessionId, uint256 stakingDays, uint256 topup) external {
         require(sessionId <= lastSessionIdV1, 'Staking: Invalid sessionId');
         require(stakingDays != 0, 'Staking: Staking days < 1');
         require(stakingDays <= 5555, 'Staking: Staking days > 5555');
@@ -497,6 +502,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 sessionStakingDays
             );
 
+        if(topup>0){
+        IToken(addresses.mainToken).burn(msg.sender, topup);
+        amountOut = amountOut.add(topup);
+        }
+        
         stakeInternal(amountOut, stakingDays, msg.sender);
     }
 
