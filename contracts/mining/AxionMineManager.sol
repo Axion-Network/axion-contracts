@@ -68,7 +68,7 @@ contract AxionMineManager is Initializable, Manageable {
         address _liqRepNFTAddress,
         address _OG5555_25NFTAddress,
         address _OG5555_100NFTAddress,
-        address uniswapFactoryAddress
+        address _uniswapFactoryAddress
     ) public initializer {
         _setupRole(MANAGER_ROLE, _mineManager);
 
@@ -77,7 +77,7 @@ contract AxionMineManager is Initializable, Manageable {
         OG5555_25NFTAddress = _OG5555_25NFTAddress;
         OG5555_100NFTAddress = _OG5555_100NFTAddress;
         
-        uniswapFactory = IUniswapV2Factory(uniswapFactoryAddress);
+        uniswapFactory = IUniswapV2Factory(_uniswapFactoryAddress);
     }
 
     function getMineAddresses() external view returns (address[] memory) {
