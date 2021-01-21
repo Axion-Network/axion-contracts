@@ -24,7 +24,7 @@ contract AxionMineManager is Initializable, Manageable {
         uint256 _rewardTokenAmount,
         uint256 _blockReward,
         uint256 _startBlock
-    ) external payable onlyManager returns (address) {
+    ) external payable onlyManager {
         IUniswapV2Pair lpPair = IUniswapV2Pair(_lpTokenAddress);
 
         address lpPairAddress =
@@ -52,8 +52,6 @@ contract AxionMineManager is Initializable, Manageable {
         );
 
         registerMine(address(mine));
-
-        return (address(mine));
     }
 
     function registerMine(address _mineAddress) internal {
