@@ -51,7 +51,7 @@ contract AxionMine is Initializable, Manageable {
         address _liqRepNFTAddress,
         address _OG5555_25NFTAddress,
         address _OG5555_100NFTAddress
-    ) {
+    ) public {
         _setupRole(MANAGER_ROLE, _mineManager);
 
         uint256 lastRewardBlock =
