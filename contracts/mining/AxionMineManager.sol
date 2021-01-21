@@ -2,12 +2,12 @@
 
 pragma solidity ^0.6.8;
 
-import "./AxionMine.sol";
-import "../abstracts/Manageable.sol";
-import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
-import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
-import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import './AxionMine.sol';
+import '../abstracts/Manageable.sol';
+import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
+import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/Initializable.sol';
 
 contract AxionMineManager is Initializable, Manageable {
     address[] internal mineAddresses;
@@ -30,7 +30,7 @@ contract AxionMineManager is Initializable, Manageable {
         address lpPairAddress =
             uniswapFactory.getPair(lpPair.token0(), lpPair.token1());
 
-        require(lpPairAddress == _lpTokenAddress, "UNISWAP_PAIR_NOT_FOUND");
+        require(lpPairAddress == _lpTokenAddress, 'UNISWAP_PAIR_NOT_FOUND');
 
         AxionMine mine =
             new AxionMine(
@@ -63,20 +63,20 @@ contract AxionMineManager is Initializable, Manageable {
     }
 
     function initialize(
-        address _mineManager,
+        address _manager,
         address _rewardTokenAddress,
         address _liqRepNFTAddress,
         address _OG5555_25NFTAddress,
         address _OG5555_100NFTAddress,
         address uniswapFactoryAddress
     ) public initializer {
-        _setupRole(MANAGER_ROLE, _mineManager);
+        _setupRole(MANAGER_ROLE, _manager);
 
         rewardTokenAddress = _rewardTokenAddress;
         liqRepNFTAddress = _liqRepNFTAddress;
         OG5555_25NFTAddress = _OG5555_25NFTAddress;
         OG5555_100NFTAddress = _OG5555_100NFTAddress;
-        
+
         uniswapFactory = IUniswapV2Factory(uniswapFactoryAddress);
     }
 

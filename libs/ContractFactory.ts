@@ -54,6 +54,11 @@ import {
   SubBalancesV1__factory,
   TokenV1,
   TokenV1__factory,
+  // Miner Manager
+  AxionMine,
+  AxionMine__factory,
+  AxionMineManager,
+  AxionMineManager__factory,
 } from '../typechain';
 
 enum AxionContract {
@@ -87,6 +92,10 @@ enum AxionContract {
   NativeSwapV1 = 'NativeSwapV1',
   SubBalancesV1 = 'SubBalancesV1',
   TokenV1 = 'TokenV1',
+
+  // Mine
+  AxionMine = 'AxionMine',
+  AxionMineManager = 'AxionMineManager',
 }
 
 export class ContractFactory {
@@ -400,5 +409,30 @@ export class ContractFactory {
       AxionContract.TERC721,
       address
     ) as Promise<TERC721>;
+  }
+
+  // Mine
+  static getAxionMineManagerFactory(): Promise<AxionMineManager__factory> {
+    return ethers.getContractFactory(
+      AxionContract.AxionMineManager
+    ) as Promise<AxionMineManager__factory>;
+  }
+  static getAxionMineManagerAt(address: string): Promise<AxionMineManager> {
+    return ethers.getContractAt(
+      AxionContract.AxionMineManager,
+      address
+    ) as Promise<AxionMineManager>;
+  }
+
+  static getAxionMineFactory(): Promise<AxionMine__factory> {
+    return ethers.getContractFactory(
+      AxionContract.AxionMine
+    ) as Promise<AxionMine__factory>;
+  }
+  static getAxionMineAt(address: string): Promise<AxionMine> {
+    return ethers.getContractAt(
+      AxionContract.AxionMine,
+      address
+    ) as Promise<AxionMine>;
   }
 }
