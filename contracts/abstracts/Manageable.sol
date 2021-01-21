@@ -19,4 +19,8 @@ abstract contract Manageable is AccessControlUpgradeable {
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);
     }
+
+    function isManager() external view returns (bool) {
+        return hasRole(MANAGER_ROLE, _msgSender());
+    }
 } 
