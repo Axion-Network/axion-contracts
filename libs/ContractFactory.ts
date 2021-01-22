@@ -18,6 +18,8 @@ import {
   SubBalances__factory,
   SubBalancesMock__factory,
   TERC20__factory,
+  TERC721,
+  TERC721__factory,
   Token,
   Token__factory,
   UniswapV2Router02Mock__factory,
@@ -52,6 +54,11 @@ import {
   SubBalancesV1__factory,
   TokenV1,
   TokenV1__factory,
+  // Miner Manager
+  AxionMine,
+  AxionMine__factory,
+  AxionMineManager,
+  AxionMineManager__factory,
 } from '../typechain';
 
 enum AxionContract {
@@ -66,6 +73,7 @@ enum AxionContract {
   Token = 'Token',
   UniswapV2Router02Mock = 'UniswapV2Router02Mock',
   TERC20 = 'TERC20',
+  TERC721 = 'TERC721',
 
   // V1
   StakingRestorable = 'StakingRestorable',
@@ -84,6 +92,10 @@ enum AxionContract {
   NativeSwapV1 = 'NativeSwapV1',
   SubBalancesV1 = 'SubBalancesV1',
   TokenV1 = 'TokenV1',
+
+  // Mine
+  AxionMine = 'AxionMine',
+  AxionMineManager = 'AxionMineManager',
 }
 
 export class ContractFactory {
@@ -384,5 +396,43 @@ export class ContractFactory {
       AxionContract.TokenRestorable,
       address
     ) as Promise<TokenRestorable>;
+  }
+
+  // 721
+  static getTERC721Factory(): Promise<TERC721__factory> {
+    return ethers.getContractFactory(
+      AxionContract.TERC721
+    ) as Promise<TERC721__factory>;
+  }
+  static getTERC721At(address: string): Promise<TERC721> {
+    return ethers.getContractAt(
+      AxionContract.TERC721,
+      address
+    ) as Promise<TERC721>;
+  }
+
+  // Mine
+  static getAxionMineManagerFactory(): Promise<AxionMineManager__factory> {
+    return ethers.getContractFactory(
+      AxionContract.AxionMineManager
+    ) as Promise<AxionMineManager__factory>;
+  }
+  static getAxionMineManagerAt(address: string): Promise<AxionMineManager> {
+    return ethers.getContractAt(
+      AxionContract.AxionMineManager,
+      address
+    ) as Promise<AxionMineManager>;
+  }
+
+  static getAxionMineFactory(): Promise<AxionMine__factory> {
+    return ethers.getContractFactory(
+      AxionContract.AxionMine
+    ) as Promise<AxionMine__factory>;
+  }
+  static getAxionMineAt(address: string): Promise<AxionMine> {
+    return ethers.getContractAt(
+      AxionContract.AxionMine,
+      address
+    ) as Promise<AxionMine>;
   }
 }
