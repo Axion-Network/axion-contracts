@@ -56,7 +56,7 @@ describe('Axion Mine', () => {
   });
 
   describe('depositLPTokens', () => {	
-    it.only(`should deposit`, async () => {	
+    it(`should deposit`, async () => {	
       await nft1.mint(_manager.address);
       await nft2.mint(_manager.address);
       await nft3.mint(_manager.address);
