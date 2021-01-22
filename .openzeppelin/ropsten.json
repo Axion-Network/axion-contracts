@@ -2535,6 +2535,469 @@
           }
         }
       }
+    },
+    "f3c6e445cd12be2b773980859139e3f81ba44f91ba01ce23add4eae24aafc8ef": {
+      "address": "0xE0e65df55313098a0f3D0aa336BcC4cA77F4EAB5",
+      "txHash": "0xd17044aaa15acc713eedcbf09e5279ad493f42a7b87f0eae979b8ab813d4fc03",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "_roles",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)84_storage)",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:225"
+          },
+          {
+            "contract": "Staking",
+            "label": "addresses",
+            "type": "t_struct(Addresses)7627_storage",
+            "src": "contracts/Staking.sol:69"
+          },
+          {
+            "contract": "Staking",
+            "label": "stakingV1",
+            "type": "t_contract(IStakingV1)15931",
+            "src": "contracts/Staking.sol:70"
+          },
+          {
+            "contract": "Staking",
+            "label": "shareRate",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:79"
+          },
+          {
+            "contract": "Staking",
+            "label": "sharesTotalSupply",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:80"
+          },
+          {
+            "contract": "Staking",
+            "label": "nextPayoutCall",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:81"
+          },
+          {
+            "contract": "Staking",
+            "label": "stepTimestamp",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:82"
+          },
+          {
+            "contract": "Staking",
+            "label": "startContract",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:83"
+          },
+          {
+            "contract": "Staking",
+            "label": "globalPayout",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:84"
+          },
+          {
+            "contract": "Staking",
+            "label": "globalPayin",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:85"
+          },
+          {
+            "contract": "Staking",
+            "label": "lastSessionId",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:86"
+          },
+          {
+            "contract": "Staking",
+            "label": "lastSessionIdV1",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:87"
+          },
+          {
+            "contract": "Staking",
+            "label": "sessionDataOf",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)7620_storage))",
+            "src": "contracts/Staking.sol:90"
+          },
+          {
+            "contract": "Staking",
+            "label": "sessionsOf",
+            "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
+            "src": "contracts/Staking.sol:91"
+          },
+          {
+            "contract": "Staking",
+            "label": "payouts",
+            "type": "t_array(t_struct(Payout)7603_storage)dyn_storage",
+            "src": "contracts/Staking.sol:92"
+          },
+          {
+            "contract": "Staking",
+            "label": "init_",
+            "type": "t_bool",
+            "src": "contracts/Staking.sol:95"
+          },
+          {
+            "contract": "Staking",
+            "label": "basePeriod",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:97"
+          },
+          {
+            "contract": "Staking",
+            "label": "totalStakedAmount",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:98"
+          }
+        ],
+        "types": {
+          "t_struct(Addresses)7627_storage": {
+            "label": "struct Staking.Addresses"
+          },
+          "t_contract(IStakingV1)15931": {
+            "label": "contract IStakingV1"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)7620_storage))": {
+            "label": "mapping(address => mapping(uint256 => struct Staking.Session))"
+          },
+          "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
+            "label": "mapping(address => uint256[])"
+          },
+          "t_array(t_struct(Payout)7603_storage)dyn_storage": {
+            "label": "struct Staking.Payout[]"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)84_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "7853632e382a565d171cf4b38fca0de2da4472b695e2fc21ca2dac5114d2c472": {
+      "address": "0x6bc67D5e221D76197E7a70fAE966011abbA407B7",
+      "txHash": "0x0c745eadb44d14460c0f968e0d7845137c1d1fa9a15c3a3d91836c51ff49f684",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "_roles",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)84_storage)",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:225"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "mineAddresses",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "contracts/mining/AxionMineManager.sol:13"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "uniswapFactory",
+            "type": "t_contract(IUniswapV2Factory)2227",
+            "src": "contracts/mining/AxionMineManager.sol:15"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "rewardTokenAddress",
+            "type": "t_address",
+            "src": "contracts/mining/AxionMineManager.sol:17"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "liqRepNFTAddress",
+            "type": "t_address",
+            "src": "contracts/mining/AxionMineManager.sol:18"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "OG5555_25NFTAddress",
+            "type": "t_address",
+            "src": "contracts/mining/AxionMineManager.sol:19"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "OG5555_100NFTAddress",
+            "type": "t_address",
+            "src": "contracts/mining/AxionMineManager.sol:20"
+          }
+        ],
+        "types": {
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          },
+          "t_contract(IUniswapV2Factory)2227": {
+            "label": "contract IUniswapV2Factory"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)84_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "01e6ad6d06498a71953bdf17a16ee1fc3cde59edb6417d2601abeab2ced5cb9a": {
+      "address": "0x30441f1EF6Be5090219Ce60cbEcEeb9F236E5bE6",
+      "txHash": "0x65081f9d5c3e4824bb479b19b4c6ef78ca2807574462c7294a916a8e8fbf8da0",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\GSN\\ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "_roles",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)84_storage)",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:61"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:225"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "mineAddresses",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "contracts\\mining\\AxionMineManager.sol:13"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "uniswapFactory",
+            "type": "t_contract(IUniswapV2Factory)6186",
+            "src": "contracts\\mining\\AxionMineManager.sol:15"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "rewardTokenAddress",
+            "type": "t_address",
+            "src": "contracts\\mining\\AxionMineManager.sol:17"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "liqRepNFTAddress",
+            "type": "t_address",
+            "src": "contracts\\mining\\AxionMineManager.sol:18"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "OG5555_25NFTAddress",
+            "type": "t_address",
+            "src": "contracts\\mining\\AxionMineManager.sol:19"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "OG5555_100NFTAddress",
+            "type": "t_address",
+            "src": "contracts\\mining\\AxionMineManager.sol:20"
+          }
+        ],
+        "types": {
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          },
+          "t_contract(IUniswapV2Factory)6186": {
+            "label": "contract IUniswapV2Factory"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)84_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "8ab451e314853fd5978c4796d7619d877a7e03402bf25ce9442fecf70f5a2c85": {
+      "address": "0xaB3110763aA7F151106020dB4576A7af3b356223",
+      "txHash": "0xc147c2314cd29cd2f2eff3a6d06766bde1b0755dc5e1d1aa48f8b4320f1810f3",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\GSN\\ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "_roles",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)84_storage)",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:61"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:225"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "mineAddresses",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "contracts\\mining\\AxionMineManager.sol:13"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "uniswapFactory",
+            "type": "t_contract(IUniswapV2Factory)6186",
+            "src": "contracts\\mining\\AxionMineManager.sol:15"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "rewardTokenAddress",
+            "type": "t_address",
+            "src": "contracts\\mining\\AxionMineManager.sol:17"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "liqRepNFTAddress",
+            "type": "t_address",
+            "src": "contracts\\mining\\AxionMineManager.sol:18"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "OG5555_25NFTAddress",
+            "type": "t_address",
+            "src": "contracts\\mining\\AxionMineManager.sol:19"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "OG5555_100NFTAddress",
+            "type": "t_address",
+            "src": "contracts\\mining\\AxionMineManager.sol:20"
+          }
+        ],
+        "types": {
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          },
+          "t_contract(IUniswapV2Factory)6186": {
+            "label": "contract IUniswapV2Factory"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)84_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
     }
   },
   "admin": {
