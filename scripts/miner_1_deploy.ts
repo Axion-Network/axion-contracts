@@ -9,7 +9,7 @@ import fs from 'fs';
 import { AxionMineManager } from '../typechain';
 
 /**
- * Explain what the script does here
+ * Deploys Axion Mine Manager
  **/
 const SCRIPT_NAME = 'CREATE MINER';
 

@@ -7,7 +7,7 @@ import { getRestorableDeployedContracts } from './utils/get_restorable_deployed_
 const ShareRateJson = require('../snapshots/share_rate_129_layer2.json');
 
 /**
- * Explain what the script does here
+ * Fix shares
  **/
 const SCRIPT_NAME = 'Fix v2 shares';
 
