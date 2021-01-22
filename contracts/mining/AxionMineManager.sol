@@ -25,7 +25,7 @@ contract AxionMineManager is Initializable, Manageable {
         uint256 _blockReward,
         uint256 _startBlock
     ) external payable onlyManager {
-        require(_startBlock > block.number, 'INVALID_START_BLOCK');
+        require(_startBlock >= block.number, 'INVALID_START_BLOCK');
 
         IUniswapV2Pair lpPair = IUniswapV2Pair(_lpTokenAddress);
 
