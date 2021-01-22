@@ -1,21 +1,14 @@
 import { initMineTestContracts } from './utils/initMineTestContracts';
-import { ROLES } from './../constants/roles';
-import { ethers } from 'hardhat';c
-import { BigNumber } from 'ethers';
+import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import {
   AxionMine,
   TERC20,
   TERC721,
 } from '../typechain';
-import { TestUtil } from './utils/TestUtil';
-import { ContractFactory } from '../libs/ContractFactory';
 
-import { SECONDS_IN_DAY, AUCTIONSTAKE_MIN } from './utils/constants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
-/** Helper Vars */
-const DEADLINE = ethers.utils.parseEther('10000000');
 const REWARD_AMOUNT = ethers.utils.parseEther('10000000');
 const BLOCK_REWARD = ethers.utils.parseEther('1');
 const START_BLOCK = 1;
@@ -54,13 +47,13 @@ describe('Axion Mine', () => {
     it('should init the contract correctly', async () => {
       const mineInfo = await mine.mineInfo();
 
-      expect(mineInfo.lpToken).to.equal(lpToken);
-      expect(mineInfo.rewardToken).to.equal(lpToken);
-      expect(mineInfo.startBlock).to.equal(lpToken);
+      expect(mineInfo.lpToken).to.equal(lpToken.address);
+      expect(mineInfo.rewardToken).to.equal(rewardToken.address);
+      expect(mineInfo.startBlock).to.equal(START_BLOCK);
       expect(mineInfo.blockReward).to.equal(BLOCK_REWARD);
-      expect(mineInfo.liqRepNFT).to.equal(nft1);
-      expect(mineInfo.OG5555_25NFT).to.equal(nft2);
-      expect(mineInfo.OG5555_100NFT).to.equal(nft3);
+      expect(mineInfo.liqRepNFT).to.equal(nft1.address);
+      expect(mineInfo.OG5555_25NFT).to.equal(nft2.address);
+      expect(mineInfo.OG5555_100NFT).to.equal(nft3.address);
     });
   });
 
