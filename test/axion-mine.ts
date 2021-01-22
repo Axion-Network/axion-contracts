@@ -8,6 +8,7 @@ import {
 } from '../typechain';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
+import { min } from 'bn.js';
 
 const REWARD_AMOUNT = ethers.utils.parseEther('10000000');
 const BLOCK_REWARD = ethers.utils.parseEther('1');
@@ -15,7 +16,6 @@ const START_BLOCK = 1;
 
 describe('Axion Mine', () => {
   let _manager: SignerWithAddress;
-  let _bank: SignerWithAddress;
   let rewardToken: TERC20;
   let lpToken: TERC20;
   let nft1: TERC721
@@ -27,14 +27,12 @@ describe('Axion Mine', () => {
     const [manager, bank] = await ethers.getSigners();
     const contracts = await initMineTestContracts({
       manager,
-      bank,
       rewardAmount: REWARD_AMOUNT,
       startBlock: START_BLOCK,
       blockReward: BLOCK_REWARD
     });
 
     _manager = manager;
-    _bank = bank;
     rewardToken = contracts.rewardToken;
     lpToken = contracts.lpToken;
     nft1 = contracts.nft1;
@@ -58,8 +56,12 @@ describe('Axion Mine', () => {
   });
 
   describe('depositLPTokens', () => {	
-    it(`should deposit`, async () => {	
-      
+    it.only(`should deposit`, async () => {	
+      await nft1.mint(_manager.address);
+      await nft2.mint(_manager.address);
+      await nft3.mint(_manager.address);
+
+      await mine.connect(_manager).depositLPTokens(ethers.utils.parseEther('1'));
     });	
   });
 });

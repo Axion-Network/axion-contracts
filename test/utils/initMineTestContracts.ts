@@ -11,7 +11,6 @@ import { BigNumber } from 'ethers';
 
 interface InitOptions {
   manager: SignerWithAddress;
-  bank: SignerWithAddress;
   rewardAmount: BigNumber;
   startBlock: number;
   blockReward: BigNumber;
@@ -28,7 +27,6 @@ interface AxionContracts {
 
 export async function initMineTestContracts({
   manager,
-  bank,
   rewardAmount,
   startBlock,
   blockReward
@@ -36,29 +34,29 @@ export async function initMineTestContracts({
 
   const rewardToken = await ContractFactory.getTERC20Factory().then((factory) =>
     factory
-      .connect(bank)
+      .connect(manager)
       .deploy(
         'AXN Token',
         'AXN',
         ethers.utils.parseEther('10000000000'),
-        bank.address
+        manager.address
       )
   );
 
   const lpToken = await ContractFactory.getTERC20Factory().then((factory) =>
     factory
-      .connect(bank)
+      .connect(manager)
       .deploy(
         'LP Token',
         'LP',
         ethers.utils.parseEther('10000000000'),
-        bank.address
+        manager.address
       )
   );
 
   const nft1 = await ContractFactory.getTERC721Factory().then((factory) =>
     factory
-      .connect(bank)
+      .connect(manager)
       .deploy(
         'LP Token',
         'LP'
@@ -67,7 +65,7 @@ export async function initMineTestContracts({
 
   const nft2 = await ContractFactory.getTERC721Factory().then((factory) =>
     factory
-      .connect(bank)
+      .connect(manager)
       .deploy(
         'LP Token',
         'LP'
@@ -76,7 +74,7 @@ export async function initMineTestContracts({
 
   const nft3 = await ContractFactory.getTERC721Factory().then((factory) =>
     factory
-      .connect(bank)
+      .connect(manager)
       .deploy(
         'LP Token',
         'LP'
@@ -85,14 +83,16 @@ export async function initMineTestContracts({
 
   const mine = await ContractFactory.getAxionMineFactory().then((factory) =>
     factory
-      .connect(bank)
+      .connect(manager)
       .deploy(manager.address)
   );
 
   await rewardToken.approve(mine.address, rewardAmount);
 
   await mine.initialize(
-    rewardToken.address, rewardAmount, lpToken.address, startBlock, blockReward, nft1.address, nft2.address, nft3.address)
+    rewardToken.address, rewardAmount, lpToken.address, startBlock, blockReward, nft1.address, nft2.address, nft3.address);
+
+  await lpToken.approve(mine.address, ethers.utils.parseEther('100000000000000000'));
 
   return {
     rewardToken,
