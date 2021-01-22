@@ -2,11 +2,13 @@
 
 pragma solidity ^0.6.8;
 
-import "../abstracts/Manageable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import '../abstracts/Manageable.sol';
+import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
+import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/Initializable.sol';
 
 contract AxionMine is Initializable, Manageable {
     using SafeMath for uint256;
@@ -35,24 +37,36 @@ contract AxionMine is Initializable, Manageable {
 
     event Deposit(address indexed minerAddress, uint256 lpTokenAmount);
     event Withdraw(address indexed minerAddress, uint256 lpTokenAmount);
-    event WithdrawReward(address indexed minerAddress, uint256 rewardTokenAmount);
+    event WithdrawReward(
+        address indexed minerAddress,
+        uint256 rewardTokenAmount
+    );
 
     modifier mineUpdater() {
         updateMine();
         _;
     }
 
-    constructor(
-        address _mineManager,
+    constructor(address _mineManager) public {
+        _setupRole(MANAGER_ROLE, _mineManager);
+    }
+
+    function initialize(
         address _rewardTokenAddress,
+        uint256 _rewardTokenAmount,
         address _lpTokenAddress,
         uint256 _startBlock,
         uint256 _blockReward,
         address _liqRepNFTAddress,
         address _OG5555_25NFTAddress,
         address _OG5555_100NFTAddress
-    ) public {
-        _setupRole(MANAGER_ROLE, _mineManager);
+    ) public initializer {
+        TransferHelper.safeTransferFrom(
+            address(_rewardTokenAddress),
+            msg.sender,
+            address(this),
+            _rewardTokenAmount
+        );
 
         uint256 lastRewardBlock =
             block.number > _startBlock ? block.number : _startBlock;
@@ -107,7 +121,7 @@ contract AxionMine is Initializable, Manageable {
 
         uint256 reward = handleNFT(accReward.sub(miner.accReward));
 
-        require(reward != 0, "NOTHING_TO_WITHDRAW");
+        require(reward != 0, 'NOTHING_TO_WITHDRAW');
 
         safeRewardTransfer(reward);
 
@@ -117,7 +131,7 @@ contract AxionMine is Initializable, Manageable {
     }
 
     function depositLPTokens(uint256 _amount) external mineUpdater {
-        require(_amount != 0, "ZERO_AMOUNT");
+        require(_amount != 0, 'ZERO_AMOUNT');
 
         Miner storage miner = minerInfo[msg.sender];
 
@@ -142,8 +156,8 @@ contract AxionMine is Initializable, Manageable {
     function withdrawLPTokens(uint256 _amount) external mineUpdater {
         Miner storage miner = minerInfo[msg.sender];
 
-        require(miner.lpDeposit != 0, "NOTHING_TO_WITHDRAW");
-        require(miner.lpDeposit >= _amount, "INVALID_AMOUNT");
+        require(miner.lpDeposit != 0, 'NOTHING_TO_WITHDRAW');
+        require(miner.lpDeposit >= _amount, 'INVALID_AMOUNT');
 
         uint256 reward = getReward(miner);
 
@@ -162,7 +176,7 @@ contract AxionMine is Initializable, Manageable {
     function withdrawAll() external mineUpdater {
         Miner storage miner = minerInfo[msg.sender];
 
-        require(miner.lpDeposit != 0, "NOTHING_TO_WITHDRAW");
+        require(miner.lpDeposit != 0, 'NOTHING_TO_WITHDRAW');
 
         uint256 reward = getReward(miner);
 
@@ -217,6 +231,9 @@ contract AxionMine is Initializable, Manageable {
     }
 
     function getPendingReward() external view returns (uint256) {
+        uint256 rewardBalance = mineInfo.rewardToken.balanceOf(address(this));
+        if (rewardBalance == 0) return 0;
+
         Miner storage miner = minerInfo[msg.sender];
 
         uint256 accRewardPerLPToken = mineInfo.accRewardPerLPToken;

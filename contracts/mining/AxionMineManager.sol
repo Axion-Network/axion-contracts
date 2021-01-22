@@ -25,6 +25,8 @@ contract AxionMineManager is Initializable, Manageable {
         uint256 _blockReward,
         uint256 _startBlock
     ) external payable onlyManager {
+        require(_startBlock > block.number, 'INVALID_START_BLOCK');
+
         IUniswapV2Pair lpPair = IUniswapV2Pair(_lpTokenAddress);
 
         address lpPairAddress =
@@ -32,30 +34,33 @@ contract AxionMineManager is Initializable, Manageable {
 
         require(lpPairAddress == _lpTokenAddress, 'UNISWAP_PAIR_NOT_FOUND');
 
-        AxionMine mine =
-            new AxionMine(
-                msg.sender,
-                rewardTokenAddress,
-                _lpTokenAddress,
-                _startBlock,
-                _blockReward,
-                liqRepNFTAddress,
-                OG5555_25NFTAddress,
-                OG5555_100NFTAddress
-            );
+        AxionMine mine = new AxionMine(msg.sender);
+
+        mine.initialize(
+            rewardTokenAddress,
+            _rewardTokenAmount,
+            _lpTokenAddress,
+            _startBlock,
+            _blockReward,
+            liqRepNFTAddress,
+            OG5555_25NFTAddress,
+            OG5555_100NFTAddress
+        );
 
         TransferHelper.safeTransferFrom(
             rewardTokenAddress,
             msg.sender,
+            address(this),
+            _rewardTokenAmount
+        );
+
+        TransferHelper.safeApprove(
+            rewardTokenAddress,
             address(mine),
             _rewardTokenAmount
         );
 
-        registerMine(address(mine));
-    }
-
-    function registerMine(address _mineAddress) internal {
-        mineAddresses.push(_mineAddress);
+        mineAddresses.push(address(mine));
     }
 
     function deleteMine(uint256 index) external onlyManager {
