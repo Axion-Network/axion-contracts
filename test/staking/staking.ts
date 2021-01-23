@@ -289,7 +289,9 @@ describe('Staking', async () => {
 
       const interest = await staking.calculateStakingInterest(
         session.firstPayout, session.lastPayout, session.shares);
-     
+      
+      expect(interest).to.not.equal(previousInterest);
+        
       previousInterest = interest;
     }
 
