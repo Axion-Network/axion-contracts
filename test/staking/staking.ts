@@ -279,7 +279,8 @@ describe('Staking', async () => {
       _staker.address,
       sessionId
     );
-
+    
+    await staking.makePayout();
     let previousInterest = BigNumber.from("0");
 
     for (let i = 0; i < stakingDays; i++) {
