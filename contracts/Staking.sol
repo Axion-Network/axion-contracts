@@ -365,8 +365,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         uint256 index = payoutPerShare.length != 0 ? payoutPerShare.length - 1 : 0;
 
-        uint256 todaysSharePayout = payoutPerShare[index].add(payout.mul(1e12).div(sharesTotalSupply));
-        
+        if ( payoutPerShare.lengt!=0 ) {
+            uint256 todaysSharePayout = payoutPerShare[index].add(payout.mul(1e12).div(sharesTotalSupply));
+        } else {
+            uint256 todaysSharePayout = payout.mul(1e12).div(sharesTotalSupply);
+        }
+
         payoutPerShare.push(todaysSharePayout);
 
         nextPayoutCall = nextPayoutCall.add(stepTimestamp);
