@@ -4,10 +4,10 @@ import { TestUtil } from '../utils/TestUtil';
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import {
-    Token,
-    Staking,
-    StakingV1,
-    SubBalancesMock
+  Token,
+  Staking,
+  StakingV1,
+  SubBalancesMock
 } from '../../typechain';
 import { BigNumber } from 'ethers';
 import { SECONDS_IN_DAY, STAKE_PERIOD } from '../utils/constants';
@@ -46,19 +46,19 @@ describe('Staking', async () => {
     const amount = ethers.utils.parseEther('10');
 
     await token
-        .connect(_staker)
-        .approve(staking.address, amount);
+      .connect(_staker)
+      .approve(staking.address, amount);
 
     await staking
-        .connect(_staker)
-        .stake(amount, stakingDays);
+      .connect(_staker)
+      .stake(amount, stakingDays);
 
     const sessionId = await staking.sessionsOf(_staker.address, 0);
     const sessionData = await staking.sessionDataOf(_staker.address, sessionId);
 
     const shareRate = await staking.shareRate();
     const daysStaked = sessionData.end.sub(sessionData.start).div(SECONDS_IN_DAY);
-    
+
     expect(shareRate).to.equal(ethers.utils.parseEther('1'));
     expect(daysStaked).to.equal(stakingDays);
     expect(sessionData.amount).to.equal(amount);
@@ -83,7 +83,7 @@ describe('Staking', async () => {
     expect(sessionData.amount).to.equal(
       ethers.utils.parseEther(stakeAmount.toString())
     );
-    
+
     let expectedShares = TestUtil.calcShares(stakeAmount, stakingDays, 1.0);
 
     const actualShares = parseFloat(
@@ -127,7 +127,7 @@ describe('Staking', async () => {
     const amount = ethers.utils.parseEther('10');
 
     await token
-      .connect(_staker)  
+      .connect(_staker)
       .approve(staking.address, amount);
 
     await staking
@@ -148,20 +148,20 @@ describe('Staking', async () => {
   it("shouldn't allow a stake over 5555 days", async () => {
     const amount = ethers.utils.parseEther('10');
     const _stakerStaking = staking.connect(_staker);
-    
+
     await expect(
       _stakerStaking
         .stake(amount, 5556))
-          .to.be.revertedWith('Staking: Staking days > 5555');
+      .to.be.revertedWith('Staking: Staking days > 5555');
 
     // Edge case
     await _stakerStaking
       .stake(amount, 5555);
-    
+
     await expect(
       _stakerStaking
         .stake(amount, 100000))
-          .to.be.revertedWith('Staking: Staking days > 5555');
+      .to.be.revertedWith('Staking: Staking days > 5555');
   });
 
   it('should unstake and not allow second unstake', async () => {
@@ -180,7 +180,7 @@ describe('Staking', async () => {
     await TestUtil.increaseTime(SECONDS_IN_DAY * length);
 
     await staking.makePayout();
-    
+
     const sessionId = await staking.sessionsOf(_staker.address, 0);
 
     const preUnstakeSessionData = await staking.sessionDataOf(
@@ -210,7 +210,7 @@ describe('Staking', async () => {
 
     await expect(
       staking.connect(_staker).unstake(sessionId))
-        .to.be.revertedWith('Staking: Stake withdrawn');
+      .to.be.revertedWith('Staking: Stake withdrawn');
   });
 
   it('should unstake V1 and not allow second unstake', async () => {
@@ -227,7 +227,7 @@ describe('Staking', async () => {
 
     // Forward to the end of the staking period
     await TestUtil.increaseTime(SECONDS_IN_DAY * length);
-    
+
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
     const preUnstakeSessionData = await stakingV1.sessionDataOf(
@@ -258,7 +258,7 @@ describe('Staking', async () => {
 
     await expect(
       staking.connect(_staker).unstakeV1(sessionId))
-        .to.be.revertedWith('Staking: Stake withdrawn');
+      .to.be.revertedWith('Staking: Stake withdrawn');
   });
 
   it('should stop accruing interest after stake end date', async () => {
@@ -329,15 +329,15 @@ describe('Staking', async () => {
 
     await staking.makePayout();
 
-    for (let i = 1; i <= 4; i++){
+    for (let i = 1; i <= 4; i++) {
       await TestUtil.increaseTime(SECONDS_IN_DAY * (0.2));
-  
+
       const stakingInterest = await staking.calculateStakingInterest(
         sessionData.firstPayout, sessionData.lastPayout, sessionData.shares);
 
       const result = await staking.getAmountOutAndPenalty(
         sessionData.amount, sessionData.start, sessionData.end, stakingInterest);
-    
+
       expect(result[0]).to.not.equal(previousPayout);
       expect(result[1]).to.not.equal(previousPenalty);
 
@@ -368,7 +368,7 @@ describe('Staking', async () => {
       .connect(_staker)
       .unstake(sessionId);
 
-    expect(await subBalancesMock.callOutcomeStakerTriggerCalledCount()).to.equal(0);  
+    expect(await subBalancesMock.callOutcomeStakerTriggerCalledCount()).to.equal(0);
   });
 
   it('should call SubBalances on stake and unstake if stake length is more than or equal to base period', async () => {
@@ -393,7 +393,7 @@ describe('Staking', async () => {
       .connect(_staker)
       .unstake(sessionId);
 
-    expect(await subBalancesMock.callOutcomeStakerTriggerCalledCount()).to.equal(1); 
+    expect(await subBalancesMock.callOutcomeStakerTriggerCalledCount()).to.equal(1);
   });
 
   it('should not call SubBalances on unstakeV1 if stake length is less than base period', async () => {
@@ -424,7 +424,7 @@ describe('Staking', async () => {
       .connect(_staker)
       .unstakeV1(sessionId);
 
-    expect(await subBalancesMock.callOutcomeStakerTriggerV1CalledCount()).to.equal(0);  
+    expect(await subBalancesMock.callOutcomeStakerTriggerV1CalledCount()).to.equal(0);
   });
 
   it('should call SubBalances on unstakeV1 if stake length is more than or equal to base period', async () => {
@@ -455,47 +455,50 @@ describe('Staking', async () => {
       .connect(_staker)
       .unstakeV1(sessionId);
 
-    expect(await subBalancesMock.callOutcomeStakerTriggerV1CalledCount()).to.equal(1); 
+    expect(await subBalancesMock.callOutcomeStakerTriggerV1CalledCount()).to.equal(1);
   });
 
   it('should fail on unstake if shares is 0 or withdrawn', async () => {
     await expect(
       staking.connect(_staker).unstake(0))
-        .to.be.revertedWith('Staking: Stake withdrawn or not set');
+      .to.be.revertedWith('Staking: Stake withdrawn or not set');
   });
 
   it('should fail on unstakeV1 if sessionId is higher than allowed', async () => {
     await expect(
       staking.connect(_staker).unstakeV1(lastSessionIdV1 + 1))
-        .to.be.revertedWith('Staking: Invalid sessionId');
+      .to.be.revertedWith('Staking: Invalid sessionId');
   });
 
   it('should fail on unstakeV1 if shares is 0', async () => {
     await expect(
       staking.connect(_staker).unstakeV1(lastSessionIdV1))
-        .to.be.revertedWith('Staking: Stake withdrawn or not set');
+      .to.be.revertedWith('Staking: Stake withdrawn or not set');
   });
 
-  it('should restake', async () => {
+  it('should restake without topup', async () => {
     const stakingDays = 10;
     const restakeDays = 15;
     const amount = ethers.utils.parseEther('10');
+    const preStakeBalance = await token.balanceOf(_staker.address);
 
     await token
-        .connect(_staker)
-        .approve(staking.address, amount);
+      .connect(_staker)
+      .approve(staking.address, amount);
 
     await staking
-        .connect(_staker)
-        .stake(amount, stakingDays);
+      .connect(_staker)
+      .stake(amount, stakingDays);
 
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
 
     const preRestakeSessionId = await staking.sessionsOf(_staker.address, 0);
 
     await staking
-        .connect(_staker)
-        .restake(preRestakeSessionId, restakeDays);
+      .connect(_staker)
+      .restake(preRestakeSessionId, restakeDays, 0);
+
+    const postRestakeBalance = await token.balanceOf(_staker.address);
 
     const postRestakeSessionId = await staking.sessionsOf(_staker.address, 1);
     const preRestakeSessionData = await staking.sessionDataOf(_staker.address, preRestakeSessionId);
@@ -503,21 +506,58 @@ describe('Staking', async () => {
     const daysStaked = postRestakeSessionData.end.sub(postRestakeSessionData.start).div(SECONDS_IN_DAY);
 
     expect(daysStaked).to.equal(restakeDays);
+    expect(postRestakeBalance).to.equal(preStakeBalance.sub(amount));
     expect(preRestakeSessionData.payout).to.equal(postRestakeSessionData.amount);
   });
 
-  it('should restakeV1', async () => {
+  it('should restake with topup', async () => {
     const stakingDays = 10;
     const restakeDays = 15;
     const amount = ethers.utils.parseEther('10');
+    const topup = ethers.utils.parseEther('1');
+    const preStakeBalance = await token.balanceOf(_staker.address);
 
     await token
-        .connect(_staker)
-        .approve(staking.address, amount);
+      .connect(_staker)
+      .approve(staking.address, amount);
+
+    await staking
+      .connect(_staker)
+      .stake(amount, stakingDays);
+
+    await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+
+    const preRestakeSessionId = await staking.sessionsOf(_staker.address, 0);
+
+    await staking
+      .connect(_staker)
+      .restake(preRestakeSessionId, restakeDays, topup);
+
+    const postRestakeBalance = await token.balanceOf(_staker.address);
+
+    const postRestakeSessionId = await staking.sessionsOf(_staker.address, 1);
+    const preRestakeSessionData = await staking.sessionDataOf(_staker.address, preRestakeSessionId);
+    const postRestakeSessionData = await staking.sessionDataOf(_staker.address, postRestakeSessionId);
+    const daysStaked = postRestakeSessionData.end.sub(postRestakeSessionData.start).div(SECONDS_IN_DAY);
+
+    expect(daysStaked).to.equal(restakeDays);
+    expect(postRestakeBalance).to.equal(preStakeBalance.sub(amount).sub(topup));
+    expect(preRestakeSessionData.payout).to.equal(postRestakeSessionData.amount.sub(topup));
+  });
+
+  it('should restakeV1 without topup', async () => {
+    const stakingDays = 10;
+    const restakeDays = 15;
+    const amount = ethers.utils.parseEther('10');
+    const preStakeBalance = await token.balanceOf(_staker.address);
+
+    await token
+      .connect(_staker)
+      .approve(staking.address, amount);
 
     await stakingV1
-        .connect(_staker)
-        .stake(amount, stakingDays);
+      .connect(_staker)
+      .stake(amount, stakingDays);
 
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
 
@@ -529,8 +569,10 @@ describe('Staking', async () => {
     await staking.setTotalStakedAmount(preRestakeSessionV1Data.amount);
 
     await staking
-        .connect(_staker)
-        .restakeV1(preRestakeSessionV1Id, restakeDays);
+      .connect(_staker)
+      .restakeV1(preRestakeSessionV1Id, restakeDays, 0);
+
+    const postRestakeBalance = await token.balanceOf(_staker.address);
 
     const preRestakeSessionId = await staking.sessionsOf(_staker.address, 0);
     const preRestakeSessionData = await staking.sessionDataOf(_staker.address, preRestakeSessionId);
@@ -540,6 +582,49 @@ describe('Staking', async () => {
     const daysStaked = postRestakeSessionData.end.sub(postRestakeSessionData.start).div(SECONDS_IN_DAY);
 
     expect(daysStaked).to.equal(restakeDays);
+    expect(postRestakeBalance).to.equal(preStakeBalance.sub(amount));
     expect(preRestakeSessionData.payout).to.equal(postRestakeSessionData.amount);
+  });
+
+  it('should restakeV1 with topup', async () => {
+    const stakingDays = 10;
+    const restakeDays = 15;
+    const amount = ethers.utils.parseEther('10');
+    const topup = ethers.utils.parseEther('1');
+    const preStakeBalance = await token.balanceOf(_staker.address);
+
+    await token
+      .connect(_staker)
+      .approve(staking.address, amount);
+
+    await stakingV1
+      .connect(_staker)
+      .stake(amount, stakingDays);
+
+    await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+
+    const preRestakeSessionV1Id = await stakingV1.sessionsOf(_staker.address, 0);
+    const preRestakeSessionV1Data = await stakingV1.sessionDataOf(_staker.address, preRestakeSessionV1Id);
+
+    await staking.setLastSessionId(preRestakeSessionV1Id);
+    await staking.setSharesTotalSupply(preRestakeSessionV1Data.shares);
+    await staking.setTotalStakedAmount(preRestakeSessionV1Data.amount);
+
+    await staking
+      .connect(_staker)
+      .restakeV1(preRestakeSessionV1Id, restakeDays, topup);
+
+    const postRestakeBalance = await token.balanceOf(_staker.address);
+
+    const preRestakeSessionId = await staking.sessionsOf(_staker.address, 0);
+    const preRestakeSessionData = await staking.sessionDataOf(_staker.address, preRestakeSessionId);
+
+    const postRestakeSessionId = await staking.sessionsOf(_staker.address, 1);
+    const postRestakeSessionData = await staking.sessionDataOf(_staker.address, postRestakeSessionId);
+    const daysStaked = postRestakeSessionData.end.sub(postRestakeSessionData.start).div(SECONDS_IN_DAY);
+
+    expect(daysStaked).to.equal(restakeDays);
+    expect(postRestakeBalance).to.equal(preStakeBalance.sub(amount).sub(topup));
+    expect(preRestakeSessionData.payout).to.equal(postRestakeSessionData.amount.sub(topup));
   });
 });
