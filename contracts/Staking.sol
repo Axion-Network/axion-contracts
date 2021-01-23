@@ -232,12 +232,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 shares
     ) public view returns (uint256) {
         uint256 stakingInterest;
+        uint256 lastIndex;
 
         if (payoutPerShare.length !=0 ) {
-            uint256 lastIndex =
+            lastIndex =
                 MathUpgradeable.min(payoutPerShare.length - 1, lastPayout);
         }else {
-            uint256 lastIndex = 0;
+            lastIndex = 0;
         }
         uint256 startInterest =
             shares.mul(payoutPerShare[firstPayout]).div(1e12);
