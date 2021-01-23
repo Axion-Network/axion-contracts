@@ -22,18 +22,6 @@ export async function restoreStakingSnapshot(staking: Staking, token: Token) {
   const payoutList = payouts.map((d: any) => d.payout);
   const payoutSharesTotalSupply = payouts.map((d: any) => d.sharesTotalSupply);
 
-  await staking.setOtherVars(
-    startContract,
-    '1060000000000000000',
-    sharesTotalSupply,
-    nextPayoutCall,
-    globalPayin,
-    globalPayout,
-    payoutList,
-    payoutSharesTotalSupply,
-    _sessionsIds
-  );
-
   console.log(
     'setOtherVars',
     JSON.stringify(
@@ -50,6 +38,18 @@ export async function restoreStakingSnapshot(staking: Staking, token: Token) {
       null,
       2
     )
+  );
+
+  await staking.setOtherVars(
+    startContract,
+    '1060000000000000000',
+    sharesTotalSupply,
+    nextPayoutCall,
+    globalPayin,
+    globalPayout,
+    payoutList,
+    payoutSharesTotalSupply,
+    _sessionsIds
   );
 
   console.log('restoreStakingSnapshot - Done');
