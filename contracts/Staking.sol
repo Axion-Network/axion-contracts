@@ -167,6 +167,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         if (shareRate == 0) {
             shareRate = 1e18;
         }
+        if (sharesTotalSupply == 0) {
+            sharesTotalSupply = 1;
+        }
     }
 
     /** End init functions */
