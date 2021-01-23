@@ -232,11 +232,17 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 shares
     ) public view returns (uint256) {
         uint256 stakingInterest;
-        uint256 lastIndex = MathUpgradeable.min(payoutPerShare.length-1, lastPayout);
-        uint256 startInterest = shares.mul(payoutPerShare[firstPayout]).div(1e12);
+
+        uint256 lastIndex =
+            MathUpgradeable.min(payoutPerShare.length - 1, lastPayout);
+
+        uint256 startInterest =
+            shares.mul(payoutPerShare[firstPayout]).div(1e12);
+
         uint256 lastInterest = shares.mul(payoutPerShare[lastIndex]).div(1e12);
+        
         stakingInterest = lastInterest.sub(startInterest);
- 
+
         return stakingInterest;
     }
 
@@ -346,13 +352,16 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         uint256 payout = _getPayout();
 
-        uint256 payoutsLength = payoutPerShare.length;
-        uint256 todaySharePayout = payoutPerShare[payoutsLength-1].add(payout.mul(1e12).div(sharesTotalSupply));
-        payoutPerShare.push(todaySharePayout);
+        uint256 index = payoutPerShare.length != 0 ? payoutPerShare.length - 1 : 0;
+
+        uint256 todaysSharePayout =
+            payoutPerShare[index].add(payout.mul(1e12).div(sharesTotalSupply));
+
+        payoutPerShare.push(todaysSharePayout);
 
         nextPayoutCall = nextPayoutCall.add(stepTimestamp);
 
-        emit MakePayout(payout, sharesTotalSupply, todaySharePayout, now);
+        emit MakePayout(payout, sharesTotalSupply, todaysSharePayout, now);
     }
 
     function readPayout() external view returns (uint256) {
@@ -634,22 +643,30 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     /**automated init payoutPerShare array - can be removed if we use the manual setPayoutPerShare */
-    function initPayoutPerShare () external onlyManager {
-        require(payoutPerShare.length == 0,'already initialized');
+    function initPayoutPerShare() external onlyManager {
+        require(payoutPerShare.length == 0, 'already initialized');
 
-        uint256 sharePayout = payouts[0].payout.mul(1e12).div(payouts[0].sharesTotalSupply);
+        uint256 sharePayout =
+            payouts[0].payout.mul(1e12).div(payouts[0].sharesTotalSupply);
         payoutPerShare.push(sharePayout);
 
-        for (uint256 i = 1; i < payouts.length ; i++)
-        {
-            sharePayout = payoutPerShare[i-1].add(payouts[i].payout.mul(1e12).div(payouts[i].sharesTotalSupply));
+        for (uint256 i = 1; i < payouts.length; i++) {
+            sharePayout = payoutPerShare[i - 1].add(
+                payouts[i].payout.mul(1e12).div(payouts[i].sharesTotalSupply)
+            );
             payoutPerShare.push(sharePayout);
         }
-
     }
+
     /** manually initialize payoutPerShare from precalculated values, cheaper gas */
-    function setPayoutPerShare (uint256[] calldata shareAmounts) external onlyManager{
-        require(payoutPerShare.length.add(shareAmounts.length) <= payouts.length, 'already initialized');
+    function setPayoutPerShare(uint256[] calldata shareAmounts)
+        external
+        onlyManager
+    {
+        require(
+            payoutPerShare.length.add(shareAmounts.length) <= payouts.length,
+            'already initialized'
+        );
 
         for (uint256 i = 0; i < shareAmounts.length; i++) {
             payoutPerShare.push(shareAmounts[i]);
