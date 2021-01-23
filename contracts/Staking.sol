@@ -353,14 +353,17 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     function makePayout() public {
         require(now >= nextPayoutCall, 'Staking: Wrong payout time');
+        uint256 todaysSharePayout;
 
         uint256 payout = _getPayout();
 
         uint256 index = payoutPerShare.length != 0 ? payoutPerShare.length - 1 : 0;
 
-        uint256 todaysSharePayout =
-            payoutPerShare[index].add(payout.mul(1e12).div(sharesTotalSupply));
-
+        if (sharesTotalSupply !=0 ) {
+            todaysSharePayout = payoutPerShare[index].add(payout.mul(1e12).div(sharesTotalSupply));
+        } else {
+            todaysSharePayout =0;
+        }
         payoutPerShare.push(todaysSharePayout);
 
         nextPayoutCall = nextPayoutCall.add(stepTimestamp);
