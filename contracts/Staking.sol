@@ -236,7 +236,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         if (payoutPerShare.length !=0 ) {
             lastIndex =
-                MathUpgradeable.min(payoutPerShare.length - 1, lastPayout);
+                MathUpgradeable.min(payoutPerShare.length - 1, lastPayout-1);
         }else {
             lastIndex = 0;
         }
