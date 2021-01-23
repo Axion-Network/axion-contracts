@@ -167,10 +167,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         if (shareRate == 0) {
             shareRate = 1e18;
         }
-        if (sharesTotalSupply == 0) {
-            sharesTotalSupply = 1;
-        }
-    }
+     }
 
     /** End init functions */
 
@@ -366,9 +363,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 index = payoutPerShare.length != 0 ? payoutPerShare.length - 1 : 0;
 
         if ( payoutPerShare.length!=0 ) {
-            todaysSharePayout = payoutPerShare[index].add(payout.mul(1e12).div(sharesTotalSupply));
+            todaysSharePayout = payoutPerShare[index].add(payout.mul(1e12).div(sharesTotalSupply+1));
         } else {
-            todaysSharePayout = payout.mul(1e12).div(sharesTotalSupply);
+            todaysSharePayout = payout.mul(1e12).div(sharesTotalSupply+1);
         }
 
         payoutPerShare.push(todaysSharePayout);
