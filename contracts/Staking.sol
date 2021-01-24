@@ -354,6 +354,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         nextPayoutCall = nextPayoutCall.add(stepTimestamp);
 
+        updateShareRate(payout);
+
         emit MakePayout(payout, sharesTotalSupply, now);
     }
 
@@ -672,5 +674,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
 
         emit Stake(staker, sessionId, amount, start, end, shares);
+    }
+
+    function updateShareRate(uint256 _payout) internal {
+        uint256 increaseShareRateBy = (shareRate.mul(_payout + 1)).div(totalStakedAmount + 1);
+        shareRate = shareRate.add(increaseShareRateBy);
     }
 }
