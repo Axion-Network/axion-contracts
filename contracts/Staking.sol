@@ -216,7 +216,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             start,
             end,
             stakingDays,
-            payouts.length,
+            payoutPerShare.length,
             staker
         );
     }
@@ -236,7 +236,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         if (payoutPerShare.length !=0 ) {
             lastIndex =
-                MathUpgradeable.min(payoutPerShare.length - 1, lastPayout-1);
+                MathUpgradeable.min(payoutPerShare.length - 1, lastPayout - 1);
         }else {
             lastIndex = 0;
         }
@@ -363,7 +363,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 index = payoutPerShare.length != 0 ? payoutPerShare.length - 1 : 0;
 
         if ( payoutPerShare.length!=0 ) {
-            todaysSharePayout = payoutPerShare[index].add(payout.mul(1e12).div(sharesTotalSupply+1));
+            todaysSharePayout = payoutPerShare[index].add(payout.mul(1e12).div(sharesTotalSupply + 1));
         } else {
             todaysSharePayout = payout.mul(1e12).div(sharesTotalSupply+1);
         }
