@@ -47,43 +47,6 @@ contract AxionMine is Initializable, Manageable {
         _;
     }
 
-    constructor(address _mineManager) public {
-        _setupRole(MANAGER_ROLE, _mineManager);
-    }
-
-    function initialize(
-        address _rewardTokenAddress,
-        uint256 _rewardTokenAmount,
-        address _lpTokenAddress,
-        uint256 _startBlock,
-        uint256 _blockReward,
-        address _liqRepNFTAddress,
-        address _OG5555_25NFTAddress,
-        address _OG5555_100NFTAddress
-    ) public initializer {
-        TransferHelper.safeTransferFrom(
-            address(_rewardTokenAddress),
-            msg.sender,
-            address(this),
-            _rewardTokenAmount
-        );
-
-        uint256 lastRewardBlock =
-            block.number > _startBlock ? block.number : _startBlock;
-
-        mineInfo = Mine(
-            IERC20(_lpTokenAddress),
-            IERC20(_rewardTokenAddress),
-            _startBlock,
-            lastRewardBlock,
-            _blockReward,
-            0,
-            IERC721(_liqRepNFTAddress),
-            IERC721(_OG5555_25NFTAddress),
-            IERC721(_OG5555_100NFTAddress)
-        );
-    }
-
     function updateMine() internal {
         if (block.number <= mineInfo.lastRewardBlock) {
             return;
@@ -228,6 +191,43 @@ contract AxionMine is Initializable, Manageable {
     function transferRewardTokens(address _to) external onlyManager {
         uint256 rewardBalance = mineInfo.rewardToken.balanceOf(address(this));
         mineInfo.rewardToken.transfer(_to, rewardBalance);
+    }
+
+    constructor(address _mineManager) public {
+        _setupRole(MANAGER_ROLE, _mineManager);
+    }
+
+    function initialize(
+        address _rewardTokenAddress,
+        uint256 _rewardTokenAmount,
+        address _lpTokenAddress,
+        uint256 _startBlock,
+        uint256 _blockReward,
+        address _liqRepNFTAddress,
+        address _OG5555_25NFTAddress,
+        address _OG5555_100NFTAddress
+    ) public initializer {
+        TransferHelper.safeTransferFrom(
+            address(_rewardTokenAddress),
+            msg.sender,
+            address(this),
+            _rewardTokenAmount
+        );
+
+        uint256 lastRewardBlock =
+            block.number > _startBlock ? block.number : _startBlock;
+
+        mineInfo = Mine(
+            IERC20(_lpTokenAddress),
+            IERC20(_rewardTokenAddress),
+            _startBlock,
+            lastRewardBlock,
+            _blockReward,
+            0,
+            IERC721(_liqRepNFTAddress),
+            IERC721(_OG5555_25NFTAddress),
+            IERC721(_OG5555_100NFTAddress)
+        );
     }
 
     function getPendingReward() external view returns (uint256) {

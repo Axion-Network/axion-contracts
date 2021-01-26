@@ -2,11 +2,11 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { network, upgrades } from 'hardhat';
-import { ContractFactory } from '../libs/ContractFactory';
-import { getDeployedContracts } from './utils/get_deployed_contracts';
+import { ContractFactory } from '../../libs/ContractFactory';
+import { getDeployedContracts } from '../utils/get_deployed_contracts';
 import path from 'path';
 import fs from 'fs';
-import { AxionMineManager } from '../typechain';
+import { AxionMineManager } from '../../typechain';
 
 /**
  * Deploys Axion Mine Manager
@@ -44,8 +44,6 @@ const main = async () => {
       { unsafeAllowCustomTypes: true, unsafeAllowLinkedLibraries: true }
     )) as AxionMineManager;
 
-    // const mineManagerFactory = await ContractFactory.getAxionMineManagerFactory();
-    // const mineManager = await mineManagerFactory.deploy();
     console.log('Mine Manager Initialized', mineManager.address);
 
     await mineManager.setupRole(
