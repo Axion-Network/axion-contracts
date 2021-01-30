@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { network } from 'hardhat';
-import { ContractFactory } from '../libs/ContractFactory';
+import { ContractFactory } from '../../libs/ContractFactory';
 import path from 'path';
 import fs from 'fs';
 

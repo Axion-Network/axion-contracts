@@ -2,14 +2,21 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { network, upgrades } from 'hardhat';
-import { ContractFactory } from '../libs/ContractFactory';
-import { getDeployedContracts } from './utils/get_deployed_contracts';
+import { ContractFactory } from '../../libs/ContractFactory';
+import { getDeployedContracts } from '../utils/get_deployed_contracts';
 import path from 'path';
 import fs from 'fs';
-import { AxionMineManager } from '../typechain';
+import { AxionMineManager } from '../../typechain';
 
 /**
  * Deploys Axion Mine Manager
+ * OG-5555-2.5 Contract: NFT 1
+ * 0x3F4a14b2A23BD40944d9D316CDda2c74944C2646
+ * OG-5555-100 Contract: NFT 2
+ * 0x6d49c44F1bf0Bbe926b1dFe3e20109D1e4BdC626
+ * AXN-LIQ-REP Contract: NFT 3
+ * 0xBd050D8555EE7c8c0cCc343b541E9Ed02EeeEE05
+
  **/
 const SCRIPT_NAME = 'CREATE MINER';
 
@@ -19,9 +26,10 @@ const main = async () => {
   const {
     DEPLOYER_ADDRESS,
     UNISWAP_FACTORY,
-    NFT1_ADDRESS,
-    NFT2_ADDRESS,
-    NFT3_ADDRESS,
+    OG_5555_25_NFT,
+    OG_5555_100_NFT,
+    LIQ_REP_NFT,
+    MINE_MANAGER,
   } = process.env;
 
   const { token } = await getDeployedContracts(networkName);
@@ -34,28 +42,24 @@ const main = async () => {
     const mineManager = (await upgrades.deployProxy(
       await ContractFactory.getAxionMineManagerFactory(),
       [
-        DEPLOYER_ADDRESS ?? '',
+        DEPLOYER_ADDRESS,
         token.address,
-        NFT1_ADDRESS ?? '',
-        NFT2_ADDRESS ?? '',
-        NFT3_ADDRESS ?? '',
-        UNISWAP_FACTORY ?? '',
+        LIQ_REP_NFT,
+        OG_5555_25_NFT,
+        OG_5555_100_NFT,
+        UNISWAP_FACTORY,
       ],
       { unsafeAllowCustomTypes: true, unsafeAllowLinkedLibraries: true }
     )) as AxionMineManager;
 
-    // const mineManagerFactory = await ContractFactory.getAxionMineManagerFactory();
-    // const mineManager = await mineManagerFactory.deploy();
     console.log('Mine Manager Initialized', mineManager.address);
 
     await mineManager.setupRole(
       await mineManager.MANAGER_ROLE(),
-      '0xcaaD2020967F0f314Fb8A150413F7f9fC26c0f73'
+      MINE_MANAGER as string
     );
-    await mineManager.setupRole(
-      await mineManager.MANAGER_ROLE(),
-      '0xbE42d298d31b2551aE9E6e88B838A3ba5Dc1D6CD'
-    );
+
+    console.log('Manager roles added');
 
     const addressFilePath = path.join(
       __dirname,
