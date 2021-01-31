@@ -11,7 +11,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-wit
 
 const lastSessionIdV1 = 1;
 
-describe.only('Staking', async () => {
+describe('Staking', async () => {
   let _staker: SignerWithAddress;
   let token: Token;
   let staking: Staking;
