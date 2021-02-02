@@ -97,6 +97,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     uint256 public basePeriod;
     uint256 public totalStakedAmount;
 
+    mapping(address => uint256) internal totalSharesOf;
+
     /* New variables must go below here. */
 
     /** Roles */
@@ -603,6 +605,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sharesTotalSupply = sharesTotalSupply.sub(shares);
         totalStakedAmount = totalStakedAmount.sub(amount);
+        totalSharesOf[msg.sender] = totalSharesOf[msg.sender].sub(shares);
 
         (uint256 amountOut, uint256 penalty) =
             getAmountOutAndPenalty(amount, start, end, stakingInterest);
@@ -647,6 +650,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 shares = _getStakersSharesAmount(amount, start, end);
         sharesTotalSupply = sharesTotalSupply.add(shares);
         totalStakedAmount = totalStakedAmount.add(amount);
+        totalSharesOf[staker] = totalSharesOf[staker].add(shares);
 
         sessionDataOf[staker][sessionId] = Session({
             amount: amount,
@@ -672,5 +676,16 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
 
         emit Stake(staker, sessionId, amount, start, end, shares);
+    }
+
+    function setTotalSharesOf() external {
+        totalSharesOf[msg.sender] = 0;
+        uint256[] memory sessionsOfSender = sessionsOf[msg.sender];
+
+        for (uint256 i = 0; i < sessionsOfSender.length; i++) {
+            totalSharesOf[msg.sender] = totalSharesOf[msg.sender].add(
+                sessionDataOf[msg.sender][sessionsOfSender[i]].shares
+            );
+        }
     }
 }
