@@ -1,7 +1,6 @@
 node_modules
 build
 coverage.json
-node_modules
 package-lock.json
 dist
 .vscode
@@ -27,3 +26,4 @@ artifacts
 
 #Typechain
 typechain
+types

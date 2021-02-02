@@ -7,13 +7,13 @@ import fs from 'fs';
 import { TEST_NETWORKS } from '../constants/common';
 import { ContractFactory } from '../libs/ContractFactory';
 import {
-  Auction,
-  BPD,
-  ForeignSwap,
-  NativeSwap,
-  Staking,
-  SubBalances,
-  Token,
+  AuctionRestorable,
+  BPDRestorable,
+  ForeignSwapRestorable,
+  NativeSwapRestorable,
+  StakingRestorable,
+  SubBalancesRestorable,
+  TokenRestorable,
 } from '../typechain';
 
 const TOKEN_NAME = 'Axion';
@@ -55,20 +55,20 @@ const main = async () => {
 
     // Auction
     const auction = (await upgrades.deployProxy(
-      await ContractFactory.getAuctionFactory(),
+      await ContractFactory.getAuctionRestorableFactory(),
       [managerAddress, deployerAddress],
       { unsafeAllowCustomTypes: true, unsafeAllowLinkedLibraries: true }
-    )) as Auction;
+    )) as AuctionRestorable;
     console.log('Deployed: Auction', auction.address);
 
     // Swap Token
-    let hex4Token: Token | undefined;
+    let hex4Token: TokenRestorable | undefined;
     if (!SWAP_TOKEN_ADDRESS) {
       hex4Token = (await upgrades.deployProxy(
-        await ContractFactory.getTokenFactory(),
+        await ContractFactory.getTokenRestorableFactory(),
         [managerAddress, deployerAddress, 'HEX10T', 'HEX10T'],
         { unsafeAllowCustomTypes: true, unsafeAllowLinkedLibraries: true }
-      )) as Token;
+      )) as TokenRestorable;
       console.log('Deployed: SwapToken', hex4Token.address);
     } else {
       console.log(
@@ -78,51 +78,71 @@ const main = async () => {
 
     // Axion
     const token = (await upgrades.deployProxy(
-      await ContractFactory.getTokenFactory(),
+      await ContractFactory.getTokenRestorableFactory(),
       [managerAddress, deployerAddress, TOKEN_NAME, TOKEN_SYMBOL],
       { unsafeAllowCustomTypes: true, unsafeAllowLinkedLibraries: true }
-    )) as Token;
+    )) as TokenRestorable;
     console.log('Deployed: Axion', token.address);
 
     // Native Swap
     const nativeswap = (await upgrades.deployProxy(
-      await ContractFactory.getNativeSwapFactory(),
+      await ContractFactory.getNativeSwapRestorableFactory(),
       [managerAddress, deployerAddress],
       { unsafeAllowCustomTypes: true, unsafeAllowLinkedLibraries: true }
-    )) as NativeSwap;
+    )) as NativeSwapRestorable;
     console.log('Deployed: NativeSwap', nativeswap.address);
 
     // BPD
     const bpd = (await upgrades.deployProxy(
-      await ContractFactory.getBPDFactory(),
+      await ContractFactory.getBPDRestorableFactory(),
       [managerAddress, deployerAddress],
       { unsafeAllowCustomTypes: true, unsafeAllowLinkedLibraries: true }
-    )) as BPD;
+    )) as BPDRestorable;
     console.log('Deployed: BPD', bpd.address);
 
     // Foreign Swap
     const foreignswap = (await upgrades.deployProxy(
-      await ContractFactory.getForeignSwapFactory(),
+      await ContractFactory.getForeignSwapRestorableFactory(),
       [managerAddress, deployerAddress],
       { unsafeAllowCustomTypes: true, unsafeAllowLinkedLibraries: true }
-    )) as ForeignSwap;
+    )) as ForeignSwapRestorable;
     console.log('Deployed: ForeignSwap', bpd.address);
 
     // SubBalances
     const subbalances = (await upgrades.deployProxy(
-      await ContractFactory.getSubBalancesFactory(),
+      await ContractFactory.getSubBalancesRestorableFactory(),
       [managerAddress, deployerAddress],
       { unsafeAllowCustomTypes: true, unsafeAllowLinkedLibraries: true }
-    )) as SubBalances;
+    )) as SubBalancesRestorable;
     console.log('Deployed: SubBalances', subbalances.address);
 
     // Staking
     const staking = (await upgrades.deployProxy(
-      await ContractFactory.getStakingFactory(),
+      await ContractFactory.getStakingRestorableFactory(),
       [managerAddress, deployerAddress],
       { unsafeAllowCustomTypes: true, unsafeAllowLinkedLibraries: true }
-    )) as Staking;
+    )) as StakingRestorable;
     console.log('Deployed: Staking', staking.address);
+
+    const verifyScriptPath = path.join(
+      __dirname,
+      '..',
+      'verify-contracts',
+      'V2-verify'
+    );
+
+    fs.writeFileSync(
+      verifyScriptPath,
+      `
+        npx hardhat verify --network ${networkName} ${token.address}
+        npx hardhat verify --network ${networkName} ${nativeswap.address}
+        npx hardhat verify --network ${networkName} ${foreignswap.address}
+        npx hardhat verify --network ${networkName} ${subbalances.address}
+        npx hardhat verify --network ${networkName} ${staking.address}
+        npx hardhat verify --network ${networkName} ${bpd.address}
+        npx hardhat verify --network ${networkName} ${auction.address}
+      `
+    );
 
     const addressFilePath = path.join(
       __dirname,

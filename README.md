@@ -32,3 +32,6 @@
 
 - [Hardhat Overview](https://hardhat.org/getting-started/#overview)
 - [Debugging with Hardhat Network](https://hardhat.org/tutorial/debugging-with-hardhat-network.html)
+
+## HOW TO VERIFY
+npx hardhat verify --network live <contract address>

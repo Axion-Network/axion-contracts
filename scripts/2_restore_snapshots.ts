@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { network } from 'hardhat';
-import { getDeployedContracts } from './utils/get_deployed_contracts';
+import { getRestorableDeployedContracts } from './utils/get_restorable_deployed_contracts';
 import { restoreBPDSnapshot } from './restore-snapshot/restore_bpd_snapshot';
 import { restoreNativeSwapSnapshot } from './restore-snapshot/restore_nativeswap_snapshot';
 import { restoreForeignSwapSnapshot } from './restore-snapshot/restore_foreignswap_snapshot';
@@ -21,38 +21,38 @@ const main = async () => {
 
   try {
     console.log(
-        `============================ ${SCRIPT_NAME} ===============================`
+      `============================ ${SCRIPT_NAME} ===============================`
     );
     console.log(`Running on network: ${networkName}`);
 
     const {
-      auction,
-      bpd,
-      foreignSwap,
-      nativeSwap,
-      token,
-      subBalances,
-      staking,
-    } = await getDeployedContracts(networkName);
+      auctionRestorable,
+      bpdRestorable,
+      foreignSwapRestorable,
+      nativeSwapRestorable,
+      tokenRestorable,
+      subBalancesRestorable,
+      stakingRestorable,
+    } = await getRestorableDeployedContracts(networkName);
 
-    await restoreBPDSnapshot(bpd, token);
-    await restoreNativeSwapSnapshot(nativeSwap);
-    await restoreForeignSwapSnapshot(foreignSwap);
-    await restoreAuctionSnapshot(auction, token);
-    await restoreSubBalancesSnapshot(subBalances);
-    await restoreStakingSnapshot(staking, token);
+    await restoreBPDSnapshot(bpdRestorable, tokenRestorable);
+    await restoreNativeSwapSnapshot(nativeSwapRestorable);
+    await restoreForeignSwapSnapshot(foreignSwapRestorable);
+    await restoreAuctionSnapshot(auctionRestorable, tokenRestorable);
+    await restoreSubBalancesSnapshot(subBalancesRestorable);
+    await restoreStakingSnapshot(stakingRestorable, tokenRestorable);
     await airdropTokens(
-      token,
+      tokenRestorable,
       process.env.AIR_DROPPER_ADDRESS ??
         '0x902634D7451277d46353969D5a4Ad56b71d08D6E'
     );
 
     console.log(
-        `============================ ${SCRIPT_NAME}: DONE ===============================`
+      `============================ ${SCRIPT_NAME}: DONE ===============================`
     );
   } catch (e) {
     console.error(
-        `============================ ${SCRIPT_NAME}: FAILED ===============================`
+      `============================ ${SCRIPT_NAME}: FAILED ===============================`
     );
     throw e;
   }

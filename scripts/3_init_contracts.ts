@@ -108,7 +108,8 @@ const main = async () => {
         subBalances.address,
         foreignSwap.address,
         usedStakingV1Address,
-        TIME_IN_DAY.toString()
+        TIME_IN_DAY.toString(),
+        0
       )
       .then(() => console.log('Staking init'));
 

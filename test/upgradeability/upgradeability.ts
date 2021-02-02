@@ -34,7 +34,7 @@ describe('Upgradeability', () => {
     const contracts = await initTestSmartContracts({
       setter,
       recipient,
-      fakeBank,
+      bank: fakeBank,
     });
     // token = contracts.token;
     swaptoken = contracts.swaptoken;
@@ -42,7 +42,7 @@ describe('Upgradeability', () => {
     token = contracts.token;
     nativeswap = contracts.nativeswap;
     auction = contracts.auction;
-    subBalances = contracts.subbalances;
+    subBalances = contracts.subBalances;
     staking = contracts.staking;
     bpd = contracts.bpd;
   });
@@ -123,7 +123,7 @@ describe('Upgradeability', () => {
 
     it('should upgrade auction', async () => {
       const [
-        setter,
+        setter,	
         recipient,
         fakeBank,
         account1,
@@ -133,7 +133,7 @@ describe('Upgradeability', () => {
       // Advance the date to day 100 after launch
       await TestUtil.increaseTime(DAY * 100);
       // Bid with 10 eth
-      await auction.connect(account1).bid(0, DEADLINE, account2.address, AUTOSTAKE_LENGTH, {
+      await auction.connect(account1).bid(0, DEADLINE, account2.address, {
         value: ethers.utils.parseEther('10'),
       });
       const currentAuctionIdBefore = await auction.lastAuctionEventId();

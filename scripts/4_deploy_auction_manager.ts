@@ -2,7 +2,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { ethers, network, upgrades } from 'hardhat';
-import { getDeployedContracts } from './utils/get_deployed_contracts';
 import { ContractFactory } from '../libs/ContractFactory';
 import { AuctionManager } from '../typechain';
 import fs from 'fs';

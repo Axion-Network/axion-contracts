@@ -6,7 +6,7 @@
   "scripts": {
     "compile": "hardhat compile",
     "coverage": "hardhat coverage && yarn coverage:check",
-    "coverage:check": "istanbul check-coverage --statements 47.6 --branches 28.23 --functions 48.46 --lines 47.74",
+    "coverage:check": "istanbul check-coverage --statements 68 --branches 45 --functions 66 --lines 68",
     "dev": "hardhat node",
     "test": "hardhat test",
     "test:watch": "nodemon -w ./test -e .ts -x yarn test",
@@ -47,6 +47,7 @@
     "typescript": "^4.1.3"
   },
   "dependencies": {
+    "bn.js": "^5.1.3",
     "eth-crypto": "^1.8.0",
     "web3": "^1.3.1"
   }
