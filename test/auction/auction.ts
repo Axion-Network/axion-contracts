@@ -52,7 +52,7 @@ describe('Auction', () => {
     });
   });
 
-  describe.only('venture auction', () => {
+  describe('venture auction', () => {
     it('should get correct day of week && correct auction type', async () => {
 
       await auction.setupAuctionTypes(DEFAULT_AUCTION_TYPES);
