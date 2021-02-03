@@ -677,7 +677,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     /** Max Share Event */
 
-    function maxShareV2(uint256 sessionId) external {
+    function maxShare(uint256 sessionId) external {
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
         require(
@@ -695,18 +695,24 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 session.firstPayout,
                 session.lastPayout,
                 session.shares,
-                session.amount,
-                session.start,
-                session.end
+                session.amount
             );
 
         uint256 stakingDays = (session.end - session.start) / stepTimestamp;
         if (stakingDays >= basePeriod) {
-            ISubBalances(addresses.subBalances).callOutcomeStakerTrigger(
+            ISubBalances(addresses.subBalances).createMaxShareSession(
                 sessionId,
-                session.start,
+                newStart,
+                newEnd,
+                newShares,
+                session.shares
+            );
+        } else {
+            ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
+                msg.sender,
+                sessionId,
+                newStart,
                 session.end,
-                now,
                 session.shares
             );
         }
@@ -748,24 +754,24 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             uint256 newEnd,
             uint256 newAmount,
             uint256 newShares
-        ) =
-            maxShareUpgrade(
-                firstPayout,
-                lastPayout,
-                shares,
-                amount,
-                start,
-                end
-            );
+        ) = maxShareUpgrade(firstPayout, lastPayout, shares, amount);
 
-        if (stakingDays > basePeriod) {
-            ISubBalances(addresses.subBalances).callOutcomeStakerTriggerV1(
+        if (stakingDays >= basePeriod) {
+            ISubBalances(addresses.subBalances).createMaxShareSessionV1(
                 msg.sender,
                 sessionId,
-                start,
-                end,
-                now,
-                shares
+                newStart,
+                newEnd,
+                newShares,
+                session.shares
+            );
+        } else {
+            ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
+                msg.sender,
+                sessionId,
+                newStart,
+                newEnd,
+                newShares
             );
         }
 
@@ -785,9 +791,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 firstPayout,
         uint256 lastPayout,
         uint256 shares,
-        uint256 amount,
-        uint256 start,
-        uint256 end
+        uint256 amount
     )
         internal
         view
@@ -805,12 +809,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         uint256 stakingInterest =
             calculateStakingInterest(firstPayout, lastPayout, shares);
-        (uint256 amountOut, uint256 penalty) =
-            getAmountOutAndPenalty(amount, start, end, stakingInterest);
 
         uint256 newStart = now;
         uint256 newEnd = newStart + (stepTimestamp * 5555);
-        uint256 newAmount = amountOut + penalty;
+        uint256 newAmount = stakingInterest + amount;
         uint256 newShares =
             _getStakersSharesAmount(newAmount, newStart, newEnd);
 
@@ -843,22 +845,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             });
         } else {
             sessionDataOf[msg.sender][sessionId].amount = newAmount;
-            sessionDataOf[msg.sender][sessionId].start = newStart;
             sessionDataOf[msg.sender][sessionId].end = newEnd;
+            sessionDataOf[msg.sender][sessionId].start = newStart;
             sessionDataOf[msg.sender][sessionId].shares = newShares;
             sessionDataOf[msg.sender][sessionId].firstPayout = payouts.length;
             sessionDataOf[msg.sender][sessionId].lastPayout =
                 payouts.length +
                 5555;
         }
-
-        ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
-            msg.sender,
-            sessionId,
-            newStart,
-            newEnd,
-            newShares
-        );
 
         emit StakeUpgrade(
             msg.sender,

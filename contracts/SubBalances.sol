@@ -324,7 +324,7 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
             oldShares,
             stakeSession.payDayEligible
         );
-
+        stakeSession.start = start;
         stakeSession.end = end;
         stakeSession.shares = newShares;
     }
