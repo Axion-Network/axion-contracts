@@ -28,6 +28,17 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 shares
     );
 
+    event StakeUpgrade(
+        address indexed account,
+        uint256 indexed sessionId,
+        uint256 amount,
+        uint256 newAmount,
+        uint256 shares,
+        uint256 newShares,
+        uint256 start,
+        uint256 end
+    );
+
     event Unstake(
         address indexed account,
         uint256 indexed sessionId,
@@ -96,7 +107,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     uint256 public basePeriod;
     uint256 public totalStakedAmount;
-
+    bool private maxShareEventActive;
     /* New variables must go below here. */
 
     /** Roles */
@@ -625,16 +636,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return amountOut;
     }
 
-    /** Roles management - only for multi sig address */
-    function setupRole(bytes32 role, address account) external onlyManager {
-        _setupRole(role, account);
-    }
-
-    /** Temporary */
-    function setShareRate(uint256 _shareRate) external onlyManager {
-        shareRate = _shareRate;
-    }
-
     function stakeInternalCommon(
         uint256 sessionId,
         uint256 amount,
@@ -672,5 +673,204 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
 
         emit Stake(staker, sessionId, amount, start, end, shares);
+    }
+
+    /** Max Share Event */
+
+    function maxShareV2(uint256 sessionId) external {
+        Session storage session = sessionDataOf[msg.sender][sessionId];
+
+        require(
+            session.shares != 0 && session.withdrawn == false,
+            'Staking: Stake withdrawn or not set'
+        );
+
+        (
+            uint256 newStart,
+            uint256 newEnd,
+            uint256 newAmount,
+            uint256 newShares
+        ) =
+            maxShareUpgrade(
+                session.firstPayout,
+                session.lastPayout,
+                session.shares,
+                session.amount,
+                session.start,
+                session.end
+            );
+
+        uint256 stakingDays = (session.end - session.start) / stepTimestamp;
+        if (stakingDays > basePeriod) {
+            ISubBalances(addresses.subBalances).callOutcomeStakerTrigger(
+                sessionId,
+                session.start,
+                session.end,
+                now,
+                session.shares
+            );
+        }
+
+        maxShareInternal(
+            sessionId,
+            session.shares,
+            newShares,
+            session.amount,
+            newAmount,
+            newStart,
+            newEnd
+        );
+    }
+
+    function maxShareV1(uint256 sessionId) external {
+        Session storage session = sessionDataOf[msg.sender][sessionId];
+
+        require(
+            session.shares == 0 && session.withdrawn == false,
+            'Staking: Stake withdrawn'
+        );
+
+        (
+            uint256 amount,
+            uint256 start,
+            uint256 end,
+            uint256 shares,
+            uint256 firstPayout
+        ) = stakingV1.sessionDataOf(msg.sender, sessionId);
+        uint256 stakingDays = (end - start) / stepTimestamp;
+        uint256 lastPayout = stakingDays + firstPayout;
+
+        (
+            uint256 newStart,
+            uint256 newEnd,
+            uint256 newAmount,
+            uint256 newShares
+        ) =
+            maxShareUpgrade(
+                firstPayout,
+                lastPayout,
+                shares,
+                amount,
+                start,
+                end
+            );
+
+        if (stakingDays > basePeriod) {
+            ISubBalances(addresses.subBalances).callOutcomeStakerTriggerV1(
+                msg.sender,
+                sessionId,
+                start,
+                end,
+                now,
+                shares
+            );
+        }
+
+        maxShareInternal(
+            sessionId,
+            shares,
+            newShares,
+            amount,
+            newAmount,
+            newStart,
+            newEnd
+        );
+    }
+
+    function maxShareUpgrade(
+        uint256 firstPayout,
+        uint256 lastPayout,
+        uint256 shares,
+        uint256 amount,
+        uint256 start,
+        uint256 end
+    )
+        internal
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        require(
+            maxShareEventActive == true,
+            'STAKING: Max Share event is not active'
+        );
+
+        uint256 stakingInterest =
+            calculateStakingInterest(firstPayout, lastPayout, shares);
+        (uint256 amountOut, uint256 penalty) =
+            getAmountOutAndPenalty(amount, start, end, stakingInterest);
+
+        uint256 newStart = now;
+        uint256 newEnd = newStart + (stepTimestamp * 5555);
+        uint256 newAmount = amountOut + penalty;
+        uint256 newShares =
+            _getStakersSharesAmount(newAmount, newEnd, newStart);
+
+        return (newStart, newEnd, newAmount, newShares);
+    }
+
+    function maxShareInternal(
+        uint256 sessionId,
+        uint256 oldShares,
+        uint256 newShares,
+        uint256 oldAmount,
+        uint256 newAmount,
+        uint256 newStart,
+        uint256 newEnd
+    ) internal {
+        sharesTotalSupply = sharesTotalSupply.add(newShares - oldShares);
+        totalStakedAmount = totalStakedAmount.add(newAmount - oldAmount);
+        sessionDataOf[msg.sender][sessionId] = Session({
+            amount: newAmount,
+            start: newStart,
+            end: newEnd,
+            shares: newShares,
+            firstPayout: payouts.length,
+            lastPayout: payouts.length + 5555,
+            withdrawn: false,
+            payout: 0
+        });
+
+        ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
+            msg.sender,
+            sessionId,
+            newStart,
+            newEnd,
+            newShares
+        );
+
+        emit StakeUpgrade(
+            msg.sender,
+            sessionId,
+            oldAmount,
+            newAmount,
+            oldShares,
+            newShares,
+            newStart,
+            newEnd
+        );
+    }
+
+    /** Set Max Shares */
+    function setMaxShareEventActive(bool _active) external onlyManager {
+        maxShareEventActive = _active;
+    }
+
+    function getMaxShareEventActive() external view returns (bool) {
+        return maxShareEventActive;
+    }
+
+    /** Roles management - only for multi sig address */
+    function setupRole(bytes32 role, address account) external onlyManager {
+        _setupRole(role, account);
+    }
+
+    /** Temporary */
+    function setShareRate(uint256 _shareRate) external onlyManager {
+        shareRate = _shareRate;
     }
 }
