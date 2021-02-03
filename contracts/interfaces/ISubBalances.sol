@@ -27,4 +27,6 @@ interface ISubBalances {
         uint256 actualEnd,
         uint256 shares
     ) external;
+
+    function createMaxShareSession() external;
 }

@@ -262,6 +262,45 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         }
     }
 
+
+    function createMaxShareSessionV1(
+
+    ) external override {
+        require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
+
+        StakeSession storage stakeSession = stakeSessions[sessionId];
+
+
+        maxShareEligbility(stakeSession.payDayEligible)
+    }
+
+    function createMaxShareSessionV2(
+
+    ) external override {
+        require(hasRole(STAKING_ROLE, _msgSender()), "SUBBALANCES: Caller is not a staking role");
+
+        bool[5] memory payDayEligible = subBalancesV1.getSessionEligibility(sessionId);
+
+        maxShareEligbility(payDayEligible)
+    }
+
+    function maxShareEligibility(
+        bool[5] memory stakePayDays
+    ) external override {
+        for (uint256 i = 0; i < subBalanceList.length; i++) {
+            SubBalance storage subBalance = subBalanceList[i];  
+            
+            bool wasEligible = stakePayDays[i];
+            
+            if (wasEligible) {
+                subBalances.totalShares = subBalances.totalShares + newShares - oldShares
+            }
+            else {
+                subBalances.totalShares = newShares
+            }
+        }
+    }
+
     function callIncomeStakerTrigger(
         address staker,
         uint256 sessionId,
