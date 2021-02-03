@@ -28,5 +28,20 @@ interface ISubBalances {
         uint256 shares
     ) external;
 
-    function createMaxShareSession() external;
+    function createMaxShareSession(
+        uint256 sessionId,
+        uint256 start,
+        uint256 end,
+        uint256 newShares,
+        uint256 oldShares
+    ) external;
+
+    function createMaxShareSessionV1(
+        address staker,
+        uint256 sessionId,
+        uint256 start,
+        uint256 end,
+        uint256 newShares,
+        uint256 oldShares
+    ) external;
 }
