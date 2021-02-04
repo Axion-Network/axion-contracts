@@ -653,7 +653,22 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 shares = _getStakersSharesAmount(amount, start, end);
         sharesTotalSupply = sharesTotalSupply.add(shares);
         totalStakedAmount = totalStakedAmount.add(amount);
+
+        uint oldTotalShares = totalSharesOf[staker];
         totalSharesOf[staker] = totalSharesOf[staker].add(shares);
+
+        for (uint8 i = 0; i < divTokens.length; i++) {
+            uint256 tokenInterestEarned =
+                oldTotalShares.mul(tokenPrice[divTokens[i]]).sub(
+                    deductBalances[msg.sender][divTokens[i]]
+                );
+
+            deductBalances[msg.sender][tokens[i].TokenAddress] = totalSharesOf[
+                msg.sender
+            ]
+                .mul(tokenPrice[tokens[i].TokenAddress])
+                .sub(tokenInterestEarned);
+        }
 
         sessionDataOf[staker][sessionId] = Session({
             amount: amount,
