@@ -97,6 +97,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     uint256 public basePeriod;
     uint256 public totalStakedAmount;
 
+    address[] public divTokens;
     mapping(address => uint256) internal totalSharesOf;
     mapping(address => uint256) internal tokenPricePerShare;
     mapping(address => mapping(address => uint256)) public deductBalances;
@@ -681,11 +682,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function setTotalSharesOf() external {
-        totalSharesOf[msg.sender] = 0;
+        uint256 totalShares;
         uint256[] memory sessionsOfSender = sessionsOf[msg.sender];
 
         for (uint256 i = 0; i < sessionsOfSender.length; i++) {
-            totalSharesOf[msg.sender] = totalSharesOf[msg.sender].add(
+            totalShares = totalShares.add(
                 sessionDataOf[msg.sender][sessionsOfSender[i]].shares
             );
         }
@@ -709,8 +710,16 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 continue;
             }
 
-            totalSharesOf[msg.sender] = totalSharesOf[msg.sender].add(shares);
+            totalShares = totalShares.add(shares);
         }
+
+        for (uint256 i = 0; i < divTokens.length; i++) {
+            deductBalances[msg.sender][divTokens[i]] = totalShares.mul(
+                tokenPricePerShare[divTokens[i]]
+            );
+        }
+
+        totalSharesOf[msg.sender] = totalShares;
     }
 
     function updateTokenPricePerShare(
