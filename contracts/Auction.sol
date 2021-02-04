@@ -101,9 +101,9 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     /** VentureToken struct & mapping */
     struct VentureToken {
         address coin;
-        uint8 percentage;
+        uint percentage;
     }
-    mapping(uint8 => VentureToken[]) public tokensOfTheDay;
+    mapping(uint => VentureToken[]) public tokensOfTheDay;
 
     /** modifiers */
     modifier onlyCaller() {
@@ -289,7 +289,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         uint256 amountOutMin,
         uint256 amount,
         uint256 deadline
-    ) private returns (uint256 amount){
+    ) private returns (uint256){
         address[] memory path = new address[](2);
 
         path[0] = IUniswapV2Router02(addresses.uniswap).WETH();
@@ -358,7 +358,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         (uint256 toRecipient, uint256 toUniswap) =
             _calculateRecipientAndUniswapAmountsToSend();
 
-        VentureToken[] tokens = tokensOfTheDay[getCurrentDay()];
+        VentureToken[] storage tokens = tokensOfTheDay[getCurrentDay()];
 
         for (uint8 i = 0; i < tokens.length; i++) {
             uint256 amountBought = _swapEthForToken(tokens[i].coin, amountOutMin, toUniswap, deadline);
@@ -679,7 +679,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
         uint8 percent = 0;
         for(uint8 i; i < coins.length; i++) {
-            tokensOfTheDay[day].push(Venture({
+            tokensOfTheDay[day].push(VentureToken({
                 coin: coins[i],
                 percentage: percentages[i]
             }));

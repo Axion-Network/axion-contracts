@@ -124,6 +124,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         _;
     }
 
+    // TODO
+    modifier onlyAuction() {
+        require(hasRole(MANAGER_ROLE, _msgSender()), 'Caller is not a manager');
+        _;
+    }
+
     /** Init functions */
     function initialize(address _manager, address _migrator)
         public
@@ -608,7 +614,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sharesTotalSupply = sharesTotalSupply.sub(shares);
         totalStakedAmount = totalStakedAmount.sub(amount);
+
+        uint256 oldTotalShares = totalSharesOf[msg.sender];
         totalSharesOf[msg.sender] = totalSharesOf[msg.sender].sub(shares);
+
+        rebalance(oldTotalShares);
 
         (uint256 amountOut, uint256 penalty) =
             getAmountOutAndPenalty(amount, start, end, stakingInterest);
@@ -654,21 +664,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         sharesTotalSupply = sharesTotalSupply.add(shares);
         totalStakedAmount = totalStakedAmount.add(amount);
 
-        uint oldTotalShares = totalSharesOf[staker];
+        uint256 oldTotalShares = totalSharesOf[staker];
         totalSharesOf[staker] = totalSharesOf[staker].add(shares);
 
-        for (uint8 i = 0; i < divTokens.length; i++) {
-            uint256 tokenInterestEarned =
-                oldTotalShares.mul(tokenPrice[divTokens[i]]).sub(
-                    deductBalances[msg.sender][divTokens[i]]
-                );
-
-            deductBalances[msg.sender][tokens[i].TokenAddress] = totalSharesOf[
-                msg.sender
-            ]
-                .mul(tokenPrice[tokens[i].TokenAddress])
-                .sub(tokenInterestEarned);
-        }
+        rebalance(oldTotalShares);
 
         sessionDataOf[staker][sessionId] = Session({
             amount: amount,
@@ -696,6 +695,43 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         emit Stake(staker, sessionId, amount, start, end, shares);
     }
 
+    // TODO
+    function withdrawDivToken(address tokenAddress) external {
+        uint256 tokenInterestEarned = getTokenInterestEarned(tokenAddress);
+
+        deductBalances[msg.sender][tokenAddress] = totalSharesOf[
+                msg.sender
+            ]
+                .mul(tokenPricePerShare[tokenAddress]);
+    }
+
+    // TODO Show interest earned externally for a specific token
+
+    function getTokenInterestEarned(address tokenAddress)
+        internal
+        returns (uint256)
+    {
+        return
+            totalSharesOf[msg.sender].mul(tokenPricePerShare[tokenAddress]).sub(
+                deductBalances[msg.sender][tokenAddress]
+            );
+    }
+
+    function rebalance(uint256 oldTotalShares) internal {
+        for (uint8 i = 0; i < divTokens.length; i++) {
+            uint256 tokenInterestEarned =
+                oldTotalShares.mul(tokenPricePerShare[divTokens[i]]).sub(
+                    deductBalances[msg.sender][divTokens[i]]
+                );
+
+            deductBalances[msg.sender][divTokens[i]] = totalSharesOf[
+                msg.sender
+            ]
+                .mul(tokenPricePerShare[divTokens[i]])
+                .sub(tokenInterestEarned);
+        }
+    }
+
     function setTotalSharesOf() external {
         uint256 totalShares;
         uint256[] memory sessionsOfSender = sessionsOf[msg.sender];
@@ -706,7 +742,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             );
         }
 
-        uint256[] memory v1SessionsOfSender = stakingV1.sessionsOf[msg.sender];
+        uint256[] memory v1SessionsOfSender = stakingV1.sessionsOf(msg.sender);
 
         for (uint256 i = 0; i < v1SessionsOfSender.length; i++) {
             if (v1SessionsOfSender[i] > lastSessionIdV1) {
@@ -740,7 +776,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     function updateTokenPricePerShare(
         address tokenAddress,
         uint256 amountBought
-    ) external onlyAuction {
+    ) external override onlyAuction {
         tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add(
             amountBought.mul(1e12).div(sharesTotalSupply).div(1e12)
         );
