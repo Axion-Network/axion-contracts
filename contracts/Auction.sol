@@ -362,6 +362,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
         for (uint8 i = 0; i < tokens.length; i++) {
             uint256 amountBought = _swapEthForToken(tokens[i].coin, amountOutMin, toUniswap, deadline);
+            IStaking(addresses.staking).updateTokenPricePerShare(tokens[i].coin, amountBought);
         }
 
         uint256 stepsFromStart = calculateStepsFromStart();
