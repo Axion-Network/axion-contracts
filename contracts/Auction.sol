@@ -98,12 +98,12 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
     uint8[7] public auctionTypes;
 
-    /** Venture struct && mapping */
-    struct Venture {
+    /** VentureToken struct & mapping */
+    struct VentureToken {
         address coin;
         uint8 percentage;
     }
-    mapping(uint8 => Venture[]) public tokensOfTheDay;
+    mapping(uint8 => VentureToken[]) public tokensOfTheDay;
 
     /** modifiers */
     modifier onlyCaller() {
@@ -284,6 +284,22 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         }(amountOutMin, path, addresses.staking, deadline);
     }
 
+    function _swapEthForToken(
+        address tokenAddress,
+        uint256 amountOutMin,
+        uint256 amount,
+        uint256 deadline
+    ) private returns (uint256 amount){
+        address[] memory path = new address[](2);
+
+        path[0] = IUniswapV2Router02(addresses.uniswap).WETH();
+        path[1] = tokenAddress;
+
+        return IUniswapV2Router02(addresses.uniswap).swapExactETHForTokens{
+            value: amount
+        }(amountOutMin, path, addresses.staking, deadline)[1];
+    }
+
     function bid(
         uint256 amountOutMin,
         uint256 deadline,
@@ -298,6 +314,55 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             _calculateRecipientAndUniswapAmountsToSend();
 
         _swapEth(amountOutMin, toUniswap, deadline);
+
+        uint256 stepsFromStart = calculateStepsFromStart();
+
+        /** If referralsOn is true sallow to set ref */
+        if (options.referralsOn == true) {
+            auctionBidOf[stepsFromStart][_msgSender()].ref = ref;
+        } else {
+            // Else set ref to 0x0 for this auction bid
+            auctionBidOf[stepsFromStart][_msgSender()].ref = address(0);
+        }
+
+        auctionBidOf[stepsFromStart][_msgSender()].eth = auctionBidOf[
+            stepsFromStart
+        ][_msgSender()]
+            .eth
+            .add(msg.value);
+
+        if (!existAuctionsOf[stepsFromStart][_msgSender()]) {
+            auctionsOf[_msgSender()].push(stepsFromStart);
+            existAuctionsOf[stepsFromStart][_msgSender()] = true;
+        }
+
+        reservesOf[stepsFromStart].eth = reservesOf[stepsFromStart].eth.add(
+            msg.value
+        );
+
+        addresses.recipient.transfer(toRecipient);
+
+        emit Bid(msg.sender, msg.value, stepsFromStart, now);
+    }
+
+    function venturebBid(
+        uint256 amountOutMin,
+        uint256 deadline,
+        address ref
+    ) external payable {
+        _saveAuctionData();
+        _updatePrice();
+
+        require(_msgSender() != ref, 'msg.sender == ref');
+
+        (uint256 toRecipient, uint256 toUniswap) =
+            _calculateRecipientAndUniswapAmountsToSend();
+
+        VentureToken[] tokens = tokensOfTheDay[getCurrentDay()];
+
+        for (uint8 i = 0; i < tokens.length; i++) {
+            uint256 amountBought = _swapEthForToken(tokens[i].coin, amountOutMin, toUniswap, deadline);
+        }
 
         uint256 stepsFromStart = calculateStepsFromStart();
 
