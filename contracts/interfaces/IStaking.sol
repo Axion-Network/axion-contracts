@@ -10,6 +10,7 @@ interface IStaking {
     ) external;
 
     function updateTokenPricePerShare(
+        address bidderAddress,
         address tokenAddress,
         uint256 amountBought
     ) external;

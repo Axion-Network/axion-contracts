@@ -43,6 +43,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 indexed time
     );
 
+    event WithdrawLiquidDiv(
+        address indexed accountAddress,
+        address indexed tokenAddress,
+        uint256 indexed interest
+    );
+
     /** Structs */
     struct Payout {
         uint256 payout;
@@ -695,19 +701,30 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         emit Stake(staker, sessionId, amount, start, end, shares);
     }
 
-    // TODO
     function withdrawDivToken(address tokenAddress) external {
-        uint256 tokenInterestEarned = getTokenInterestEarned(tokenAddress);
+        uint256 tokenInterestEarned =
+            getTokenInterestEarnedInternal(tokenAddress);
 
-        deductBalances[msg.sender][tokenAddress] = totalSharesOf[
-                msg.sender
-            ]
-                .mul(tokenPricePerShare[tokenAddress]);
+        deductBalances[msg.sender][tokenAddress] = totalSharesOf[msg.sender]
+            .mul(tokenPricePerShare[tokenAddress]);
+
+        IERC20Upgradeable(tokenAddress).transfer(
+            msg.sender,
+            tokenInterestEarned
+        );
+
+        emit WithdrawLiquidDiv(msg.sender, tokenAddress, tokenInterestEarned);
     }
 
-    // TODO Show interest earned externally for a specific token
-
     function getTokenInterestEarned(address tokenAddress)
+        external
+        view
+        returns (uint256)
+    {
+        return getTokenInterestEarnedInternal(tokenAddress);
+    }
+
+    function getTokenInterestEarnedInternal(address tokenAddress)
         internal
         returns (uint256)
     {
@@ -724,9 +741,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                     deductBalances[msg.sender][divTokens[i]]
                 );
 
-            deductBalances[msg.sender][divTokens[i]] = totalSharesOf[
-                msg.sender
-            ]
+            deductBalances[msg.sender][divTokens[i]] = totalSharesOf[msg.sender]
                 .mul(tokenPricePerShare[divTokens[i]])
                 .sub(tokenInterestEarned);
         }
@@ -774,11 +789,23 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function updateTokenPricePerShare(
+        address bidderAddress,
         address tokenAddress,
         uint256 amountBought
     ) external override onlyAuction {
+        uint256 amountForBidder = amountBought.mul(10).div(100);
+
+        IERC20Upgradeable(tokenAddress).transfer(
+            bidderAddress,
+            amountForBidder
+        );
+
         tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add(
-            amountBought.mul(1e12).div(sharesTotalSupply).div(1e12)
+            amountBought
+                .sub(amountForBidder)
+                .mul(1e12)
+                .div(sharesTotalSupply)
+                .div(1e12)
         );
     }
 }

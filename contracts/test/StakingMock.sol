@@ -12,6 +12,7 @@ contract StakingMock is IStaking {
     ) external override {}
 
     function updateTokenPricePerShare(
+        address bidderAddress,
         address tokenAddress,
         uint256 amountBought
     ) external override {}

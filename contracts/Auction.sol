@@ -345,8 +345,9 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         emit Bid(msg.sender, msg.value, stepsFromStart, now);
     }
 
-    function venturebBid(
-        uint256 amountOutMin,
+    // TODO figure out slippage tolerance
+    function ventureBid(
+        uint256[] calldata amountOutMin,
         uint256 deadline,
         address ref
     ) external payable {
@@ -355,14 +356,16 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
         require(_msgSender() != ref, 'msg.sender == ref');
 
-        (uint256 toRecipient, uint256 toUniswap) =
-            _calculateRecipientAndUniswapAmountsToSend();
+        (uint256 forOrigin, uint256 forUniswap) =
+            _calculateVentureEthAmounts();
 
         VentureToken[] storage tokens = tokensOfTheDay[getCurrentDay()];
 
+        uint forUniDivided = forUniswap.div(tokens.length);
+
         for (uint8 i = 0; i < tokens.length; i++) {
-            uint256 amountBought = _swapEthForToken(tokens[i].coin, amountOutMin, toUniswap, deadline);
-            IStaking(addresses.staking).updateTokenPricePerShare(tokens[i].coin, amountBought);
+            uint256 amountBought = _swapEthForToken(tokens[i].coin, amountOutMin[i], forUniDivided, deadline);
+            IStaking(addresses.staking).updateTokenPricePerShare(msg.sender, tokens[i].coin, amountBought);
         }
 
         uint256 stepsFromStart = calculateStepsFromStart();
@@ -390,7 +393,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             msg.value
         );
 
-        addresses.recipient.transfer(toRecipient);
+        addresses.recipient.transfer(forOrigin);
 
         emit Bid(msg.sender, msg.value, stepsFromStart, now);
     }
@@ -632,6 +635,16 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         uint256 toUniswap = msg.value.sub(toRecipient);
 
         return (toRecipient, toUniswap);
+    }
+
+    function _calculateVentureEthAmounts()
+        private
+        returns (uint256, uint256)
+    {
+        uint256 toOrigin = msg.value.mul(5).div(100);
+        uint256 toUniswap = msg.value.sub(toOrigin);
+
+        return (toOrigin, toUniswap);
     }
 
     function _calculateRefAndUserAmountsToMint(uint256 amount)
