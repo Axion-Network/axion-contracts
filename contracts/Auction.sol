@@ -101,9 +101,9 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     /** VentureToken struct & mapping */
     struct VentureToken {
         address coin;
-        uint percentage;
+        uint256 percentage;
     }
-    mapping(uint => VentureToken[]) public tokensOfTheDay;
+    mapping(uint256 => VentureToken[]) public tokensOfTheDay;
 
     /** modifiers */
     modifier onlyCaller() {
@@ -289,22 +289,37 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         uint256 amountOutMin,
         uint256 amount,
         uint256 deadline
-    ) private returns (uint256){
+    ) private returns (uint256) {
         address[] memory path = new address[](2);
 
         path[0] = IUniswapV2Router02(addresses.uniswap).WETH();
         path[1] = tokenAddress;
 
-        return IUniswapV2Router02(addresses.uniswap).swapExactETHForTokens{
-            value: amount
-        }(amountOutMin, path, addresses.staking, deadline)[1];
+        return
+            IUniswapV2Router02(addresses.uniswap).swapExactETHForTokens{
+                value: amount
+            }(amountOutMin, path, addresses.staking, deadline)[1];
     }
 
     function bid(
-        uint256 amountOutMin,
+        uint256[] amountOutMin,
         uint256 deadline,
         address ref
     ) external payable {
+        uint8 auctionType = auctionTypes[getCurrentDay()];
+
+        if (auctionType == 0) {
+            bidInternal(amountOutMin[0], deadline, ref);
+        } else if (auctionType == 1) {
+            ventureBid(amountOutMin, deadline, ref);
+        }
+    }
+
+    function bidInternal(
+        uint256 amountOutMin,
+        uint256 deadline,
+        address ref
+    ) internal payable {
         _saveAuctionData();
         _updatePrice();
 
@@ -350,22 +365,32 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         uint256[] calldata amountOutMin,
         uint256 deadline,
         address ref
-    ) external payable {
+    ) internal payable {
         _saveAuctionData();
         _updatePrice();
 
         require(_msgSender() != ref, 'msg.sender == ref');
 
-        (uint256 forOrigin, uint256 forUniswap) =
-            _calculateVentureEthAmounts();
+        (uint256 forOrigin, uint256 forUniswap) = _calculateVentureEthAmounts();
 
         VentureToken[] storage tokens = tokensOfTheDay[getCurrentDay()];
 
-        uint forUniDivided = forUniswap.div(tokens.length);
+        uint256 forUniDivided = forUniswap.div(tokens.length);
 
         for (uint8 i = 0; i < tokens.length; i++) {
-            uint256 amountBought = _swapEthForToken(tokens[i].coin, amountOutMin[i], forUniDivided, deadline);
-            IStaking(addresses.staking).updateTokenPricePerShare(msg.sender, tokens[i].coin, amountBought);
+            uint256 amountBought =
+                _swapEthForToken(
+                    tokens[i].coin,
+                    amountOutMin[i],
+                    forUniDivided,
+                    deadline
+                );
+                
+            IStaking(addresses.staking).updateTokenPricePerShare(
+                msg.sender,
+                tokens[i].coin,
+                amountBought
+            );
         }
 
         uint256 stepsFromStart = calculateStepsFromStart();
@@ -578,18 +603,13 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         return stepsFromStart.add(uint256(7).sub(stepsFromStart.mod(7)));
     }
 
-    /** 
-    * @dev 
-    * friday = 0, saturday = 1, sunday = 2 etc...
-    */
-    function getCurrentDay() public view returns (uint256) {
+    /**
+     * @dev
+     * friday = 0, saturday = 1, sunday = 2 etc...
+     */
+    function getCurrentDay() internal view returns (uint256) {
         uint256 stepsFromStart = calculateStepsFromStart();
         return stepsFromStart.mod(7);
-    }
-
-    function getTodaysAuctionType() public view returns (uint256) {
-        uint256 day = getCurrentDay();
-        return auctionTypes[day];
     }
 
     function calculateStepsFromStart() public view returns (uint256) {
@@ -637,10 +657,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         return (toRecipient, toUniswap);
     }
 
-    function _calculateVentureEthAmounts()
-        private
-        returns (uint256, uint256)
-    {
+    function _calculateVentureEthAmounts() private returns (uint256, uint256) {
         uint256 toOrigin = msg.value.mul(5).div(100);
         uint256 toUniswap = msg.value.sub(toOrigin);
 
@@ -678,8 +695,10 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _setupRole(role, account);
     }
 
-
-    function setupAuctionTypes(uint8[7] calldata _auctionTypes) external onlyManager {
+    function setupAuctionTypes(uint8[7] calldata _auctionTypes)
+        external
+        onlyManager
+    {
         auctionTypes = _auctionTypes;
     }
 
@@ -687,19 +706,25 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         auctionTypes[_day] = _type;
     }
 
-    function setTokenOfDay(uint8 day, address[] calldata coins, uint8[] calldata percentages) external onlyManager {
+    function setTokenOfDay(
+        uint8 day,
+        address[] calldata coins,
+        uint8[] calldata percentages
+    ) external onlyManager {
         delete tokensOfTheDay[day];
 
         uint8 percent = 0;
-        for(uint8 i; i < coins.length; i++) {
-            tokensOfTheDay[day].push(VentureToken({
-                coin: coins[i],
-                percentage: percentages[i]
-            }));
-            
+        for (uint8 i; i < coins.length; i++) {
+            tokensOfTheDay[day].push(
+                VentureToken({coin: coins[i], percentage: percentages[i]})
+            );
+
             percent = percentages[i] + percent;
         }
 
-        require(percent == 100, "AUCTION: Percentage for venture day must equal 100");
+        require(
+            percent == 100,
+            'AUCTION: Percentage for venture day must equal 100'
+        );
     }
 }
