@@ -103,18 +103,18 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     uint256 public basePeriod;
     uint256 public totalStakedAmount;
 
-    address[] public divTokens;
+    address[] internal divTokens;
     mapping(address => uint256) internal totalSharesOf;
     mapping(address => uint256) internal tokenPricePerShare;
-    mapping(address => mapping(address => uint256)) public deductBalances;
+    mapping(address => mapping(address => uint256)) internal deductBalances;
 
     /* New variables must go below here. */
 
-    /** Roles */
     modifier onlyManager() {
         require(hasRole(MANAGER_ROLE, _msgSender()), 'Caller is not a manager');
         _;
     }
+
     modifier onlyMigrator() {
         require(
             hasRole(MIGRATOR_ROLE, _msgSender()),
@@ -122,6 +122,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
         _;
     }
+
     modifier onlyExternalStaker() {
         require(
             hasRole(EXTERNAL_STAKER_ROLE, _msgSender()),
@@ -130,13 +131,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         _;
     }
 
-    // TODO
     modifier onlyAuction() {
-        require(hasRole(MANAGER_ROLE, _msgSender()), 'Caller is not a manager');
+        require(msg.sender == addresses.auction, 'Caller is not the auction');
         _;
     }
 
-    /** Init functions */
     function initialize(address _manager, address _migrator)
         public
         initializer
@@ -157,7 +156,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     ) external onlyMigrator {
         require(!init_, 'Staking: init is active');
         init_ = true;
-        /** Setup */
+
         _setupRole(EXTERNAL_STAKER_ROLE, _foreignSwapAddress);
         _setupRole(EXTERNAL_STAKER_ROLE, _auctionAddress);
 
@@ -183,8 +182,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             shareRate = 1e18;
         }
     }
-
-    /** End init functions */
 
     function sessionsOf_(address account)
         external
@@ -726,6 +723,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     function getTokenInterestEarnedInternal(address tokenAddress)
         internal
+        view
         returns (uint256)
     {
         return

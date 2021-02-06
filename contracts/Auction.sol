@@ -17,8 +17,14 @@ import './interfaces/IAuctionV1.sol';
 contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
 
-    /** Events */
     event Bid(
+        address indexed account,
+        uint256 value,
+        uint256 indexed auctionId,
+        uint256 indexed time
+    );
+
+    event VentureBid(
         address indexed account,
         uint256 value,
         uint256 indexed auctionId,
@@ -35,7 +41,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
     event AuctionIsOver(uint256 eth, uint256 token, uint256 indexed auctionId);
 
-    /** Struct */
     struct AuctionReserves {
         uint256 eth;
         uint256 token;
@@ -302,7 +307,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     }
 
     function bid(
-        uint256[] amountOutMin,
+        uint256[] calldata amountOutMin,
         uint256 deadline,
         address ref
     ) external payable {
@@ -319,7 +324,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         uint256 amountOutMin,
         uint256 deadline,
         address ref
-    ) internal payable {
+    ) internal {
         _saveAuctionData();
         _updatePrice();
 
@@ -332,12 +337,9 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
         uint256 stepsFromStart = calculateStepsFromStart();
 
-        /** If referralsOn is true sallow to set ref */
+        /** If referralsOn is true allow to set ref */
         if (options.referralsOn == true) {
             auctionBidOf[stepsFromStart][_msgSender()].ref = ref;
-        } else {
-            // Else set ref to 0x0 for this auction bid
-            auctionBidOf[stepsFromStart][_msgSender()].ref = address(0);
         }
 
         auctionBidOf[stepsFromStart][_msgSender()].eth = auctionBidOf[
@@ -360,29 +362,26 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         emit Bid(msg.sender, msg.value, stepsFromStart, now);
     }
 
-    // TODO figure out slippage tolerance
     function ventureBid(
-        uint256[] calldata amountOutMin,
+        uint256[] memory amountOutMin,
         uint256 deadline,
         address ref
-    ) internal payable {
+    ) internal {
         _saveAuctionData();
         _updatePrice();
 
         require(_msgSender() != ref, 'msg.sender == ref');
 
-        (uint256 forOrigin, uint256 forUniswap) = _calculateVentureEthAmounts();
+        (uint256 amountForOrigin, uint256 amountForUniswap) = _calculateVentureEthAmounts();
 
         VentureToken[] storage tokens = tokensOfTheDay[getCurrentDay()];
-
-        uint256 forUniDivided = forUniswap.div(tokens.length);
 
         for (uint8 i = 0; i < tokens.length; i++) {
             uint256 amountBought =
                 _swapEthForToken(
                     tokens[i].coin,
                     amountOutMin[i],
-                    forUniDivided,
+                    amountForUniswap.mul(tokens[i].percentage).div(100),
                     deadline
                 );
                 
@@ -395,12 +394,9 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
         uint256 stepsFromStart = calculateStepsFromStart();
 
-        /** If referralsOn is true sallow to set ref */
+        /** If referralsOn is true allow to set ref */
         if (options.referralsOn == true) {
             auctionBidOf[stepsFromStart][_msgSender()].ref = ref;
-        } else {
-            // Else set ref to 0x0 for this auction bid
-            auctionBidOf[stepsFromStart][_msgSender()].ref = address(0);
         }
 
         auctionBidOf[stepsFromStart][_msgSender()].eth = auctionBidOf[
@@ -418,9 +414,9 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             msg.value
         );
 
-        addresses.recipient.transfer(forOrigin);
+        addresses.recipient.transfer(amountForOrigin);
 
-        emit Bid(msg.sender, msg.value, stepsFromStart, now);
+        emit VentureBid(msg.sender, msg.value, stepsFromStart, now);
     }
 
     function withdraw(uint256 auctionId, uint256 stakeDays) external {
@@ -695,7 +691,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _setupRole(role, account);
     }
 
-    function setupAuctionTypes(uint8[7] calldata _auctionTypes)
+    function setAuctionTypes(uint8[7] calldata _auctionTypes)
         external
         onlyManager
     {
