@@ -679,6 +679,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             );
         }
 
+        sessionDataOf[msg.sender][sessionId].amount = newAmount;
+        sessionDataOf[msg.sender][sessionId].end = newEnd;
+        sessionDataOf[msg.sender][sessionId].start = newStart;
+        sessionDataOf[msg.sender][sessionId].shares = newShares;
+        sessionDataOf[msg.sender][sessionId].firstPayout = payouts.length;
+        sessionDataOf[msg.sender][sessionId].lastPayout = payouts.length + 5555;
+
         maxShareInternal(
             sessionId,
             session.shares,
@@ -686,8 +693,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             session.amount,
             newAmount,
             newStart,
-            newEnd,
-            false
+            newEnd
         );
     }
 
@@ -737,6 +743,19 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             );
         }
 
+        sessionDataOf[msg.sender][sessionId] = Session({
+            amount: newAmount,
+            start: newStart,
+            end: newEnd,
+            shares: newShares,
+            firstPayout: payouts.length,
+            lastPayout: payouts.length + 5555,
+            withdrawn: false,
+            payout: 0
+        });
+
+        sessionsOf[msg.sender].push(sessionId);
+
         maxShareInternal(
             sessionId,
             shares,
@@ -744,8 +763,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             amount,
             newAmount,
             newStart,
-            newEnd,
-            true
+            newEnd
         );
     }
 
@@ -793,34 +811,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 oldAmount,
         uint256 newAmount,
         uint256 newStart,
-        uint256 newEnd,
-        bool v1
+        uint256 newEnd
     ) internal {
         sharesTotalSupply = sharesTotalSupply.add(newShares - oldShares);
         totalStakedAmount = totalStakedAmount.add(newAmount - oldAmount);
-
-        if (v1) {
-            sessionDataOf[msg.sender][sessionId] = Session({
-                amount: newAmount,
-                start: newStart,
-                end: newEnd,
-                shares: newShares,
-                firstPayout: payouts.length,
-                lastPayout: payouts.length + 5555,
-                withdrawn: false,
-                payout: 0
-            });
-            sessionsOf[msg.sender].push(sessionId);
-        } else {
-            sessionDataOf[msg.sender][sessionId].amount = newAmount;
-            sessionDataOf[msg.sender][sessionId].end = newEnd;
-            sessionDataOf[msg.sender][sessionId].start = newStart;
-            sessionDataOf[msg.sender][sessionId].shares = newShares;
-            sessionDataOf[msg.sender][sessionId].firstPayout = payouts.length;
-            sessionDataOf[msg.sender][sessionId].lastPayout =
-                payouts.length +
-                5555;
-        }
 
         emit StakeUpgrade(
             msg.sender,
