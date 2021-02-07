@@ -535,8 +535,8 @@ describe('Staking', async () => {
     );
   });
 
-  it.only('should not upgrade stakes to max share if event is off', async () => {
-    const stakingDays = 351;
+  it('should not upgrade stakes to max share if event is off', async () => {
+    const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
     const eventActive = await staking.connect(_setter).getMaxShareEventActive();
     expect(eventActive).to.equal(false);
