@@ -654,7 +654,7 @@ describe('Staking', async () => {
     expect(sessionData.lastPayout.toString()).to.equal('5565');
   });
 
-  it.only('should upgrade v1 5555 stakes to max share', async () => {
+  it('should upgrade v1 5555 stakes to max share', async () => {
     const stakingDays = 5555;
     const amount = ethers.utils.parseEther('10');
     await staking.connect(_setter).setMaxShareEventActive(true);
