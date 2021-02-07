@@ -140,44 +140,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         init_ = false;
     }
 
-    function init(
-        address _mainTokenAddress,
-        address _auctionAddress,
-        address _subBalancesAddress,
-        address _foreignSwapAddress,
-        address _stakingV1Address,
-        uint256 _stepTimestamp,
-        uint256 _lastSessionIdV1
-    ) external onlyMigrator {
-        require(!init_, 'Staking: init is active');
-        init_ = true;
-        /** Setup */
-        _setupRole(EXTERNAL_STAKER_ROLE, _foreignSwapAddress);
-        _setupRole(EXTERNAL_STAKER_ROLE, _auctionAddress);
-
-        addresses = Addresses({
-            mainToken: _mainTokenAddress,
-            auction: _auctionAddress,
-            subBalances: _subBalancesAddress
-        });
-
-        stakingV1 = IStakingV1(_stakingV1Address);
-        lastSessionId = _lastSessionIdV1;
-
-        stepTimestamp = _stepTimestamp;
-
-        if (startContract == 0) {
-            startContract = now;
-            nextPayoutCall = startContract.add(_stepTimestamp);
-        }
-        if (_lastSessionIdV1 != 0) {
-            lastSessionIdV1 = _lastSessionIdV1;
-        }
-        if (shareRate == 0) {
-            shareRate = 1e18;
-        }
-    }
-
     /** End init functions */
 
     function sessionsOf_(address account)
@@ -682,7 +644,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         require(
             session.shares != 0 && session.withdrawn == false,
-            'Staking: Stake withdrawn or not set'
+            'STAKING: Stake withdrawn or not set'
         );
 
         (
@@ -730,13 +692,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function maxShareV1(uint256 sessionId) external {
-        require(sessionId <= lastSessionIdV1, 'Staking: Invalid sessionId');
+        require(sessionId <= lastSessionIdV1, 'STAKING: Invalid sessionId');
 
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
         require(
             session.shares == 0 && session.withdrawn == false,
-            'Staking: Stake withdrawn'
+            'STAKING: Stake withdrawn'
         );
 
         (
@@ -762,8 +724,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 sessionId,
                 newStart,
                 newEnd,
-                newShares,
-                session.shares
+                newShares, // new shares
+                shares // old shares
             );
         } else {
             ISubBalances(addresses.subBalances).callIncomeStakerTrigger(
@@ -843,6 +805,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 withdrawn: false,
                 payout: 0
             });
+            sessionsOf[msg.sender].push(sessionId);
         } else {
             sessionDataOf[msg.sender][sessionId].amount = newAmount;
             sessionDataOf[msg.sender][sessionId].end = newEnd;
@@ -864,6 +827,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             newStart,
             newEnd
         );
+    }
+
+    // stepTimestamp
+    // startContract
+    function calculateStepsFromStart() public view returns (uint256) {
+        return now.sub(startContract).div(stepTimestamp);
     }
 
     /** Set Max Shares */
