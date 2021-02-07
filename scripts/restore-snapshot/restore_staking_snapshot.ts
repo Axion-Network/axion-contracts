@@ -43,7 +43,7 @@ export async function restoreStakingSnapshot(staking: Staking, token: Token) {
 
   await staking.setOtherVars(
     startContract,
-    '1060000000000000000',
+    '1090000000000000000',
     sharesTotalSupply,
     nextPayoutCall,
     globalPayin,
@@ -53,7 +53,7 @@ export async function restoreStakingSnapshot(staking: Staking, token: Token) {
     _sessionsIds
   );
   // TODO: Update StakingV1 Contract to keep track of total staked amount
-  await staking.setTotalStakedAmount('33333333000000000000000000');
+  await staking.setTotalStakedAmount('35044444000000000000000000');
 
   console.log('restoreStakingSnapshot - Done');
   console.log('---------------------------------');

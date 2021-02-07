@@ -5,7 +5,7 @@ import { network } from 'hardhat';
 /**
  * Deploy upgradable contracts
  **/
-const SCRIPT_NAME = 'DEPLOY AXION LAYER 1 CONTRACTS';
+const SCRIPT_NAME = 'MINT TOKENS';
 
 const main = async () => {
   const networkName = network.name;
@@ -20,7 +20,7 @@ const main = async () => {
 
     const swapToken = await ContractFactory.getTERC20At(SWAP_TOKEN_ADDRESS);
     await swapToken.mint(
-      '0xbE42d298d31b2551aE9E6e88B838A3ba5Dc1D6CD',
+      '0xcaaD2020967F0f314Fb8A150413F7f9fC26c0f73',
       '1000000000000000000000000000'
     );
 

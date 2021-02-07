@@ -590,30 +590,7 @@ describe('Staking', async () => {
       _staker.address,
       sessionId
     );
-    console.log(
-      'Shares before',
-      sessionDataBefore.shares.toString(),
-      'after',
-      sessionDataAfter.shares.toString()
-    );
-    console.log(
-      'Shares before',
-      sessionDataBefore.amount.toString(),
-      'after',
-      sessionDataAfter.amount.toString()
-    );
-    console.log(
-      'firstPayout before',
-      sessionDataBefore.firstPayout.toString(),
-      'after',
-      sessionDataAfter.firstPayout.toString()
-    );
-    console.log(
-      'lastPayout before',
-      sessionDataBefore.lastPayout.toString(),
-      'after',
-      sessionDataAfter.lastPayout.toString()
-    );
+
     expect(sessionDataAfter.firstPayout.toString()).to.equal('10');
     expect(sessionDataAfter.lastPayout.toString()).to.equal('5565');
   });
@@ -675,19 +652,40 @@ describe('Staking', async () => {
     const sessionData = await staking.sessionDataOf(_staker.address, sessionId);
     expect(sessionData.firstPayout.toString()).to.equal('10');
     expect(sessionData.lastPayout.toString()).to.equal('5565');
+  });
 
-    console.log(
-      'Shares before',
-      sessionDataV1.shares.toString(),
-      'after',
-      sessionData.shares.toString()
+  it.only('should upgrade v1 5555 stakes to max share', async () => {
+    const stakingDays = 5555;
+    const amount = ethers.utils.parseEther('10');
+    await staking.connect(_setter).setMaxShareEventActive(true);
+
+    await token.connect(_staker).approve(staking.address, amount);
+    await stakingV1.connect(_staker).stake(amount, stakingDays);
+
+    await staking.setSharesTotalSupply(`10000000000000000000`);
+    await staking.setTotalStakedAmount(`10000000000000000000`);
+
+    for (let i = 0; i < 10; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
+
+    await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+
+    const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
+    const sessionDataV1 = await stakingV1.sessionDataOf(
+      _staker.address,
+      sessionId
     );
-    console.log(
-      'amount before',
-      sessionDataV1.amount.toString(),
-      'after',
-      sessionData.amount.toString()
-    );
+    console.log(sessionDataV1);
+
+    await staking.connect(_staker).maxShareV1(sessionId);
+
+    const sessionData = await staking.sessionDataOf(_staker.address, sessionId);
+    console.log(sessionData);
+    expect(sessionData.firstPayout.toString()).to.equal('10');
+    expect(sessionData.lastPayout.toString()).to.equal('5565');
   });
 
   it('should not upgrade v1 stakes that have been withdrawn', async () => {

@@ -778,6 +778,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 newShares =
             _getStakersSharesAmount(newAmount, newStart, newEnd);
 
+        require(
+            newShares > shares,
+            'STAKING: New shares are not greater then previous shares'
+        );
+
         return (newStart, newEnd, newAmount, newShares);
     }
 

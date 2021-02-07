@@ -39,7 +39,7 @@
           {
             "contract": "Auction",
             "label": "reservesOf",
-            "type": "t_mapping(t_uint256,t_struct(AuctionReserves)6882_storage)",
+            "type": "t_mapping(t_uint256,t_struct(AuctionReserves)2481_storage)",
             "src": "contracts/Auction.sol:74"
           },
           {
@@ -51,7 +51,7 @@
           {
             "contract": "Auction",
             "label": "auctionBidOf",
-            "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserBid)6889_storage))",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserBid)2488_storage))",
             "src": "contracts/Auction.sol:76"
           },
           {
@@ -87,19 +87,19 @@
           {
             "contract": "Auction",
             "label": "options",
-            "type": "t_struct(Options)6911_storage",
+            "type": "t_struct(Options)2510_storage",
             "src": "contracts/Auction.sol:85"
           },
           {
             "contract": "Auction",
             "label": "addresses",
-            "type": "t_struct(Addresses)6898_storage",
+            "type": "t_struct(Addresses)2497_storage",
             "src": "contracts/Auction.sol:86"
           },
           {
             "contract": "Auction",
             "label": "auctionV1",
-            "type": "t_contract(IAuctionV1)18887",
+            "type": "t_contract(IAuctionV1)3931",
             "src": "contracts/Auction.sol:87"
           },
           {
@@ -122,13 +122,13 @@
           }
         ],
         "types": {
-          "t_mapping(t_uint256,t_struct(AuctionReserves)6882_storage)": {
+          "t_mapping(t_uint256,t_struct(AuctionReserves)2481_storage)": {
             "label": "mapping(uint256 => struct Auction.AuctionReserves)"
           },
           "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
             "label": "mapping(address => uint256[])"
           },
-          "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserBid)6889_storage))": {
+          "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserBid)2488_storage))": {
             "label": "mapping(uint256 => mapping(address => struct Auction.UserBid))"
           },
           "t_mapping(t_uint256,t_mapping(t_address,t_bool))": {
@@ -137,13 +137,13 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_struct(Options)6911_storage": {
+          "t_struct(Options)2510_storage": {
             "label": "struct Auction.Options"
           },
-          "t_struct(Addresses)6898_storage": {
+          "t_struct(Addresses)2497_storage": {
             "label": "struct Auction.Addresses"
           },
-          "t_contract(IAuctionV1)18887": {
+          "t_contract(IAuctionV1)3931": {
             "label": "contract IAuctionV1"
           },
           "t_bool": {
@@ -874,7 +874,7 @@
     },
     "9f47c6c181d013a12af7ec67ddfcc588df70044adaa79c7447558655b19f75be": {
       "address": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
-      "txHash": "0x68e350269953c1060d1ea996251bea80c54fb7180ca8ad3ec40c5e00df6ae033",
+      "txHash": "0xa6c28f2ffc134ab92b435f3b751673ae0a0af8f519adc2e436b3251303d40722",
       "layout": {
         "storage": [
           {
