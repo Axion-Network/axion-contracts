@@ -2,7 +2,7 @@
 
 pragma solidity >=0.4.25 <0.7.0;
 
-import "../interfaces/IStaking.sol";
+import '../interfaces/IStaking.sol';
 
 contract StakingMock is IStaking {
     function externalStake(

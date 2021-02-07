@@ -17,6 +17,7 @@ import {
   SubBalances,
   SubBalances__factory,
   SubBalancesMock__factory,
+  TERC20,
   TERC20__factory,
   TERC721,
   TERC721__factory,
@@ -223,6 +224,13 @@ export class ContractFactory {
     return ethers.getContractFactory(
       AxionContract.TERC20
     ) as Promise<TERC20__factory>;
+  }
+
+  static getTERC20At(address: string): Promise<TERC20> {
+    return ethers.getContractAt(
+      AxionContract.TERC20,
+      address
+    ) as Promise<TERC20>;
   }
 
   // V1
