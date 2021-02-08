@@ -2,8 +2,8 @@
   "manifestVersion": "3.1",
   "impls": {
     "6f8640f611f651ce8635cb80350837ac3ac6462347b06f230e0bea0a919e633a": {
-      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0xbaab38b0e431a92a7b0d4b07388f2622905dcf07b07093dc7dc0949788b69f24",
+      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "txHash": "0x695e06c4cd2ee4fb446260ca32e9c84ef72e4f4c7c70099117f3f08ee14a8c46",
       "layout": {
         "storage": [
           {
@@ -39,7 +39,7 @@
           {
             "contract": "Auction",
             "label": "reservesOf",
-            "type": "t_mapping(t_uint256,t_struct(AuctionReserves)2481_storage)",
+            "type": "t_mapping(t_uint256,t_struct(AuctionReserves)6882_storage)",
             "src": "contracts/Auction.sol:74"
           },
           {
@@ -51,7 +51,7 @@
           {
             "contract": "Auction",
             "label": "auctionBidOf",
-            "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserBid)2488_storage))",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserBid)6889_storage))",
             "src": "contracts/Auction.sol:76"
           },
           {
@@ -87,19 +87,19 @@
           {
             "contract": "Auction",
             "label": "options",
-            "type": "t_struct(Options)2510_storage",
+            "type": "t_struct(Options)6911_storage",
             "src": "contracts/Auction.sol:85"
           },
           {
             "contract": "Auction",
             "label": "addresses",
-            "type": "t_struct(Addresses)2497_storage",
+            "type": "t_struct(Addresses)6898_storage",
             "src": "contracts/Auction.sol:86"
           },
           {
             "contract": "Auction",
             "label": "auctionV1",
-            "type": "t_contract(IAuctionV1)3931",
+            "type": "t_contract(IAuctionV1)18934",
             "src": "contracts/Auction.sol:87"
           },
           {
@@ -122,13 +122,13 @@
           }
         ],
         "types": {
-          "t_mapping(t_uint256,t_struct(AuctionReserves)2481_storage)": {
+          "t_mapping(t_uint256,t_struct(AuctionReserves)6882_storage)": {
             "label": "mapping(uint256 => struct Auction.AuctionReserves)"
           },
           "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
             "label": "mapping(address => uint256[])"
           },
-          "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserBid)2488_storage))": {
+          "t_mapping(t_uint256,t_mapping(t_address,t_struct(UserBid)6889_storage))": {
             "label": "mapping(uint256 => mapping(address => struct Auction.UserBid))"
           },
           "t_mapping(t_uint256,t_mapping(t_address,t_bool))": {
@@ -137,13 +137,13 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_struct(Options)2510_storage": {
+          "t_struct(Options)6911_storage": {
             "label": "struct Auction.Options"
           },
-          "t_struct(Addresses)2497_storage": {
+          "t_struct(Addresses)6898_storage": {
             "label": "struct Auction.Addresses"
           },
-          "t_contract(IAuctionV1)3931": {
+          "t_contract(IAuctionV1)18934": {
             "label": "contract IAuctionV1"
           },
           "t_bool": {
@@ -241,8 +241,8 @@
       }
     },
     "d8f5c5eaa9d6f3a48d2844343ada6fca53dace3e2dddb2be993281676338f52e": {
-      "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-      "txHash": "0x0cfd1820ac93b34407c2058730b6a1a78d7c886e1981506317a12c13f8850456",
+      "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      "txHash": "0x1abaf8e225743d385350e23c11fbeb869d8ed8c5f22bd248e331ce65508a1bd2",
       "layout": {
         "storage": [
           {
@@ -380,8 +380,8 @@
       }
     },
     "dd5129dd2cb01d19e959b77523e13692b3b97232d8ded6aefc95442cabae3fa2": {
-      "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-      "txHash": "0x4400f1943e4fc73d39366523c1057baace5013c3b19747120106f6b74d6e491b",
+      "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+      "txHash": "0x97e1bb2ded122bf9bb34dcadb44cee5f8531603bece17a50c2d52178f6ca5cd9",
       "layout": {
         "storage": [
           {
@@ -441,13 +441,13 @@
           {
             "contract": "NativeSwap",
             "label": "mainToken",
-            "type": "t_contract(IToken)19106",
+            "type": "t_contract(IToken)19153",
             "src": "contracts/NativeSwap.sol:34"
           },
           {
             "contract": "NativeSwap",
             "label": "auction",
-            "type": "t_contract(IAuction)18870",
+            "type": "t_contract(IAuction)18917",
             "src": "contracts/NativeSwap.sol:35"
           },
           {
@@ -470,10 +470,10 @@
           "t_contract(IERC20)3361": {
             "label": "contract IERC20"
           },
-          "t_contract(IToken)19106": {
+          "t_contract(IToken)19153": {
             "label": "contract IToken"
           },
-          "t_contract(IAuction)18870": {
+          "t_contract(IAuction)18917": {
             "label": "contract IAuction"
           },
           "t_mapping(t_address,t_uint256)": {
@@ -495,8 +495,8 @@
       }
     },
     "11aa87abdf08bad8bb60ab16cc02f527fd4750bd496a07c383ab4b7789f2c3c7": {
-      "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
-      "txHash": "0x685eb862ea4dfee6343d374350c0dadcd8101861499c7bad9d428fd7442d0654",
+      "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+      "txHash": "0x88073edc8b91b287714816191fb4e0461550844a17cd8b12daf5dbcfb9fdfeff",
       "layout": {
         "storage": [
           {
@@ -586,8 +586,8 @@
       }
     },
     "13626d8c27ba279c67e1a0958e6704ffac40494ad98b895062a98b70adaeb0a0": {
-      "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
-      "txHash": "0x34236b999122e55c2dd4ba675b945a9dd596a3dbda407172a52b9ec209821435",
+      "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+      "txHash": "0xabb47c0372fdb9f0db26ab63e5d3527c8f634698a8a0ce04ab18a464d7aff00d",
       "layout": {
         "storage": [
           {
@@ -743,8 +743,8 @@
       }
     },
     "1bf0bdd6260087d6bf91067393ad6213b208ecadead9237beeea79f555cd1500": {
-      "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-      "txHash": "0xd77c4b3917312e9e9b38efc3b5327b7afd91a4f74d812ef4278d1da1514d1f15",
+      "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+      "txHash": "0x74626e15a6086737245fecee307f52570769d77156a90be2b705140af6fba3d0",
       "layout": {
         "storage": [
           {
@@ -780,13 +780,13 @@
           {
             "contract": "SubBalances",
             "label": "addresses",
-            "type": "t_struct(Addresses)12113_storage",
+            "type": "t_struct(Addresses)12160_storage",
             "src": "contracts/SubBalances.sol:50"
           },
           {
             "contract": "SubBalances",
             "label": "subBalancesV1",
-            "type": "t_contract(ISubBalancesV1)19089",
+            "type": "t_contract(ISubBalancesV1)19136",
             "src": "contracts/SubBalances.sol:51"
           },
           {
@@ -816,7 +816,7 @@
           {
             "contract": "SubBalances",
             "label": "subBalanceList",
-            "type": "t_array(t_struct(SubBalance)12104_storage)5_storage",
+            "type": "t_array(t_struct(SubBalance)12151_storage)5_storage",
             "src": "contracts/SubBalances.sol:63"
           },
           {
@@ -828,7 +828,7 @@
           {
             "contract": "SubBalances",
             "label": "stakeSessions",
-            "type": "t_mapping(t_uint256,t_struct(StakeSession)12093_storage)",
+            "type": "t_mapping(t_uint256,t_struct(StakeSession)12140_storage)",
             "src": "contracts/SubBalances.sol:65"
           },
           {
@@ -839,201 +839,23 @@
           }
         ],
         "types": {
-          "t_struct(Addresses)12113_storage": {
+          "t_struct(Addresses)12160_storage": {
             "label": "struct SubBalances.Addresses"
           },
-          "t_contract(ISubBalancesV1)19089": {
+          "t_contract(ISubBalancesV1)19136": {
             "label": "contract ISubBalancesV1"
           },
           "t_uint256": {
             "label": "uint256"
           },
-          "t_array(t_struct(SubBalance)12104_storage)5_storage": {
+          "t_array(t_struct(SubBalance)12151_storage)5_storage": {
             "label": "struct SubBalances.SubBalance[5]"
           },
           "t_array(t_uint256)5_storage": {
             "label": "uint256[5]"
           },
-          "t_mapping(t_uint256,t_struct(StakeSession)12093_storage)": {
+          "t_mapping(t_uint256,t_struct(StakeSession)12140_storage)": {
             "label": "mapping(uint256 => struct SubBalances.StakeSession)"
-          },
-          "t_bool": {
-            "label": "bool"
-          },
-          "t_mapping(t_bytes32,t_struct(RoleData)84_storage)": {
-            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
-          },
-          "t_array(t_uint256)49_storage": {
-            "label": "uint256[49]"
-          },
-          "t_array(t_uint256)50_storage": {
-            "label": "uint256[50]"
-          }
-        }
-      }
-    },
-    "9f47c6c181d013a12af7ec67ddfcc588df70044adaa79c7447558655b19f75be": {
-      "address": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
-      "txHash": "0xa6c28f2ffc134ab92b435f3b751673ae0a0af8f519adc2e436b3251303d40722",
-      "layout": {
-        "storage": [
-          {
-            "contract": "Initializable",
-            "label": "_initialized",
-            "type": "t_bool",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
-          },
-          {
-            "contract": "Initializable",
-            "label": "_initializing",
-            "type": "t_bool",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
-          },
-          {
-            "contract": "ContextUpgradeable",
-            "label": "__gap",
-            "type": "t_array(t_uint256)50_storage",
-            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
-          },
-          {
-            "contract": "AccessControlUpgradeable",
-            "label": "_roles",
-            "type": "t_mapping(t_bytes32,t_struct(RoleData)84_storage)",
-            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
-          },
-          {
-            "contract": "AccessControlUpgradeable",
-            "label": "__gap",
-            "type": "t_array(t_uint256)49_storage",
-            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:225"
-          },
-          {
-            "contract": "Staking",
-            "label": "addresses",
-            "type": "t_struct(Addresses)10056_storage",
-            "src": "contracts/Staking.sol:80"
-          },
-          {
-            "contract": "Staking",
-            "label": "stakingV1",
-            "type": "t_contract(IStakingV1)18964",
-            "src": "contracts/Staking.sol:81"
-          },
-          {
-            "contract": "Staking",
-            "label": "shareRate",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:90"
-          },
-          {
-            "contract": "Staking",
-            "label": "sharesTotalSupply",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:91"
-          },
-          {
-            "contract": "Staking",
-            "label": "nextPayoutCall",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:92"
-          },
-          {
-            "contract": "Staking",
-            "label": "stepTimestamp",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:93"
-          },
-          {
-            "contract": "Staking",
-            "label": "startContract",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:94"
-          },
-          {
-            "contract": "Staking",
-            "label": "globalPayout",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:95"
-          },
-          {
-            "contract": "Staking",
-            "label": "globalPayin",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:96"
-          },
-          {
-            "contract": "Staking",
-            "label": "lastSessionId",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:97"
-          },
-          {
-            "contract": "Staking",
-            "label": "lastSessionIdV1",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:98"
-          },
-          {
-            "contract": "Staking",
-            "label": "sessionDataOf",
-            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)10049_storage))",
-            "src": "contracts/Staking.sol:101"
-          },
-          {
-            "contract": "Staking",
-            "label": "sessionsOf",
-            "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
-            "src": "contracts/Staking.sol:102"
-          },
-          {
-            "contract": "Staking",
-            "label": "payouts",
-            "type": "t_array(t_struct(Payout)10032_storage)dyn_storage",
-            "src": "contracts/Staking.sol:103"
-          },
-          {
-            "contract": "Staking",
-            "label": "init_",
-            "type": "t_bool",
-            "src": "contracts/Staking.sol:106"
-          },
-          {
-            "contract": "Staking",
-            "label": "basePeriod",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:108"
-          },
-          {
-            "contract": "Staking",
-            "label": "totalStakedAmount",
-            "type": "t_uint256",
-            "src": "contracts/Staking.sol:109"
-          },
-          {
-            "contract": "Staking",
-            "label": "maxShareEventActive",
-            "type": "t_bool",
-            "src": "contracts/Staking.sol:110"
-          }
-        ],
-        "types": {
-          "t_struct(Addresses)10056_storage": {
-            "label": "struct Staking.Addresses"
-          },
-          "t_contract(IStakingV1)18964": {
-            "label": "contract IStakingV1"
-          },
-          "t_uint256": {
-            "label": "uint256"
-          },
-          "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)10049_storage))": {
-            "label": "mapping(address => mapping(uint256 => struct Staking.Session))"
-          },
-          "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
-            "label": "mapping(address => uint256[])"
-          },
-          "t_array(t_struct(Payout)10032_storage)dyn_storage": {
-            "label": "struct Staking.Payout[]"
           },
           "t_bool": {
             "label": "bool"
@@ -1390,10 +1212,188 @@
           }
         }
       }
+    },
+    "5f9fd1f766f4e8f84617aa45634c901a1f85fe8c0a444f439af761366542b2e7": {
+      "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+      "txHash": "0x68eea28a1dd92f0f487c1ecee02496e605b91b9bf8051344a4b1f1e1c6974eea",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:24"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:29"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "_roles",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)84_storage)",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:225"
+          },
+          {
+            "contract": "Staking",
+            "label": "addresses",
+            "type": "t_struct(Addresses)10056_storage",
+            "src": "contracts/Staking.sol:80"
+          },
+          {
+            "contract": "Staking",
+            "label": "stakingV1",
+            "type": "t_contract(IStakingV1)19011",
+            "src": "contracts/Staking.sol:81"
+          },
+          {
+            "contract": "Staking",
+            "label": "shareRate",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:90"
+          },
+          {
+            "contract": "Staking",
+            "label": "sharesTotalSupply",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:91"
+          },
+          {
+            "contract": "Staking",
+            "label": "nextPayoutCall",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:92"
+          },
+          {
+            "contract": "Staking",
+            "label": "stepTimestamp",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:93"
+          },
+          {
+            "contract": "Staking",
+            "label": "startContract",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:94"
+          },
+          {
+            "contract": "Staking",
+            "label": "globalPayout",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:95"
+          },
+          {
+            "contract": "Staking",
+            "label": "globalPayin",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:96"
+          },
+          {
+            "contract": "Staking",
+            "label": "lastSessionId",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:97"
+          },
+          {
+            "contract": "Staking",
+            "label": "lastSessionIdV1",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:98"
+          },
+          {
+            "contract": "Staking",
+            "label": "sessionDataOf",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)10049_storage))",
+            "src": "contracts/Staking.sol:101"
+          },
+          {
+            "contract": "Staking",
+            "label": "sessionsOf",
+            "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
+            "src": "contracts/Staking.sol:102"
+          },
+          {
+            "contract": "Staking",
+            "label": "payouts",
+            "type": "t_array(t_struct(Payout)10032_storage)dyn_storage",
+            "src": "contracts/Staking.sol:103"
+          },
+          {
+            "contract": "Staking",
+            "label": "init_",
+            "type": "t_bool",
+            "src": "contracts/Staking.sol:106"
+          },
+          {
+            "contract": "Staking",
+            "label": "basePeriod",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:108"
+          },
+          {
+            "contract": "Staking",
+            "label": "totalStakedAmount",
+            "type": "t_uint256",
+            "src": "contracts/Staking.sol:109"
+          },
+          {
+            "contract": "Staking",
+            "label": "maxShareEventActive",
+            "type": "t_bool",
+            "src": "contracts/Staking.sol:110"
+          }
+        ],
+        "types": {
+          "t_struct(Addresses)10056_storage": {
+            "label": "struct Staking.Addresses"
+          },
+          "t_contract(IStakingV1)19011": {
+            "label": "contract IStakingV1"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(Session)10049_storage))": {
+            "label": "mapping(address => mapping(uint256 => struct Staking.Session))"
+          },
+          "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
+            "label": "mapping(address => uint256[])"
+          },
+          "t_array(t_struct(Payout)10032_storage)dyn_storage": {
+            "label": "struct Staking.Payout[]"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)84_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
     }
   },
   "admin": {
-    "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-    "txHash": "0x17762a6655da3cfa424faff942ffc49af9d649ee8cb19c20b54117a80bf9147b"
+    "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "txHash": "0xa75f2c81e45bfb92e0e15049dd38f3881a4316715b41e0451783d58ddef5a83c"
   }
 }
