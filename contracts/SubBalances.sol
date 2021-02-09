@@ -592,4 +592,21 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);
     }
+
+    function maxShareMigratorHelper(
+        uint256 sessionId,
+        uint256 end,
+        uint256 shares
+    ) external onlyMigrator {
+        StakeSession storage session = stakeSessions[sessionId];
+
+        require(
+            end > session.start,
+            'SUBBALANCES: Stake end must be after stake start'
+        );
+
+        session.shares = shares;
+        session.end = end;
+        session.payDayEligible = [true, true, true, true, true];
+    }
 }

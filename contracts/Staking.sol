@@ -28,7 +28,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 shares
     );
 
-    event StakeUpgrade(
+    event MaxShareUpgrade(
         address indexed account,
         uint256 indexed sessionId,
         uint256 amount,
@@ -834,7 +834,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         sharesTotalSupply = sharesTotalSupply.add(newShares - oldShares);
         totalStakedAmount = totalStakedAmount.add(newAmount - oldAmount);
 
-        emit StakeUpgrade(
+        emit MaxShareUpgrade(
             msg.sender,
             sessionId,
             oldAmount,
