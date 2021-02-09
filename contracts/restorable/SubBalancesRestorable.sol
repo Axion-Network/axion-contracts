@@ -23,6 +23,23 @@ contract SubBalancesRestorable is SubBalances {
         startTimestamp = _startTimestamp;
     }
 
+    function maxShareMigratorHelper(
+        uint256 sessionId,
+        uint256 end,
+        uint256 shares
+    ) external onlyMigrator {
+        StakeSession storage session = stakeSessions[sessionId];
+
+        require(
+            end > session.start,
+            'SUBBALANCES: Stake end must be after stake start'
+        );
+
+        session.shares = shares;
+        session.end = end;
+        session.payDayEligible = [true, true, true, true, true];
+    }
+
     function addBPDShares(uint256[5] calldata _shares) external onlyMigrator {
         for (uint256 i = 0; i < 5; i++) {
             SubBalance storage subBalance = subBalanceList[i];
