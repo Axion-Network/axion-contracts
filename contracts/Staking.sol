@@ -692,8 +692,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 msg.sender,
                 sessionId,
                 newStart,
-                session.end,
-                session.shares
+                newEnd,
+                newShares
             );
         }
 
