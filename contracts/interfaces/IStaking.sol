@@ -14,4 +14,6 @@ interface IStaking {
         address tokenAddress,
         uint256 amountBought
     ) external;
+
+    function addDivToken(address tokenAddress) external;
 }

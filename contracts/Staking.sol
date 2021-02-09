@@ -2,13 +2,12 @@
 
 pragma solidity >=0.4.25 <0.7.0;
 
-/** OpenZeppelin Dependencies */
-// import "@openzeppelin/contracts-upgradeable/contracts/proxy/Initializable.sol";
 import '@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
-/** Local Interfaces */
+import '@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol';
+
 import './interfaces/IToken.sol';
 import './interfaces/IAuction.sol';
 import './interfaces/IStaking.sol';
@@ -17,6 +16,7 @@ import './interfaces/IStakingV1.sol';
 
 contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     /** Events */
     event Stake(
@@ -103,7 +103,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     uint256 public basePeriod;
     uint256 public totalStakedAmount;
 
-    address[] internal divTokens;
+    EnumerableSetUpgradeable.AddressSet internal divTokens;
     mapping(address => uint256) internal totalSharesOf;
     mapping(address => uint256) internal tokenPricePerShare;
     mapping(address => mapping(address => uint256)) internal deductBalances;
@@ -618,10 +618,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         sharesTotalSupply = sharesTotalSupply.sub(shares);
         totalStakedAmount = totalStakedAmount.sub(amount);
 
-        uint256 oldTotalShares = totalSharesOf[msg.sender];
+        uint256 oldTotalSharesOf = totalSharesOf[msg.sender];
         totalSharesOf[msg.sender] = totalSharesOf[msg.sender].sub(shares);
 
-        rebalance(oldTotalShares);
+        rebalance(oldTotalSharesOf);
 
         (uint256 amountOut, uint256 penalty) =
             getAmountOutAndPenalty(amount, start, end, stakingInterest);
@@ -667,10 +667,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         sharesTotalSupply = sharesTotalSupply.add(shares);
         totalStakedAmount = totalStakedAmount.add(amount);
 
-        uint256 oldTotalShares = totalSharesOf[staker];
+        uint256 oldTotalSharesOf = totalSharesOf[staker];
         totalSharesOf[staker] = totalSharesOf[staker].add(shares);
 
-        rebalance(oldTotalShares);
+        rebalance(oldTotalSharesOf);
 
         sessionDataOf[staker][sessionId] = Session({
             amount: amount,
@@ -732,33 +732,35 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             );
     }
 
-    function rebalance(uint256 oldTotalShares) internal {
-        for (uint8 i = 0; i < divTokens.length; i++) {
+    function rebalance(uint256 oldTotalSharesOf) internal {
+        for (uint8 i = 0; i < divTokens.length(); i++) {
             uint256 tokenInterestEarned =
-                oldTotalShares.mul(tokenPricePerShare[divTokens[i]]).sub(
-                    deductBalances[msg.sender][divTokens[i]]
+                oldTotalSharesOf.mul(tokenPricePerShare[divTokens.at(i)]).sub(
+                    deductBalances[msg.sender][divTokens.at(i)]
                 );
 
-            deductBalances[msg.sender][divTokens[i]] = totalSharesOf[msg.sender]
-                .mul(tokenPricePerShare[divTokens[i]])
+            deductBalances[msg.sender][divTokens.at(i)] = totalSharesOf[
+                msg.sender
+            ]
+                .mul(tokenPricePerShare[divTokens.at(i)])
                 .sub(tokenInterestEarned);
         }
     }
 
-    function setTotalSharesOf() external {
+    function setTotalSharesOfAccount() external {
         uint256 totalShares;
-        uint256[] memory sessionsOfSender = sessionsOf[msg.sender];
+        uint256[] memory sessionsOfAccount = sessionsOf[msg.sender];
 
-        for (uint256 i = 0; i < sessionsOfSender.length; i++) {
+        for (uint256 i = 0; i < sessionsOfAccount.length; i++) {
             totalShares = totalShares.add(
-                sessionDataOf[msg.sender][sessionsOfSender[i]].shares
+                sessionDataOf[msg.sender][sessionsOfAccount[i]].shares
             );
         }
 
-        uint256[] memory v1SessionsOfSender = stakingV1.sessionsOf(msg.sender);
+        uint256[] memory v1SessionsOfAccount = stakingV1.sessionsOf(msg.sender);
 
-        for (uint256 i = 0; i < v1SessionsOfSender.length; i++) {
-            if (v1SessionsOfSender[i] > lastSessionIdV1) {
+        for (uint256 i = 0; i < v1SessionsOfAccount.length; i++) {
+            if (v1SessionsOfAccount[i] > lastSessionIdV1) {
                 continue;
             }
 
@@ -768,7 +770,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 uint256 end,
                 uint256 shares,
                 uint256 firstPayout
-            ) = stakingV1.sessionDataOf(msg.sender, v1SessionsOfSender[i]);
+            ) = stakingV1.sessionDataOf(msg.sender, v1SessionsOfAccount[i]);
 
             if (shares == 0) {
                 continue;
@@ -777,9 +779,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             totalShares = totalShares.add(shares);
         }
 
-        for (uint256 i = 0; i < divTokens.length; i++) {
-            deductBalances[msg.sender][divTokens[i]] = totalShares.mul(
-                tokenPricePerShare[divTokens[i]]
+        for (uint256 i = 0; i < divTokens.length(); i++) {
+            deductBalances[msg.sender][divTokens.at(i)] = totalShares.mul(
+                tokenPricePerShare[divTokens.at(i)]
             );
         }
 
@@ -805,5 +807,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 .div(sharesTotalSupply)
                 .div(1e12)
         );
+    }
+
+    function addDivToken(address tokenAddress) external override onlyAuction {
+        if (!divTokens.contains(tokenAddress)) {
+            divTokens.add(tokenAddress);
+        }
     }
 }

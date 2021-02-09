@@ -2,7 +2,7 @@
 
 pragma solidity >=0.4.25 <0.7.0;
 
-import "../interfaces/IStaking.sol";
+import '../interfaces/IStaking.sol';
 
 contract StakingMock is IStaking {
     function externalStake(
@@ -16,4 +16,6 @@ contract StakingMock is IStaking {
         address tokenAddress,
         uint256 amountBought
     ) external override {}
+
+    function addDivToken(address tokenAddress) external override {}
 }

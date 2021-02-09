@@ -716,6 +716,8 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             );
 
             percent = percentages[i] + percent;
+
+            IStaking(addresses.staking).addDivToken(coins[i]);
         }
 
         require(
