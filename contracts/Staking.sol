@@ -866,7 +866,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function addShareTotalySupply(uint256 _shares) onlyManager {
-        totalStakedAmount = totalStakedAmount.add(_shares);
+        sharesTotalSupply = sharesTotalSupply.add(_shares);
     }
 
     /** Roles management - only for multi sig address */
