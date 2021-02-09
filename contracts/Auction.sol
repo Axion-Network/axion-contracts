@@ -262,8 +262,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         else return sum.div(points);
     }
 
-    /** Core functionality */
-    /** Internal */
     function _updatePrice() internal {
         uint256 stepsFromStart = calculateStepsFromStart();
 
@@ -271,22 +269,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
         reservesOf[stepsFromStart]
             .uniswapMiddlePrice = getUniswapMiddlePriceForDays();
-    }
-
-    /** Externals */
-    function _swapEth(
-        uint256 amountOutMin,
-        uint256 amount,
-        uint256 deadline
-    ) private {
-        address[] memory path = new address[](2);
-
-        path[0] = IUniswapV2Router02(addresses.uniswap).WETH();
-        path[1] = addresses.mainToken;
-
-        IUniswapV2Router02(addresses.uniswap).swapExactETHForTokens{
-            value: amount
-        }(amountOutMin, path, addresses.staking, deadline);
     }
 
     function _swapEthForToken(
@@ -316,7 +298,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         if (auctionType == 0) {
             bidInternal(amountOutMin[0], deadline, ref);
         } else if (auctionType == 1) {
-            ventureBid(amountOutMin, deadline, ref);
+            ventureBid(amountOutMin, deadline);
         }
     }
 
@@ -333,7 +315,12 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         (uint256 toRecipient, uint256 toUniswap) =
             _calculateRecipientAndUniswapAmountsToSend();
 
-        _swapEth(amountOutMin, toUniswap, deadline);
+        _swapEthForToken(
+            addresses.mainToken,
+            amountOutMin,
+            toUniswap,
+            deadline
+        );
 
         uint256 stepsFromStart = calculateStepsFromStart();
 
@@ -362,17 +349,14 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         emit Bid(msg.sender, msg.value, stepsFromStart, now);
     }
 
-    function ventureBid(
-        uint256[] memory amountOutMin,
-        uint256 deadline,
-        address ref
-    ) internal {
+    function ventureBid(uint256[] memory amountOutMin, uint256 deadline)
+        internal
+    {
         _saveAuctionData();
         _updatePrice();
 
-        require(_msgSender() != ref, 'msg.sender == ref');
-
-        (uint256 amountForOrigin, uint256 amountForUniswap) = _calculateVentureEthAmounts();
+        (uint256 amountForOrigin, uint256 amountForUniswap) =
+            _calculateVentureEthAmounts();
 
         VentureToken[] storage tokens = tokensOfTheDay[getCurrentDay()];
 
@@ -384,7 +368,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
                     amountForUniswap.mul(tokens[i].percentage).div(100),
                     deadline
                 );
-                
+
             IStaking(addresses.staking).updateTokenPricePerShare(
                 msg.sender,
                 tokens[i].coin,
@@ -393,11 +377,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         }
 
         uint256 stepsFromStart = calculateStepsFromStart();
-
-        /** If referralsOn is true allow to set ref */
-        if (options.referralsOn == true) {
-            auctionBidOf[stepsFromStart][_msgSender()].ref = ref;
-        }
 
         auctionBidOf[stepsFromStart][_msgSender()].eth = auctionBidOf[
             stepsFromStart
