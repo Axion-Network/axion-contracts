@@ -55,12 +55,10 @@ const main = async () => {
       });
     }
 
-    const { stakingRestorable } = await getRestorableDeployedContracts(
-      networkName
-    );
-
-    console.log('Setting max share event active');
-    await stakingRestorable.setMaxShareEventActive(true);
+    const {
+      stakingRestorable,
+      subBalancesRestorable,
+    } = await getRestorableDeployedContracts(networkName);
 
     console.log(
       `============================ ${SCRIPT_NAME}: DONE ===============================`

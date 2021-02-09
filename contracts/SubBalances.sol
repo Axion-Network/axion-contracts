@@ -593,11 +593,29 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
         _setupRole(role, account);
     }
 
+<<<<<<< HEAD
     function addBPDShares(uint256[5] _shares) onlyManager {
         for (uint256 i = 0; i < 5; i++) {
             SubBalance storage subBalance = subBalanceList[i];
             uint256 _sharesToAdd = _shares[i];
             subBalance.totalShares = subBalance.totalShares.add(_sharesToAdd);
         }
+=======
+    function maxShareMigratorHelper(
+        uint256 sessionId,
+        uint256 end,
+        uint256 shares
+    ) external onlyMigrator {
+        StakeSession storage session = stakeSessions[sessionId];
+
+        require(
+            end > session.start,
+            'SUBBALANCES: Stake end must be after stake start'
+        );
+
+        session.shares = shares;
+        session.end = end;
+        session.payDayEligible = [true, true, true, true, true];
+>>>>>>> 329587af972175da90ed3bab8df0eed724ad8fcc
     }
 }

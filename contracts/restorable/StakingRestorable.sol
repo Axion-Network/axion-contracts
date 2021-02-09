@@ -48,6 +48,14 @@ contract StakingRestorable is Staking {
         }
     }
 
+    function addStakedAmount(uint256 _staked) external onlyMigrator {
+        totalStakedAmount = totalStakedAmount.add(_staked);
+    }
+
+    function addShareTotalSupply(uint256 _shares) external onlyMigrator {
+        sharesTotalSupply = sharesTotalSupply.add(_shares);
+    }
+
     // migration functions
     function setOtherVars(
         uint256 _startTime,
