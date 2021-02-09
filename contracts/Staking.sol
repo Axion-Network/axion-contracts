@@ -113,7 +113,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     uint256 public basePeriod;
     uint256 public totalStakedAmount;
-    
+
     bool private maxShareEventActive;
 
     EnumerableSetUpgradeable.AddressSet internal divTokens;
@@ -796,6 +796,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         if (!divTokens.contains(tokenAddress)) {
             divTokens.add(tokenAddress);
         }
+    }
 
     function maxShare(uint256 sessionId) external {
         Session storage session = sessionDataOf[msg.sender][sessionId];
