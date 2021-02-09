@@ -861,11 +861,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return maxShareEventActive;
     }
 
-    function addStakedAmount(uint256 _staked) onlyManager {
+    function addStakedAmount(uint256 _staked) external onlyManager {
         totalStakedAmount = totalStakedAmount.add(_staked);
     }
 
-    function addShareTotalySupply(uint256 _shares) onlyManager {
+    function addShareTotalySupply(uint256 _shares) external onlyManager {
         sharesTotalSupply = sharesTotalSupply.add(_shares);
     }
 
