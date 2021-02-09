@@ -28,7 +28,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 shares
     );
 
-    event StakeUpgrade(
+    event MaxShareUpgrade(
         address indexed account,
         uint256 indexed sessionId,
         uint256 amount,
@@ -833,17 +833,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 msg.sender,
                 sessionId,
                 newStart,
-                session.end,
-                session.shares
+                newEnd,
+                newShares
             );
         }
-
-        sessionDataOf[msg.sender][sessionId].amount = newAmount;
-        sessionDataOf[msg.sender][sessionId].end = newEnd;
-        sessionDataOf[msg.sender][sessionId].start = newStart;
-        sessionDataOf[msg.sender][sessionId].shares = newShares;
-        sessionDataOf[msg.sender][sessionId].firstPayout = payouts.length;
-        sessionDataOf[msg.sender][sessionId].lastPayout = payouts.length + 5555;
 
         maxShareInternal(
             sessionId,
@@ -854,6 +847,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             newStart,
             newEnd
         );
+
+        sessionDataOf[msg.sender][sessionId].amount = newAmount;
+        sessionDataOf[msg.sender][sessionId].end = newEnd;
+        sessionDataOf[msg.sender][sessionId].start = newStart;
+        sessionDataOf[msg.sender][sessionId].shares = newShares;
+        sessionDataOf[msg.sender][sessionId].firstPayout = payouts.length;
+        sessionDataOf[msg.sender][sessionId].lastPayout = payouts.length + 5555;
     }
 
     function maxShareV1(uint256 sessionId) external {
@@ -975,7 +975,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         sharesTotalSupply = sharesTotalSupply.add(newShares - oldShares);
         totalStakedAmount = totalStakedAmount.add(newAmount - oldAmount);
 
-        emit StakeUpgrade(
+        emit MaxShareUpgrade(
             msg.sender,
             sessionId,
             oldAmount,
