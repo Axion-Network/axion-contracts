@@ -7,7 +7,7 @@ import { SubBalancesMock } from '../../typechain';
 import { SECONDS_IN_DAY } from '../utils/constants';
 import { TestUtil } from '../utils/TestUtil';
 
-describe('Fix Share Rates & Stakes', () => {
+xdescribe('Fix Share Rates & Stakes', () => {
   it('should set share rate', async () => {
     const [setter, recipient] = await ethers.getSigners();
     const { staking } = await initTestSmartContracts({

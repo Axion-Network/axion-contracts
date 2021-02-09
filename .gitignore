@@ -12,6 +12,8 @@ coverage
 # Webstorm config
 .idea
 
+.notes
+
 # .env
 .env
 venv/

@@ -2,13 +2,12 @@
 
 pragma solidity ^0.6.0;
 
-import "../interfaces/ISubBalances.sol";
+import '../interfaces/ISubBalances.sol';
 
 contract SubBalancesMock is ISubBalances {
-
-    uint public callIncomeStakerTriggerCalledCount;
-    uint public callOutcomeStakerTriggerCalledCount;
-    uint public callOutcomeStakerTriggerV1CalledCount;
+    uint256 public callIncomeStakerTriggerCalledCount;
+    uint256 public callOutcomeStakerTriggerCalledCount;
+    uint256 public callOutcomeStakerTriggerV1CalledCount;
 
     function callIncomeStakerTrigger(
         address staker,
@@ -17,7 +16,9 @@ contract SubBalancesMock is ISubBalances {
         uint256 end,
         uint256 shares
     ) external override {
-        callIncomeStakerTriggerCalledCount = callIncomeStakerTriggerCalledCount + 1;
+        callIncomeStakerTriggerCalledCount =
+            callIncomeStakerTriggerCalledCount +
+            1;
         address(staker);
         uint256(sessionId);
         uint256(start);
@@ -32,7 +33,9 @@ contract SubBalancesMock is ISubBalances {
         uint256 actualEnd,
         uint256 shares
     ) external override {
-        callOutcomeStakerTriggerCalledCount = callOutcomeStakerTriggerCalledCount + 1;
+        callOutcomeStakerTriggerCalledCount =
+            callOutcomeStakerTriggerCalledCount +
+            1;
         uint256(sessionId);
         uint256(start);
         uint256(end);
@@ -48,7 +51,9 @@ contract SubBalancesMock is ISubBalances {
         uint256 actualEnd,
         uint256 shares
     ) external override {
-        callOutcomeStakerTriggerV1CalledCount = callOutcomeStakerTriggerV1CalledCount + 1;
+        callOutcomeStakerTriggerV1CalledCount =
+            callOutcomeStakerTriggerV1CalledCount +
+            1;
         address(staker);
         uint256(sessionId);
         uint256(start);
@@ -56,4 +61,21 @@ contract SubBalancesMock is ISubBalances {
         uint256(actualEnd);
         uint256(shares);
     }
+
+    function createMaxShareSession(
+        uint256 sessionId,
+        uint256 start,
+        uint256 end,
+        uint256 newShares,
+        uint256 oldShares
+    ) external override {}
+
+    function createMaxShareSessionV1(
+        address staker,
+        uint256 sessionId,
+        uint256 start,
+        uint256 end,
+        uint256 newShares,
+        uint256 oldShares
+    ) external override {}
 }
