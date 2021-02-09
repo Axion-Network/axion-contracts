@@ -861,14 +861,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return maxShareEventActive;
     }
 
-    function addStakedAmount(uint256 _staked) external onlyMigrator {
-        totalStakedAmount = totalStakedAmount.add(_staked);
-    }
-
-    function addShareTotalySupply(uint256 _shares) external onlyMigrator {
-        sharesTotalSupply = sharesTotalSupply.add(_shares);
-    }
-
     /** Roles management - only for multi sig address */
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);

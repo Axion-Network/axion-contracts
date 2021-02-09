@@ -69,25 +69,25 @@ const main = async () => {
     // );
     // console.log('Upgraded nativeSwap contract - ', nativeSwapUpgrade);
 
-    const stakingUpgrade = await upgrades.prepareUpgrade(
-      staking.address,
-      await ContractFactory.getStakingFactory(),
-      {
-        unsafeAllowCustomTypes: true,
-        unsafeAllowLinkedLibraries: true,
-      }
-    );
-    console.log('Upgraded staking contract - ', stakingUpgrade);
-
-    // const subBalancesUpgrade = await upgrades.prepareUpgrade(
-    //   subBalances.address,
-    //   await ContractFactory.getSubBalancesFactory(),
+    // const stakingUpgrade = await upgrades.prepareUpgrade(
+    //   staking.address,
+    //   await ContractFactory.getStakingFactory(),
     //   {
     //     unsafeAllowCustomTypes: true,
     //     unsafeAllowLinkedLibraries: true,
     //   }
     // );
-    // console.log('Upgraded subbalances contract - ', subBalancesUpgrade);
+    // console.log('Upgraded staking contract - ', stakingUpgrade);
+
+    const subBalancesUpgrade = await upgrades.prepareUpgrade(
+      subBalances.address,
+      await ContractFactory.getSubBalancesFactory(),
+      {
+        unsafeAllowCustomTypes: true,
+        unsafeAllowLinkedLibraries: true,
+      }
+    );
+    console.log('Upgraded subbalances contract - ', subBalancesUpgrade);
 
     // const tokenUpgrade = await upgrades.prepareUpgrade(
     //   token.address,

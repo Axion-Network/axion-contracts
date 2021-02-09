@@ -23,6 +23,14 @@ contract SubBalancesRestorable is SubBalances {
         startTimestamp = _startTimestamp;
     }
 
+    function addBPDShares(uint256[5] calldata _shares) external onlyMigrator {
+        for (uint256 i = 0; i < 5; i++) {
+            SubBalance storage subBalance = subBalanceList[i];
+            uint256 _sharesToAdd = _shares[i];
+            subBalance.totalShares = subBalance.totalShares.add(_sharesToAdd);
+        }
+    }
+
     function setSubBalanceList(
         uint256[5] calldata _totalSharesList,
         uint256[5] calldata _totalWithdrawAmountList,

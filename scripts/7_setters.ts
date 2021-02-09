@@ -55,12 +55,27 @@ const main = async () => {
       });
     }
 
-    const { stakingRestorable } = await getRestorableDeployedContracts(
-      networkName
+    const {
+      stakingRestorable,
+      subBalancesRestorable,
+    } = await getRestorableDeployedContracts(networkName);
+    // 264239566464822229782847199356
+    // 187801621951457551973232621777
+    // await stakingRestorable.addStakedAmount('296074849488382766169407304');
+    await stakingRestorable.addShareTotalSupply(
+      '18388143960856716258228824305'
     );
+    // console.log('Setting max share event active');
+    // await subBalancesRestorable.addBPDShares([
+    //   '5845982231928146848059627524',
+    //   '5845982231928146848059627524',
+    //   '5845982231928146848059627524',
+    //   '5845982231928146848059627524',
+    //   '5845982231928146848059627524',
+    // ]);
 
-    console.log('Setting max share event active');
-    await stakingRestorable.setMaxShareEventActive(true);
+    // 175991613660836568973493422471
+    // 181837595892764715821553049995
 
     console.log(
       `============================ ${SCRIPT_NAME}: DONE ===============================`
