@@ -592,4 +592,12 @@ contract SubBalances is ISubBalances, Initializable, AccessControlUpgradeable {
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);
     }
+
+    function addBPDShares(uint256[5] _shares) onlyManager {
+        for (uint256 i = 0; i < 5; i++) {
+            SubBalance storage subBalance = subBalanceList[i];
+            uint256 _sharesToAdd = _shares[i];
+            subBalance.totalShares = subBalance.totalShares.add(_sharesToAdd);
+        }
+    }
 }
