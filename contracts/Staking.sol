@@ -697,13 +697,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             );
         }
 
-        sessionDataOf[msg.sender][sessionId].amount = newAmount;
-        sessionDataOf[msg.sender][sessionId].end = newEnd;
-        sessionDataOf[msg.sender][sessionId].start = newStart;
-        sessionDataOf[msg.sender][sessionId].shares = newShares;
-        sessionDataOf[msg.sender][sessionId].firstPayout = payouts.length;
-        sessionDataOf[msg.sender][sessionId].lastPayout = payouts.length + 5555;
-
         maxShareInternal(
             sessionId,
             session.shares,
@@ -713,6 +706,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             newStart,
             newEnd
         );
+
+        sessionDataOf[msg.sender][sessionId].amount = newAmount;
+        sessionDataOf[msg.sender][sessionId].end = newEnd;
+        sessionDataOf[msg.sender][sessionId].start = newStart;
+        sessionDataOf[msg.sender][sessionId].shares = newShares;
+        sessionDataOf[msg.sender][sessionId].firstPayout = payouts.length;
+        sessionDataOf[msg.sender][sessionId].lastPayout = payouts.length + 5555;
     }
 
     function maxShareV1(uint256 sessionId) external {
