@@ -107,7 +107,7 @@ describe('Auction', () => {
 	
       await auction	
         .connect(account1)	
-        .bid(0, DEADLINE, account2.address, {	
+        .bid([0], DEADLINE, account2.address, {	
           value: ethers.utils.parseEther('1'),	
         });	
 
@@ -125,7 +125,7 @@ describe('Auction', () => {
 
       auctionID = await auction.lastAuctionEventId();	
 
-      await auction.connect(account1).bid(0, DEADLINE, account2.address, {	
+      await auction.connect(account1).bid([0], DEADLINE, account2.address, {	
         value: ethers.utils.parseEther('2'),	
       });	
 
@@ -143,7 +143,7 @@ describe('Auction', () => {
 
       auctionID = await auction.lastAuctionEventId();
 
-      await auction.connect(account1).bid(0, DEADLINE, account2.address, {	
+      await auction.connect(account1).bid([0], DEADLINE, account2.address, {	
         value: ethers.utils.parseEther('2'),	
       });	
 
@@ -155,7 +155,7 @@ describe('Auction', () => {
 
       auctionID = await auction.lastAuctionEventId();
 	
-      await auction.connect(account1).bid(0, DEADLINE, account2.address, {	
+      await auction.connect(account1).bid([0], DEADLINE, account2.address, {	
         value: ethers.utils.parseEther('2'),	
       });	
 
