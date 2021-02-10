@@ -1011,4 +1011,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     function setShareRate(uint256 _shareRate) external onlyManager {
         shareRate = _shareRate;
     }
+
+    function getDivTokens() external view returns (address[] memory) {
+        address[] memory divTokenAddresses;
+
+        for (uint8 i = 0; i < divTokens.length(); i++) {
+            divTokenAddresses[i] = divTokens.at(i);
+        }
+
+        return divTokenAddresses;
+    }
 }
