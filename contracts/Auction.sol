@@ -21,21 +21,23 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         address indexed account,
         uint256 value,
         uint256 indexed auctionId,
-        uint256 indexed time
+        uint256 time
     );
 
     event VentureBid(
         address indexed account,
-        uint256 value,
+        uint256 ethBid,
         uint256 indexed auctionId,
-        uint256 indexed time
+        uint256 time,
+        address[] coins,
+        uint256[] amountBought
     );
 
     event Withdraval(
         address indexed account,
         uint256 value,
         uint256 indexed auctionId,
-        uint256 indexed time,
+        uint256 time,
         uint256 stakeDays
     );
 
@@ -93,22 +95,24 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
     bool public init_;
 
-    /** Variables after initial contract launch must go below here. https://github.com/OpenZeppelin/openzeppelin-sdk/issues/37 */
-    /** End Variables after launch */
-
-    /** Store autoStake duration (auctionID, address) */
-    mapping(uint256 => mapping(address => uint256)) public autoStakeDaysOf;
+    mapping(uint256 => mapping(address => uint256)) public autoStakeDaysOf; // NOT USED
 
     uint256 public middlePriceDays;
 
-    uint8[7] public auctionTypes;
-
-    /** VentureToken struct & mapping */
     struct VentureToken {
         address coin;
         uint256 percentage;
     }
-    mapping(uint256 => VentureToken[]) public tokensOfTheDay;
+
+    struct AuctionData {
+        uint8 mode;
+        VentureToken[] tokens;
+    }
+
+    AuctionData[7] internal auctions;
+    uint8 internal ventureAutoStakeDays;
+
+    /* New variables must go below here. */
 
     /** modifiers */
     modifier onlyCaller() {
@@ -133,133 +137,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             'Caller is not a migrator'
         );
         _;
-    }
-
-    function initialize(address _manager, address _migrator)
-        public
-        initializer
-    {
-        _setupRole(MANAGER_ROLE, _manager);
-        _setupRole(MIGRATOR_ROLE, _migrator);
-        init_ = false;
-    }
-
-    function init(
-        uint256 _stepTimestamp,
-        address _mainTokenAddress,
-        address _stakingAddress,
-        address payable _uniswapAddress,
-        address payable _recipientAddress,
-        address _nativeSwapAddress,
-        address _foreignSwapAddress,
-        address _subbalancesAddress,
-        address _auctionV1Address
-    ) external onlyMigrator {
-        require(!init_, 'Init is active');
-        init_ = true;
-        /** Roles */
-        _setupRole(CALLER_ROLE, _nativeSwapAddress);
-        _setupRole(CALLER_ROLE, _foreignSwapAddress);
-        _setupRole(CALLER_ROLE, _stakingAddress);
-        _setupRole(CALLER_ROLE, _subbalancesAddress);
-
-        // Timer
-        if (start == 0) {
-            start = now;
-        }
-
-        stepTimestamp = _stepTimestamp;
-
-        // Options
-        options = Options({
-            autoStakeDays: 14,
-            referrerPercent: 20,
-            referredPercent: 10,
-            referralsOn: true,
-            discountPercent: 20,
-            premiumPercent: 0
-        });
-
-        // Addresses
-        auctionV1 = IAuctionV1(_auctionV1Address);
-        addresses = Addresses({
-            mainToken: _mainTokenAddress,
-            staking: _stakingAddress,
-            uniswap: _uniswapAddress,
-            recipient: _recipientAddress
-        });
-    }
-
-    /** Public Setter Functions */
-    function setReferrerPercentage(uint256 percent) external onlyManager {
-        options.referrerPercent = percent;
-    }
-
-    function setReferredPercentage(uint256 percent) external onlyManager {
-        options.referredPercent = percent;
-    }
-
-    function setReferralsOn(bool _referralsOn) external onlyManager {
-        options.referralsOn = _referralsOn;
-    }
-
-    function setAutoStakeDays(uint256 _autoStakeDays) external onlyManager {
-        options.autoStakeDays = _autoStakeDays;
-    }
-
-    function setDiscountPercent(uint256 percent) external onlyManager {
-        options.discountPercent = percent;
-    }
-
-    function setPremiumPercent(uint256 percent) external onlyManager {
-        options.premiumPercent = percent;
-    }
-
-    function setMiddlePriceDays(uint256 _middleDays) external onlyManager {
-        middlePriceDays = _middleDays;
-    }
-
-    /** Public Getter functions */
-    function auctionsOf_(address account)
-        public
-        view
-        returns (uint256[] memory)
-    {
-        return auctionsOf[account];
-    }
-
-    function getUniswapLastPrice() public view returns (uint256) {
-        address[] memory path = new address[](2);
-
-        path[0] = IUniswapV2Router02(addresses.uniswap).WETH();
-        path[1] = addresses.mainToken;
-
-        uint256 price =
-            IUniswapV2Router02(addresses.uniswap).getAmountsOut(1e18, path)[1];
-
-        return price;
-    }
-
-    function getUniswapMiddlePriceForDays() public view returns (uint256) {
-        uint256 stepsFromStart = calculateStepsFromStart();
-
-        uint256 index = stepsFromStart;
-        uint256 sum;
-        uint256 points;
-
-        while (points != middlePriceDays) {
-            if (reservesOf[index].uniswapLastPrice != 0) {
-                sum = sum.add(reservesOf[index].uniswapLastPrice);
-                points = points.add(1);
-            }
-
-            if (index == 0) break;
-
-            index = index.sub(1);
-        }
-
-        if (sum == 0) return getUniswapLastPrice();
-        else return sum.div(points);
     }
 
     function _updatePrice() internal {
@@ -293,12 +170,13 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         uint256 deadline,
         address ref
     ) external payable {
-        uint8 auctionType = auctionTypes[getCurrentDay()];
+        uint256 currentDay = getCurrentDay();
+        uint8 auctionMode = auctions[currentDay].mode;
 
-        if (auctionType == 0) {
+        if (auctionMode == 0) {
             bidInternal(amountOutMin[0], deadline, ref);
-        } else if (auctionType == 1) {
-            ventureBid(amountOutMin, deadline);
+        } else if (auctionMode == 1) {
+            ventureBid(amountOutMin, deadline, currentDay);
         }
     }
 
@@ -349,16 +227,21 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         emit Bid(msg.sender, msg.value, stepsFromStart, now);
     }
 
-    function ventureBid(uint256[] memory amountOutMin, uint256 deadline)
-        internal
-    {
+    function ventureBid(
+        uint256[] memory amountOutMin,
+        uint256 deadline,
+        uint256 currentDay
+    ) internal {
         _saveAuctionData();
         _updatePrice();
 
         (uint256 amountForOrigin, uint256 amountForUniswap) =
             _calculateVentureEthAmounts();
 
-        VentureToken[] storage tokens = tokensOfTheDay[getCurrentDay()];
+        VentureToken[] storage tokens = auctions[currentDay].tokens;
+
+        address[] memory coinsBought;
+        uint256[] memory amountsBought;
 
         for (uint8 i = 0; i < tokens.length; i++) {
             uint256 amountBought =
@@ -374,6 +257,9 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
                 tokens[i].coin,
                 amountBought
             );
+
+            coinsBought[i] = tokens[i].coin;
+            amountsBought[i] = amountBought;
         }
 
         uint256 stepsFromStart = calculateStepsFromStart();
@@ -395,17 +281,68 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
         addresses.recipient.transfer(amountForOrigin);
 
-        emit VentureBid(msg.sender, msg.value, stepsFromStart, now);
+        emit VentureBid(
+            msg.sender,
+            msg.value,
+            stepsFromStart,
+            now,
+            coinsBought,
+            amountsBought
+        );
+    }
+
+    function getUniswapLastPrice() internal view returns (uint256) {
+        address[] memory path = new address[](2);
+
+        path[0] = IUniswapV2Router02(addresses.uniswap).WETH();
+        path[1] = addresses.mainToken;
+
+        uint256 price =
+            IUniswapV2Router02(addresses.uniswap).getAmountsOut(1e18, path)[1];
+
+        return price;
+    }
+
+    function getUniswapMiddlePriceForDays() internal view returns (uint256) {
+        uint256 stepsFromStart = calculateStepsFromStart();
+
+        uint256 index = stepsFromStart;
+        uint256 sum;
+        uint256 points;
+
+        while (points != middlePriceDays) {
+            if (reservesOf[index].uniswapLastPrice != 0) {
+                sum = sum.add(reservesOf[index].uniswapLastPrice);
+                points = points.add(1);
+            }
+
+            if (index == 0) break;
+
+            index = index.sub(1);
+        }
+
+        if (sum == 0) return getUniswapLastPrice();
+        else return sum.div(points);
     }
 
     function withdraw(uint256 auctionId, uint256 stakeDays) external {
         _saveAuctionData();
         _updatePrice();
 
-        require(
-            stakeDays >= options.autoStakeDays,
-            'Auction: stakeDays < minimum days'
-        );
+        uint8 auctionMode = auctions[auctionId.mod(7)].mode;
+
+        if (auctionMode == 0) {
+            require(
+                stakeDays >= options.autoStakeDays,
+                'Auction: stakeDays < minimum days'
+            );
+        } else if (auctionMode == 1) {
+            require(
+                stakeDays >= ventureAutoStakeDays,
+                'Auction: stakeDays < minimum days'
+            );
+        }
+
         require(stakeDays <= 5555, 'Auction: stakeDays > 5555');
 
         uint256 stepsFromStart = calculateStepsFromStart();
@@ -665,34 +602,120 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         }
     }
 
+    function initialize(address _manager, address _migrator)
+        public
+        initializer
+    {
+        _setupRole(MANAGER_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _migrator);
+        init_ = false;
+    }
+
+    function init(
+        uint256 _stepTimestamp,
+        address _mainTokenAddress,
+        address _stakingAddress,
+        address payable _uniswapAddress,
+        address payable _recipientAddress,
+        address _nativeSwapAddress,
+        address _foreignSwapAddress,
+        address _subbalancesAddress,
+        address _auctionV1Address
+    ) external onlyMigrator {
+        require(!init_, 'Init is active');
+        init_ = true;
+        /** Roles */
+        _setupRole(CALLER_ROLE, _nativeSwapAddress);
+        _setupRole(CALLER_ROLE, _foreignSwapAddress);
+        _setupRole(CALLER_ROLE, _stakingAddress);
+        _setupRole(CALLER_ROLE, _subbalancesAddress);
+
+        // Timer
+        if (start == 0) {
+            start = now;
+        }
+
+        stepTimestamp = _stepTimestamp;
+
+        // Options
+        options = Options({
+            autoStakeDays: 14,
+            referrerPercent: 20,
+            referredPercent: 10,
+            referralsOn: true,
+            discountPercent: 20,
+            premiumPercent: 0
+        });
+
+        // Addresses
+        auctionV1 = IAuctionV1(_auctionV1Address);
+        addresses = Addresses({
+            mainToken: _mainTokenAddress,
+            staking: _stakingAddress,
+            uniswap: _uniswapAddress,
+            recipient: _recipientAddress
+        });
+    }
+
+    /** Public Setter Functions */
+    function setReferrerPercentage(uint256 percent) external onlyManager {
+        options.referrerPercent = percent;
+    }
+
+    function setReferredPercentage(uint256 percent) external onlyManager {
+        options.referredPercent = percent;
+    }
+
+    function setReferralsOn(bool _referralsOn) external onlyManager {
+        options.referralsOn = _referralsOn;
+    }
+
+    function setAutoStakeDays(uint256 _autoStakeDays) external onlyManager {
+        options.autoStakeDays = _autoStakeDays;
+    }
+
+    function setVentureAutoStakeDays(uint8 _autoStakeDays)
+        external
+        onlyManager
+    {
+        ventureAutoStakeDays = _autoStakeDays;
+    }
+
+    function setDiscountPercent(uint256 percent) external onlyManager {
+        options.discountPercent = percent;
+    }
+
+    function setPremiumPercent(uint256 percent) external onlyManager {
+        options.premiumPercent = percent;
+    }
+
+    function setMiddlePriceDays(uint256 _middleDays) external onlyManager {
+        middlePriceDays = _middleDays;
+    }
+
     /** Roles management - only for multi sig address */
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);
     }
 
-    function setAuctionTypes(uint8[7] calldata _auctionTypes)
-        external
-        onlyManager
-    {
-        auctionTypes = _auctionTypes;
+    function setAuctionMode(uint8 _day, uint8 _mode) external onlyManager {
+        auctions[_day].mode = _mode;
     }
 
-    function setAuctionType(uint8 _day, uint8 _type) external onlyManager {
-        auctionTypes[_day] = _type;
-    }
-
-    function setTokenOfDay(
+    function setTokensOfDay(
         uint8 day,
         address[] calldata coins,
         uint8[] calldata percentages
     ) external onlyManager {
-        delete tokensOfTheDay[day];
+        AuctionData storage auction = auctions[day];
+
+        auction.mode = 1;
+
+        delete auction.tokens;
 
         uint8 percent = 0;
         for (uint8 i; i < coins.length; i++) {
-            tokensOfTheDay[day].push(
-                VentureToken({coin: coins[i], percentage: percentages[i]})
-            );
+            auction.tokens.push(VentureToken(coins[i], percentages[i]));
 
             percent = percentages[i] + percent;
 
@@ -703,5 +726,42 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             percent == 100,
             'AUCTION: Percentage for venture day must equal 100'
         );
+    }
+
+    /** Getter functions */
+    function auctionsOf_(address account)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return auctionsOf[account];
+    }
+
+    function getAuctionModes() external view returns (uint8[7] memory) {
+        uint8[7] memory auctionModes;
+
+        for (uint8 i; i < auctions.length; i++) {
+            auctionModes[i] = auctions[i].mode;
+        }
+
+        return auctionModes;
+    }
+
+    function getTokensOfDay(uint8 _day) external view returns (address[] memory, uint256[] memory) {
+        address[] memory tokens;
+        uint256[] memory percentages;
+
+        VentureToken[] memory ventureTokens = auctions[_day].tokens;
+
+        for (uint8 i; i < ventureTokens.length; i++) {
+            tokens[i] = ventureTokens[i].coin;
+            percentages[i] = ventureTokens[i].percentage;
+        }
+
+        return (tokens, percentages);
+    }
+
+    function getVentureAutoStakeDays() external view returns (uint8) {
+        return ventureAutoStakeDays;
     }
 }

@@ -755,12 +755,22 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 uint256 firstPayout
             ) = stakingV1.sessionDataOf(msg.sender, v1SessionsOfAccount[i]);
 
+            (amount);
+            (start);
+            (end);
+            (firstPayout);
+            
             if (shares == 0) {
                 continue;
             }
 
             totalShares = totalShares.add(shares);
         }
+
+        require(
+            totalSharesOf[msg.sender] != totalShares,
+            'STAKING: totalSharesOf already set.'
+        );
 
         for (uint256 i = 0; i < divTokens.length(); i++) {
             deductBalances[msg.sender][divTokens.at(i)] = totalShares.mul(
