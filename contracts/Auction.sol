@@ -747,7 +747,11 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         return auctionModes;
     }
 
-    function getTokensOfDay(uint8 _day) external view returns (address[] memory, uint256[] memory) {
+    function getTokensOfDay(uint8 _day)
+        external
+        view
+        returns (address[] memory, uint256[] memory)
+    {
         address[] memory tokens;
         uint256[] memory percentages;
 
