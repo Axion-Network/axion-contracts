@@ -7,12 +7,12 @@ import {
   SubBalances,
   TERC20,
   Token,
-} from '../../typechain';
+} from '../typechain';
 import { ethers, upgrades } from 'hardhat';
 import { expect } from 'chai';
-import { initTestSmartContracts } from '../utils/initTestSmartContracts';
-import { ContractFactory } from '../../libs/ContractFactory';
-import { TestUtil } from '../utils/TestUtil';
+import { initTestSmartContracts } from './utils/initTestSmartContracts';
+import { ContractFactory } from '../libs/ContractFactory';
+import { TestUtil } from './utils/TestUtil';
 
 /** Helper Vars */
 const DAY = 86400;
@@ -133,7 +133,7 @@ describe('Upgradeability', () => {
       // Advance the date to day 100 after launch
       await TestUtil.increaseTime(DAY * 100);
       // Bid with 10 eth
-      await auction.connect(account1).bid(0, DEADLINE, account2.address, {
+      await auction.connect(account1).bid([0], DEADLINE, account2.address, {
         value: ethers.utils.parseEther('10'),
       });
       const currentAuctionIdBefore = await auction.lastAuctionEventId();
