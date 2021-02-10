@@ -1031,4 +1031,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         return divTokenAddresses;
     }
+
+    function getTotalSharesOf() external view returns (uint) {
+        return totalSharesOf[msg.sender];
+    }
 }
