@@ -1,10 +1,10 @@
-import { generateAuctionSnapshot } from './generate-auction-snapshot'
-import { generateBPDSnapshot } from './generate-bpd-snapshot'
-import { generateForeignSwapSnapshot } from './generate-foreign-swap-snapshot'
-import { generateMainTokenSnapshot } from './generate-main-token-snapshot'
-import { generateNatievSwapSnapshot } from './generate-native-swap-snapshot'
-import { generateStakingSnapshot } from './generate-staking-snapshot'
-import { generateSubBalancesSnapshot } from './generate-sub-balances-snapshot'
+import { generateAuctionSnapshot } from './snapshots/scripts/generate-auction-snapshot'
+import { generateBPDSnapshot } from './snapshots/scripts/generate-bpd-snapshot'
+import { generateForeignSwapSnapshot } from './snapshots/scripts/generate-foreign-swap-snapshot'
+import { generateMainTokenSnapshot } from './snapshots/scripts/generate-main-token-snapshot'
+import { generateNatievSwapSnapshot } from './snapshots/scripts/generate-native-swap-snapshot'
+import { generateStakingSnapshot } from './snapshots/scripts/generate-staking-snapshot'
+import { generateSubBalancesSnapshot } from './snapshots/scripts/generate-sub-balances-snapshot'
 
 const run = async () => {
   await generateAuctionSnapshot()
