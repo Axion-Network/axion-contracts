@@ -240,9 +240,9 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
         VentureToken[] storage tokens = auctions[currentDay].tokens;
 
-        address[] memory coinsBought;
-        uint256[] memory amountsBought;
-
+        address[] memory coinsBought = new address[](tokens.length);
+        uint256[] memory amountsBought = new uint256[](tokens.length);
+        
         for (uint8 i = 0; i < tokens.length; i++) {
             uint256 amountBought =
                 _swapEthForToken(

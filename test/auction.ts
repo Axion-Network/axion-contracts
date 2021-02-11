@@ -7,7 +7,9 @@ import {
   Token,
   Staking,
   TERC20,
-  UniswapV2Router02Mock
+  UniswapV2Router02Mock,
+  StakingRestorable,
+  AuctionRestorable
 } from '../typechain';
 import { TestUtil } from './utils/TestUtil';
 
@@ -22,8 +24,8 @@ import {
 describe('Auction', () => {
   let token: Token;
   let swaptoken: TERC20;
-  let auction: Auction;
-  let staking: Staking;
+  let auction: AuctionRestorable;
+  let staking: StakingRestorable;
   let uniswap: UniswapV2Router02Mock;
 
   beforeEach(async () => {
@@ -62,18 +64,18 @@ describe('Auction', () => {
       let day = await auction.getCurrentDay() // get current day
       const auctionType = await auction.getTodaysAuctionType(); // get aution type
       
-      expect(day.toString()).to.be.eq('4'); // 4th day of the week friday + 4 = Teusday
+      expect(day.toString()).to.be.eq('4'); // 4th day of the week Friday + 4 = Tuesday
       expect(auctionType.toString()).to.be.eq('1'); // auction type 1 = VC Auction
 
-      /** Set back to friday */
+      /** Set back to Friday */
       TestUtil.increaseTime(86400 * 3)
       day = await auction.getCurrentDay() // get current day
-      expect(day.toString()).to.be.eq('0'); // 4th day of the week friday + 4 = Teusday
+      expect(day.toString()).to.be.eq('0'); // 4th day of the week Friday + 4 = Tuesday
 
-      /** Set to thusrday */
+      /** Set to Thusrday */
       TestUtil.increaseTime(86400 * 6)
       day = await auction.getCurrentDay() // get current day
-      expect(day.toString()).to.be.eq('6'); // 4th day of the week friday + 4 = Teusday
+      expect(day.toString()).to.be.eq('6'); // 4th day of the week Friday + 4 = Tuesday
     })
 
     it('should not set token of day if percentage does not equal 100', async () => {
@@ -101,10 +103,79 @@ describe('Auction', () => {
   });
 
   describe('withdraw', () => {	
-    it(`should correctly withdraw, and fail if not between ${AUCTIONSTAKE_MIN} and 5555 days`, async () => {	
+    it(`should correctly withdraw non venture auction bid, and fail if not between ${AUCTIONSTAKE_MIN} and 5555 days`, async () => {	
       let auctionID = await auction.lastAuctionEventId();	
       const [account1, account2] = await ethers.getSigners();	
 	
+      await auction	
+        .connect(account1)	
+        .bid([0], DEADLINE, account2.address, {	
+          value: ethers.utils.parseEther('1'),	
+        });	
+
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await auction
+        .connect(account1)
+        .withdraw(auctionID, AUCTIONSTAKE_MIN);
+
+      let stakeSessionId = await staking.sessionsOf(account1.address, 0);
+
+      let stakeSessionData = await staking.sessionDataOf(account1.address, stakeSessionId);
+
+      expect(stakeSessionData.end.sub(stakeSessionData.start).div(SECONDS_IN_DAY)).to.equal(AUCTIONSTAKE_MIN);
+
+      auctionID = await auction.lastAuctionEventId();	
+
+      await auction.connect(account1).bid([0], DEADLINE, account2.address, {	
+        value: ethers.utils.parseEther('2'),	
+      });	
+
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+      
+      await auction
+        .connect(account1)
+        .withdraw(auctionID, 350);
+
+      stakeSessionId = await staking.sessionsOf(account1.address, 1);
+
+      stakeSessionData = await staking.sessionDataOf(account1.address, stakeSessionId);
+
+      expect(stakeSessionData.end.sub(stakeSessionData.start).div(SECONDS_IN_DAY)).to.equal(350);
+
+      auctionID = await auction.lastAuctionEventId();
+
+      await auction.connect(account1).bid([0], DEADLINE, account2.address, {	
+        value: ethers.utils.parseEther('2'),	
+      });	
+
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+      
+      await expect(	
+        auction.connect(account1).withdraw(auctionID, 5556)	
+      ).to.be.revertedWith('Auction: stakeDays > 5555');
+
+      auctionID = await auction.lastAuctionEventId();
+	
+      await auction.connect(account1).bid([0], DEADLINE, account2.address, {	
+        value: ethers.utils.parseEther('2'),	
+      });	
+
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+      
+      await expect(	
+        auction.connect(account1).withdraw(auctionID, 1)	
+      ).to.be.revertedWith('Auction: stakeDays < minimum days');
+    });
+
+    it.only(`should correctly withdraw venture auction bid, and fail if not between ${AUCTIONSTAKE_MIN} and 5555 days`, async () => {	
+      let auctionID = await auction.lastAuctionEventId();	
+      const [account1, account2] = await ethers.getSigners();	
+	
+      await auction.setTokensOfDay(0, [token.address], [100]);
+
+      console.log(await staking.getDivTokens());
+
       await auction	
         .connect(account1)	
         .bid([0], DEADLINE, account2.address, {	

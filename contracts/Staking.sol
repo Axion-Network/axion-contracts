@@ -683,7 +683,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     function withdrawDivToken(address tokenAddress) external {
         uint256 tokenInterestEarned =
-            getTokenInterestEarnedInternal(tokenAddress);
+            getTokenInterestEarnedInternal(msg.sender, tokenAddress);
 
         deductBalances[msg.sender][tokenAddress] = totalSharesOf[msg.sender]
             .mul(tokenPricePerShare[tokenAddress]);
@@ -696,22 +696,22 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         emit WithdrawLiquidDiv(msg.sender, tokenAddress, tokenInterestEarned);
     }
 
-    function getTokenInterestEarned(address tokenAddress)
+    function getTokenInterestEarned(address accountAddress, address tokenAddress)
         external
         view
         returns (uint256)
     {
-        return getTokenInterestEarnedInternal(tokenAddress);
+        return getTokenInterestEarnedInternal(accountAddress, tokenAddress);
     }
 
-    function getTokenInterestEarnedInternal(address tokenAddress)
+    function getTokenInterestEarnedInternal(address accountAddress, address tokenAddress)
         internal
         view
         returns (uint256)
     {
         return
-            totalSharesOf[msg.sender].mul(tokenPricePerShare[tokenAddress]).sub(
-                deductBalances[msg.sender][tokenAddress]
+            totalSharesOf[accountAddress].mul(tokenPricePerShare[tokenAddress]).sub(
+                deductBalances[accountAddress][tokenAddress]
             );
     }
 
@@ -1023,7 +1023,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function getDivTokens() external view returns (address[] memory) {
-        address[] memory divTokenAddresses;
+        address[] memory divTokenAddresses = new address[](divTokens.length());
 
         for (uint8 i = 0; i < divTokens.length(); i++) {
             divTokenAddresses[i] = divTokens.at(i);

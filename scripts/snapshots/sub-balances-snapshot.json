@@ -1,0 +1,74 @@
+{
+  "subBalanceList": [
+    {
+      "0": "180636263736263736263736259",
+      "1": "0",
+      "2": "1613201480",
+      "3": "350",
+      "4": false,
+      "totalShares": "180636263736263736263736259",
+      "totalWithdrawAmount": "0",
+      "payDayTime": "1613201480",
+      "requiredStakePeriod": "350",
+      "minted": false
+    },
+    {
+      "0": "167458241758241758241758238",
+      "1": "0",
+      "2": "1613411480",
+      "3": "700",
+      "4": false,
+      "totalShares": "167458241758241758241758238",
+      "totalWithdrawAmount": "0",
+      "payDayTime": "1613411480",
+      "requiredStakePeriod": "700",
+      "minted": false
+    },
+    {
+      "0": "167458241758241758241758238",
+      "1": "0",
+      "2": "1613621480",
+      "3": "1050",
+      "4": false,
+      "totalShares": "167458241758241758241758238",
+      "totalWithdrawAmount": "0",
+      "payDayTime": "1613621480",
+      "requiredStakePeriod": "1050",
+      "minted": false
+    },
+    {
+      "0": "149749450549450549450549447",
+      "1": "0",
+      "2": "1613831480",
+      "3": "1400",
+      "4": false,
+      "totalShares": "149749450549450549450549447",
+      "totalWithdrawAmount": "0",
+      "payDayTime": "1613831480",
+      "requiredStakePeriod": "1400",
+      "minted": false
+    },
+    {
+      "0": "149749450549450549450549447",
+      "1": "0",
+      "2": "1614041480",
+      "3": "1750",
+      "4": false,
+      "totalShares": "149749450549450549450549447",
+      "totalWithdrawAmount": "0",
+      "payDayTime": "1614041480",
+      "requiredStakePeriod": "1750",
+      "minted": false
+    }
+  ],
+  "PERIODS": [
+    "350",
+    "700",
+    "1050",
+    "1400",
+    "1750"
+  ],
+  "balanceOf": "0",
+  "startTimestamp": "1612991480",
+  "currentSharesTotalSupply": "181641208791208791208791204"
+}
