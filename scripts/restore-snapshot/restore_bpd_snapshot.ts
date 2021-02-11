@@ -1,6 +1,6 @@
 import { BPD, Token } from '../../typechain';
 
-const bpdSnapshot = require('../../snapshots/bpd-snapshot.json');
+const bpdSnapshot = require('../snapshots/bpd-snapshot.json');
 
 export async function restoreBPDSnapshot(bpd: BPD, token: Token) {
   const { poolTransferred, poolYearAmounts, balanceOf } = bpdSnapshot;
