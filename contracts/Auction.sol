@@ -752,10 +752,10 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         view
         returns (address[] memory, uint256[] memory)
     {
-        address[] memory tokens;
-        uint256[] memory percentages;
-
         VentureToken[] memory ventureTokens = auctions[_day].tokens;
+
+        address[] memory tokens = new address[](ventureTokens.length);
+        uint256[] memory percentages = new uint256[](ventureTokens.length);
 
         for (uint8 i; i < ventureTokens.length; i++) {
             tokens[i] = ventureTokens[i].coin;

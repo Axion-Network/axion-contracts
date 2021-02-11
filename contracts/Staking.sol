@@ -118,8 +118,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     EnumerableSetUpgradeable.AddressSet internal divTokens;
     mapping(address => uint256) internal totalSharesOf;
-    mapping(address => uint256) internal tokenPricePerShare;
-    mapping(address => mapping(address => uint256)) internal deductBalances;
+    mapping(address => uint256) public tokenPricePerShare;
+    mapping(address => mapping(address => uint256)) public deductBalances;
 
     /* New variables must go below here. */
 
@@ -696,23 +696,22 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         emit WithdrawLiquidDiv(msg.sender, tokenAddress, tokenInterestEarned);
     }
 
-    function getTokenInterestEarned(address accountAddress, address tokenAddress)
-        external
-        view
-        returns (uint256)
-    {
+    function getTokenInterestEarned(
+        address accountAddress,
+        address tokenAddress
+    ) external view returns (uint256) {
         return getTokenInterestEarnedInternal(accountAddress, tokenAddress);
     }
 
-    function getTokenInterestEarnedInternal(address accountAddress, address tokenAddress)
-        internal
-        view
-        returns (uint256)
-    {
+    function getTokenInterestEarnedInternal(
+        address accountAddress,
+        address tokenAddress
+    ) internal view returns (uint256) {
         return
-            totalSharesOf[accountAddress].mul(tokenPricePerShare[tokenAddress]).sub(
-                deductBalances[accountAddress][tokenAddress]
-            );
+            totalSharesOf[accountAddress]
+                .mul(tokenPricePerShare[tokenAddress])
+                .sub(deductBalances[accountAddress][tokenAddress])
+                .div(1e18);
     }
 
     function rebalance(uint256 oldTotalSharesOf) internal {
@@ -740,7 +739,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             );
         }
 
-        uint256[] memory v1SessionsOfAccount = stakingV1.sessionsOf_(msg.sender);
+        uint256[] memory v1SessionsOfAccount =
+            stakingV1.sessionsOf_(msg.sender);
 
         for (uint256 i = 0; i < v1SessionsOfAccount.length; i++) {
             if (v1SessionsOfAccount[i] > lastSessionIdV1) {
@@ -759,7 +759,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             (start);
             (end);
             (firstPayout);
-            
+
             if (shares == 0) {
                 continue;
             }
@@ -794,11 +794,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add(
-            amountBought
-                .sub(amountForBidder)
-                .mul(1e12)
-                .div(sharesTotalSupply)
-                .div(1e12)
+            amountBought.sub(amountForBidder).mul(1e18).div(sharesTotalSupply)
         );
     }
 
@@ -1032,7 +1028,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return divTokenAddresses;
     }
 
-    function getTotalSharesOf() external view returns (uint) {
+    function getTotalSharesOf() external view returns (uint256) {
         return totalSharesOf[msg.sender];
     }
 }
