@@ -732,7 +732,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     function setTotalSharesOfAccount() external {
         uint256 totalShares;
-        uint256[] memory sessionsOfAccount = sessionsOf[msg.sender];
+        uint256[] storage sessionsOfAccount = sessionsOf[msg.sender];
 
         for (uint256 i = 0; i < sessionsOfAccount.length; i++) {
             totalShares = totalShares.add(
@@ -740,7 +740,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             );
         }
 
-        uint256[] memory v1SessionsOfAccount = stakingV1.sessionsOf(msg.sender);
+        uint256[] memory v1SessionsOfAccount = stakingV1.sessionsOf_(msg.sender);
 
         for (uint256 i = 0; i < v1SessionsOfAccount.length; i++) {
             if (v1SessionsOfAccount[i] > lastSessionIdV1) {

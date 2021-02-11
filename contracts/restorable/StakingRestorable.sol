@@ -183,4 +183,9 @@ contract StakingRestorable is Staking {
             _staker
         );
     }
+
+    // Used for tests only
+    function resetTotalSharesOfAccount() external {
+        totalSharesOf[msg.sender] = 0;
+    }
 }
