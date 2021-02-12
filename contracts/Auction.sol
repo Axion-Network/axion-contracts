@@ -207,22 +207,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             auctionBidOf[stepsFromStart][_msgSender()].ref = ref;
         }
 
-        auctionBidOf[stepsFromStart][_msgSender()].eth = auctionBidOf[
-            stepsFromStart
-        ][_msgSender()]
-            .eth
-            .add(msg.value);
-
-        if (!existAuctionsOf[stepsFromStart][_msgSender()]) {
-            auctionsOf[_msgSender()].push(stepsFromStart);
-            existAuctionsOf[stepsFromStart][_msgSender()] = true;
-        }
-
-        reservesOf[stepsFromStart].eth = reservesOf[stepsFromStart].eth.add(
-            msg.value
-        );
-
-        addresses.recipient.transfer(toRecipient);
+        bidCommon(stepsFromStart, toRecipient);
 
         emit Bid(msg.sender, msg.value, stepsFromStart, now);
     }
@@ -235,35 +220,61 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _saveAuctionData();
         _updatePrice();
 
-        (uint256 amountForOrigin, uint256 amountForUniswap) =
+        (uint256 amountForOrigin, uint256 amountForStaking) =
             _calculateVentureEthAmounts();
 
         VentureToken[] storage tokens = auctions[currentDay].tokens;
 
         address[] memory coinsBought = new address[](tokens.length);
         uint256[] memory amountsBought = new uint256[](tokens.length);
-        
+
         for (uint8 i = 0; i < tokens.length; i++) {
-            uint256 amountBought =
-                _swapEthForToken(
+            uint256 amountBought;
+
+            uint256 amountToBuy =
+                amountForStaking.mul(tokens[i].percentage).div(100);
+
+            if (tokens[i].coin != address(0)) {
+                amountBought = _swapEthForToken(
                     tokens[i].coin,
                     amountOutMin[i],
-                    amountForUniswap.mul(tokens[i].percentage).div(100),
+                    amountToBuy,
                     deadline
                 );
 
-            IStaking(addresses.staking).updateTokenPricePerShare(
-                msg.sender,
-                tokens[i].coin,
-                amountBought
-            );
+                IStaking(addresses.staking).updateTokenPricePerShare(
+                    msg.sender,
+                    tokens[i].coin,
+                    amountBought
+                );
+            } else {
+                amountBought = amountToBuy;
+
+                IStaking(addresses.staking).updateTokenPricePerShare{
+                    value: amountToBuy
+                }(msg.sender, tokens[i].coin, amountToBuy);
+            }
 
             coinsBought[i] = tokens[i].coin;
             amountsBought[i] = amountBought;
         }
 
         uint256 stepsFromStart = calculateStepsFromStart();
+        bidCommon(stepsFromStart, amountForOrigin);
 
+        emit VentureBid(
+            msg.sender,
+            msg.value,
+            stepsFromStart,
+            now,
+            coinsBought,
+            amountsBought
+        );
+    }
+
+    function bidCommon(uint256 stepsFromStart, uint256 amountForOrigin)
+        internal
+    {
         auctionBidOf[stepsFromStart][_msgSender()].eth = auctionBidOf[
             stepsFromStart
         ][_msgSender()]
@@ -280,15 +291,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         );
 
         addresses.recipient.transfer(amountForOrigin);
-
-        emit VentureBid(
-            msg.sender,
-            msg.value,
-            stepsFromStart,
-            now,
-            coinsBought,
-            amountsBought
-        );
     }
 
     function getUniswapLastPrice() internal view returns (uint256) {

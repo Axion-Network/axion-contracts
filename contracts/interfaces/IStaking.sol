@@ -10,10 +10,10 @@ interface IStaking {
     ) external;
 
     function updateTokenPricePerShare(
-        address bidderAddress,
+        address payable bidderAddress,
         address tokenAddress,
         uint256 amountBought
-    ) external;
+    ) external payable;
 
     function addDivToken(address tokenAddress) external;
 }

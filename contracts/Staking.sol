@@ -685,13 +685,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 tokenInterestEarned =
             getTokenInterestEarnedInternal(msg.sender, tokenAddress);
 
-        deductBalances[msg.sender][tokenAddress] = totalSharesOf[msg.sender]
-            .mul(tokenPricePerShare[tokenAddress]);
-
         IERC20Upgradeable(tokenAddress).transfer(
             msg.sender,
             tokenInterestEarned
         );
+
+        deductBalances[msg.sender][tokenAddress] = totalSharesOf[msg.sender]
+            .mul(tokenPricePerShare[tokenAddress]);
 
         emit WithdrawLiquidDiv(msg.sender, tokenAddress, tokenInterestEarned);
     }
@@ -730,6 +730,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function setTotalSharesOfAccount() external {
+        // TO DISCUSS - This would negate all liq divs if account not registered and there was a new stake created
         uint256 totalShares;
         uint256[] storage sessionsOfAccount = sessionsOf[msg.sender];
 
@@ -782,17 +783,21 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function updateTokenPricePerShare(
-        address bidderAddress,
+        address payable bidderAddress,
         address tokenAddress,
         uint256 amountBought
-    ) external override onlyAuction {
+    ) external payable override onlyAuction {
         uint256 amountForBidder = amountBought.mul(10).div(100);
 
-        IERC20Upgradeable(tokenAddress).transfer(
-            bidderAddress,
-            amountForBidder
-        );
-
+        if (tokenAddress != address(0)) {
+            IERC20Upgradeable(tokenAddress).transfer(
+                bidderAddress,
+                amountForBidder
+            );
+        } else {
+            bidderAddress.transfer(amountForBidder);
+        }
+        
         tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add(
             amountBought.sub(amountForBidder).mul(1e18).div(sharesTotalSupply)
         );
