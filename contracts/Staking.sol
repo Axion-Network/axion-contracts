@@ -677,7 +677,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function updateShareRate(uint256 _payout) internal {
-       
         uint256 currentTokenTotalSupply = IERC20Upgradeable(addresses.mainToken).totalSupply();
         uint256 growthFactor = _payout.div(currentTokenTotalSupply + totalStakedAmount);
 
