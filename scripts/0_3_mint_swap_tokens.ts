@@ -20,18 +20,23 @@ const main = async () => {
 
     const swapToken = await ContractFactory.getTERC20At(SWAP_TOKEN_ADDRESS);
 
-    await swapToken.mint(
-      '0xcaaD2020967F0f314Fb8A150413F7f9fC26c0f73',
-      '1000000000000000000000000000'
-    );
+    // await swapToken.mint(
+    //   '0xcaaD2020967F0f314Fb8A150413F7f9fC26c0f73',
+    //   '1000000000000000000000000000'
+    // );
+
+    // await swapToken.mint(
+    //   '0xcFB56b3eE67C3FC890EF660A40fbccAFdCA84d6f',
+    //   '1000000000000000000000000000'
+    // );
+
+    // await swapToken.mint(
+    //   '0xbE42d298d31b2551aE9E6e88B838A3ba5Dc1D6CD',
+    //   '1000000000000000000000000000'
+    // );
 
     await swapToken.mint(
-      '0xcFB56b3eE67C3FC890EF660A40fbccAFdCA84d6f',
-      '1000000000000000000000000000'
-    );
-
-    await swapToken.mint(
-      '0xbE42d298d31b2551aE9E6e88B838A3ba5Dc1D6CD',
+      '0xaA48BA08769f938291D66A2fC8Efeb369163887E',
       '1000000000000000000000000000'
     );
 

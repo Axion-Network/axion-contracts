@@ -121,6 +121,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     mapping(address => uint256) public tokenPricePerShare;
     mapping(address => mapping(address => uint256)) public deductBalances;
 
+    uint256 public shareRateScalingFactor;
+
     /* New variables must go below here. */
 
     modifier onlyManager() {
@@ -342,6 +344,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         nextPayoutCall = nextPayoutCall.add(stepTimestamp);
+
+        updateShareRate(payout);
 
         emit MakePayout(payout, sharesTotalSupply, now);
     }
@@ -685,10 +689,16 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 tokenInterestEarned =
             getTokenInterestEarnedInternal(msg.sender, tokenAddress);
 
-        IERC20Upgradeable(tokenAddress).transfer(
-            msg.sender,
-            tokenInterestEarned
-        );
+        if (
+            tokenAddress != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
+        ) {
+            IERC20Upgradeable(tokenAddress).transfer(
+                msg.sender,
+                tokenInterestEarned
+            );
+        } else {
+            msg.sender.transfer(tokenInterestEarned);
+        }
 
         deductBalances[msg.sender][tokenAddress] = totalSharesOf[msg.sender]
             .mul(tokenPricePerShare[tokenAddress]);
@@ -797,7 +807,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         } else {
             bidderAddress.transfer(amountForBidder);
         }
-        
+
         tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add(
             amountBought.sub(amountForBidder).mul(1e18).div(sharesTotalSupply)
         );
@@ -1035,5 +1045,25 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     function getTotalSharesOf() external view returns (uint256) {
         return totalSharesOf[msg.sender];
+    }
+
+    function updateShareRate(uint256 _payout) internal {
+        uint256 currentTokenTotalSupply =
+            IERC20Upgradeable(addresses.mainToken).totalSupply();
+        uint256 growthFactor =
+            _payout.div(currentTokenTotalSupply + totalStakedAmount);
+
+        if (shareRateScalingFactor == 0) {
+            shareRateScalingFactor = 1;
+        }
+
+        shareRate = shareRate.mul(1 + shareRateScalingFactor.mul(growthFactor));
+    }
+
+    function setShareRateScalingFactor(uint256 _scalingFactor)
+        external
+        onlyManager
+    {
+        shareRateScalingFactor = _scalingFactor;
     }
 }

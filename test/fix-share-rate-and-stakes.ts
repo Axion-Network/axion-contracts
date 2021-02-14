@@ -132,78 +132,79 @@ xdescribe('Fix Share Rates & Stakes', () => {
     await staking.connect(staker).unstake(sessionId);
   });
 
-  it('should correctly update shares total supply', async () => {
-    const length = 10;
+  /** Since share rate is now fixed this test is not longer needed */
+  // it('should correctly update shares total supply', async () => {
+  //   const length = 10;
 
-    const [setter, recipient, staker] = await ethers.getSigners();
-    let subBalancesMock: SubBalancesMock;
-    subBalancesMock = await (
-      await ContractFactory.getSubBalancesMockFactory()
-    ).deploy();
-    const { staking, stakingV1, token } = await initTestSmartContracts({
-      setter: setter,
-      recipient: recipient,
-      fakeSubBalances: subBalancesMock.address,
-      lastSessionIdV1: 2,
-    });
+  //   const [setter, recipient, staker] = await ethers.getSigners();
+  //   let subBalancesMock: SubBalancesMock;
+  //   subBalancesMock = await (
+  //     await ContractFactory.getSubBalancesMockFactory()
+  //   ).deploy();
+  //   const { staking, stakingV1, token } = await initTestSmartContracts({
+  //     setter: setter,
+  //     recipient: recipient,
+  //     fakeSubBalances: subBalancesMock.address,
+  //     lastSessionIdV1: 2,
+  //   });
 
-    await token.connect(setter).setupRole(ROLES.MINTER, setter.address); // setup role
-    await token.connect(setter).mint(staker.address, '200'); // mint 200 for account 1
+  //   await token.connect(setter).setupRole(ROLES.MINTER, setter.address); // setup role
+  //   await token.connect(setter).mint(staker.address, '200'); // mint 200 for account 1
 
-    await token.connect(staker).approve(stakingV1.address, '100');
-    await stakingV1.connect(staker).stake('100', length);
-    const sessionId = await stakingV1.sessionsOf(staker.address, 0);
+  //   await token.connect(staker).approve(stakingV1.address, '100');
+  //   await stakingV1.connect(staker).stake('100', length);
+  //   const sessionId = await stakingV1.sessionsOf(staker.address, 0);
 
-    // // So payout gets values ?
-    await token.connect(staker).approve(staking.address, '100');
-    await staking.connect(staker).stake('100', length);
+  //   // // So payout gets values ?
+  //   await token.connect(staker).approve(staking.address, '100');
+  //   await staking.connect(staker).stake('100', length);
 
-    const days = length + 18;
-    for (let i = 0; i < days; i++) {
-      await TestUtil.increaseTime(SECONDS_IN_DAY);
+  //   const days = length + 18;
+  //   for (let i = 0; i < days; i++) {
+  //     await TestUtil.increaseTime(SECONDS_IN_DAY);
 
-      await staking.makePayout();
-    }
+  //     await staking.makePayout();
+  //   }
 
-    await stakingV1.connect(staker).unstakeTest(sessionId);
+  //   await stakingV1.connect(staker).unstakeTest(sessionId);
 
-    expect(await staking.sharesTotalSupply().then(String)).to.be.eq('100');
-    await staking.connect(setter).fixV1Stake(staker.address, sessionId);
-    expect(await staking.sharesTotalSupply().then(String)).to.be.eq('201');
-  });
+  //   expect(await staking.sharesTotalSupply().then(String)).to.be.eq('100');
+  //   await staking.connect(setter).fixV1Stake(staker.address, sessionId);
+  //   expect(await staking.sharesTotalSupply().then(String)).to.be.eq('201');
+  // });
 
-  it('should not fix a stake which has already been fixed', async () => {
-    const length = 10;
+  // it('should not fix a stake which has already been fixed', async () => {
+  //   const length = 10;
 
-    const [setter, recipient, staker] = await ethers.getSigners();
-    let subBalancesMock: SubBalancesMock;
-    subBalancesMock = await (
-      await ContractFactory.getSubBalancesMockFactory()
-    ).deploy();
-    const { staking, stakingV1, token } = await initTestSmartContracts({
-      setter: setter,
-      recipient: recipient,
-      bank: staker,
-      fakeSubBalances: subBalancesMock.address,
-      lastSessionIdV1: 1,
-    });
+  //   const [setter, recipient, staker] = await ethers.getSigners();
+  //   let subBalancesMock: SubBalancesMock;
+  //   subBalancesMock = await (
+  //     await ContractFactory.getSubBalancesMockFactory()
+  //   ).deploy();
+  //   const { staking, stakingV1, token } = await initTestSmartContracts({
+  //     setter: setter,
+  //     recipient: recipient,
+  //     bank: staker,
+  //     fakeSubBalances: subBalancesMock.address,
+  //     lastSessionIdV1: 1,
+  //   });
 
-    await token.connect(setter).setupRole(ROLES.MINTER, setter.address); // setup role
-    await token.connect(setter).mint(staker.address, '100'); // mint 100 for account 1
+  //   await token.connect(setter).setupRole(ROLES.MINTER, setter.address); // setup role
+  //   await token.connect(setter).mint(staker.address, '100'); // mint 100 for account 1
 
-    await token.connect(staker).approve(stakingV1.address, '100');
-    await stakingV1.connect(staker).stake('100', length);
-    const sessionId = await stakingV1.sessionsOf(staker.address, 0);
+  //   await token.connect(staker).approve(stakingV1.address, '100');
+  //   await stakingV1.connect(staker).stake('100', length);
+  //   const sessionId = await stakingV1.sessionsOf(staker.address, 0);
 
-    await TestUtil.increaseTime(SECONDS_IN_DAY * length);
-    await stakingV1.connect(staker).unstakeTest(sessionId);
+  //   await TestUtil.increaseTime(SECONDS_IN_DAY * length);
+  //   await stakingV1.connect(staker).unstakeTest(sessionId);
 
-    await staking.connect(setter).fixV1Stake(staker.address, sessionId);
+  //   await staking.connect(setter).fixV1Stake(staker.address, sessionId);
 
-    await expect(
-      staking.connect(setter).fixV1Stake(staker.address, sessionId)
-    ).to.be.revertedWith('Stake already fixed and or withdrawn');
-  });
+  //   await expect(
+  //     staking.connect(setter).fixV1Stake(staker.address, sessionId)
+  //   ).to.be.revertedWith('Stake already fixed and or withdrawn');
+  // });
 
   it('should not fix a stake which has not been unstaked', async () => {
     const length = 10;

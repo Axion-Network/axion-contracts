@@ -7,7 +7,7 @@ import { PromiseUtil } from '../libs/promise.util';
 import { Web3Util } from '../libs/web3.util';
 import { ContractEvent } from '../libs/contract-event';
 
-const ADDRESSES = require('../../deployed-addresses/v1addresses.json');
+const ADDRESSES = require('../../../deployed-addresses/v1addresses.json');
 const { STAKING_ADDRESS, TOKEN_ADDRESS } = ADDRESSES;
 
 interface Payout {

@@ -29,15 +29,15 @@ const main = async () => {
       staking,
     } = await getDeployedContracts(networkName);
 
-    // const auctionUpgrade = await upgrades.prepareUpgrade(
-    //   auction.address,
-    //   await ContractFactory.getAuctionFactory(),
-    //   {
-    //     unsafeAllowCustomTypes: true,
-    //     unsafeAllowLinkedLibraries: true,
-    //   }
-    // );
-    // console.log('Upgraded auction contract - ', auctionUpgrade);
+    const auctionUpgrade = await upgrades.prepareUpgrade(
+      auction.address,
+      await ContractFactory.getAuctionFactory(),
+      {
+        unsafeAllowCustomTypes: true,
+        unsafeAllowLinkedLibraries: true,
+      }
+    );
+    console.log('Upgraded auction contract - ', auctionUpgrade);
 
     // const bpdUpgrade = await upgrades.prepareUpgrade(
     //   bpd.address,
@@ -69,15 +69,15 @@ const main = async () => {
     // );
     // console.log('Upgraded nativeSwap contract - ', nativeSwapUpgrade);
 
-    // const stakingUpgrade = await upgrades.prepareUpgrade(
-    //   staking.address,
-    //   await ContractFactory.getStakingFactory(),
-    //   {
-    //     unsafeAllowCustomTypes: true,
-    //     unsafeAllowLinkedLibraries: true,
-    //   }
-    // );
-    // console.log('Upgraded staking contract - ', stakingUpgrade);
+    const stakingUpgrade = await upgrades.prepareUpgrade(
+      staking.address,
+      await ContractFactory.getStakingFactory(),
+      {
+        unsafeAllowCustomTypes: true,
+        unsafeAllowLinkedLibraries: true,
+      }
+    );
+    console.log('Upgraded staking contract - ', stakingUpgrade);
 
     // const subBalancesUpgrade = await upgrades.prepareUpgrade(
     //   subBalances.address,

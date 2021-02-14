@@ -22,11 +22,11 @@
     },
     "2": {
       "0": "0",
-      "1": "285714285714285714285714",
+      "1": "0",
       "2": "0",
       "3": "0",
       "eth": "0",
-      "token": "285714285714285714285714",
+      "token": "0",
       "uniswapLastPrice": "0",
       "uniswapMiddlePrice": "0"
     },
@@ -1001,7 +1001,7 @@
       "uniswapMiddlePrice": "0"
     }
   },
-  "start": "1612991480",
+  "start": "1613333566",
   "lastAuctionEventId": "0",
-  "balanceOf": "285714285714285714285714"
+  "balanceOf": "0"
 }

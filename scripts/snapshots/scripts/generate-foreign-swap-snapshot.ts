@@ -7,7 +7,7 @@ import { PromiseUtil } from '../libs/promise.util';
 
 require('dotenv').config();
 
-const ADDRESSES = require('../../deployed-addresses/v1addresses.json');
+const ADDRESSES = require('../../../deployed-addresses/v1addresses.json');
 const { FOREIGNSWAP_ADDRESS, TOKEN_ADDRESS } = ADDRESSES;
 
 interface ForeignSwapState {

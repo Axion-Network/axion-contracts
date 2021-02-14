@@ -234,7 +234,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             uint256 amountToBuy =
                 amountForStaking.mul(tokens[i].percentage).div(100);
 
-            if (tokens[i].coin != address(0)) {
+            if (tokens[i].coin != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)) {
                 amountBought = _swapEthForToken(
                     tokens[i].coin,
                     amountOutMin[i],
