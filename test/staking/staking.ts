@@ -646,6 +646,7 @@ describe('Staking', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
     await staking.connect(_setter).setMaxShareEventActive(true);
+    await staking.connect(_setter).setMaxShareMaxDays(5555);
 
     await token.connect(_staker).approve(staking.address, amount);
     await staking.connect(_staker).stake(amount, stakingDays);
@@ -702,6 +703,7 @@ describe('Staking', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
     await staking.connect(_setter).setMaxShareEventActive(true);
+    await staking.connect(_setter).setMaxShareMaxDays(5555);
 
     await token.connect(_staker).approve(staking.address, amount);
     await stakingV1.connect(_staker).stake(amount, stakingDays);
@@ -728,6 +730,7 @@ describe('Staking', async () => {
     const stakingDays = 5555;
     const amount = ethers.utils.parseEther('10');
     await staking.connect(_setter).setMaxShareEventActive(true);
+    await staking.connect(_setter).setMaxShareMaxDays(5555);
 
     await token.connect(_staker).approve(staking.address, amount);
     await stakingV1.connect(_staker).stake(amount, stakingDays);
@@ -778,5 +781,41 @@ describe('Staking', async () => {
     await expect(
       staking.connect(_staker).maxShareV1(sessionId)
     ).to.be.revertedWith('Stake withdrawn');
+  });
+
+  it.only('should not upgrade a stake to max share that is has stake days > max share max days', async () => {
+    const stakingDays = 10;
+    const amount = ethers.utils.parseEther('10');
+    await staking.connect(_setter).setMaxShareEventActive(true);
+    await staking.connect(_setter).setMaxShareMaxDays(1825);
+
+    await token.connect(_staker).approve(staking.address, amount);
+    await staking.connect(_staker).stake(amount, stakingDays);
+
+    for (let i = 0; i < stakingDays; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
+
+    await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+
+    const sessionId = await staking.sessionsOf(_staker.address, 0);
+
+    await staking.connect(_staker).maxShare(sessionId);
+
+    const sessionDataAfter = await staking.sessionDataOf(
+      _staker.address,
+      sessionId
+    );
+
+    expect(sessionDataAfter.firstPayout.toString()).to.equal('10');
+    expect(sessionDataAfter.lastPayout.toString()).to.equal('5565');
+
+    await expect(
+      staking.connect(_staker).maxShare(sessionId)
+    ).to.be.revertedWith(
+      'Max Share Upgrade - Stake must be less then max share max days'
+    );
   });
 });
