@@ -713,7 +713,7 @@ describe('Staking', async () => {
     ).to.be.revertedWith('Stake withdrawn');
   });
 
-  it('should upgrade v1 stakes to max share', async () => {
+  it.only('should upgrade v1 stakes to max share', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
     await staking.connect(_setter).setMaxShareEventActive(true);
@@ -724,7 +724,11 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(`10000000000000000000`);
     await staking.setTotalStakedAmount(`10000000000000000000`);
 
-    await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+    for (let i = 0; i < 10; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
