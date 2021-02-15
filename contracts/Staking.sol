@@ -799,7 +799,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     ) external payable override onlyAuction {
         uint256 amountForBidder = amountBought.mul(10).div(100);
 
-        if (tokenAddress != address(0)) {
+        if (
+            tokenAddress != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
+        ) {
             IERC20Upgradeable(tokenAddress).transfer(
                 bidderAddress,
                 amountForBidder
