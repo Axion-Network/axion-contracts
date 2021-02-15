@@ -110,8 +110,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     bool private maxShareEventActive;
     uint16 private maxShareMaxDays;
-
-    uint256 public shareRateScalingFactor;
+    uint256 private shareRateScalingFactor;
 
     /* New variables must go below here. */
 
