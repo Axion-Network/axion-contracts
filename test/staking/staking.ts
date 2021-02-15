@@ -620,7 +620,7 @@ describe('Staking', async () => {
       previousShareRate = shareRate;
     }
 
-    // DAY 11
+    // DAY 6
     await TestUtil.increaseTime(SECONDS_IN_DAY);
 
     await staking.makePayout();
@@ -674,10 +674,6 @@ describe('Staking', async () => {
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
 
     const sessionId = await staking.sessionsOf(_staker.address, 0);
-    const sessionDataBefore = await staking.sessionDataOf(
-      _staker.address,
-      sessionId
-    );
 
     await staking.connect(_staker).maxShare(sessionId);
 
@@ -731,10 +727,6 @@ describe('Staking', async () => {
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
-    const sessionDataV1 = await stakingV1.sessionDataOf(
-      _staker.address,
-      sessionId
-    );
 
     await staking.connect(_staker).maxShareV1(sessionId);
 
@@ -763,16 +755,11 @@ describe('Staking', async () => {
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
-    const sessionDataV1 = await stakingV1.sessionDataOf(
-      _staker.address,
-      sessionId
-    );
-    console.log(sessionDataV1);
 
     await staking.connect(_staker).maxShareV1(sessionId);
 
     const sessionData = await staking.sessionDataOf(_staker.address, sessionId);
-    console.log(sessionData);
+
     expect(sessionData.firstPayout.toString()).to.equal('10');
     expect(sessionData.lastPayout.toString()).to.equal('5565');
   });
