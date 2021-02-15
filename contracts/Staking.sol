@@ -107,7 +107,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     uint256 public basePeriod;
     uint256 public totalStakedAmount;
+
     bool private maxShareEventActive;
+
+    uint256 public shareRateScalingFactor;
+
     /* New variables must go below here. */
 
     /** Roles */
@@ -326,6 +330,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         nextPayoutCall = nextPayoutCall.add(stepTimestamp);
+
+        updateShareRate(payout);
 
         emit MakePayout(payout, sharesTotalSupply, now);
     }
@@ -655,7 +661,30 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         emit Stake(staker, sessionId, amount, start, end, shares);
     }
 
-    /** Max Share Event */
+    function updateShareRate(uint256 _payout) internal {
+        uint256 currentTokenTotalSupply =
+            IERC20Upgradeable(addresses.mainToken).totalSupply();
+
+        uint256 growthFactor =
+            _payout.mul(1e18).div(
+                currentTokenTotalSupply + totalStakedAmount + 1
+            );
+
+        if (shareRateScalingFactor == 0) {
+            shareRateScalingFactor = 1;
+        }
+
+        shareRate = shareRate
+            .mul(1e18 + shareRateScalingFactor.mul(growthFactor))
+            .div(1e18);
+    }
+
+    function setShareRateScalingFactor(uint256 _scalingFactor)
+        external
+        onlyManager
+    {
+        shareRateScalingFactor = _scalingFactor;
+    }
 
     function maxShare(uint256 sessionId) external {
         Session storage session = sessionDataOf[msg.sender][sessionId];

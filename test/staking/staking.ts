@@ -2,6 +2,7 @@ import { initTestSmartContracts } from '../utils/initTestSmartContracts';
 import { ContractFactory } from '../../libs/ContractFactory';
 import { TestUtil } from '../utils/TestUtil';
 import { ethers } from 'hardhat';
+import web3 from 'web3';
 import { expect } from 'chai';
 import { Token, Staking, StakingV1, SubBalancesMock } from '../../typechain';
 import { BigNumber } from 'ethers';
@@ -248,7 +249,7 @@ describe('Staking', async () => {
   });
 
   it('should stop accruing interest after stake end date', async () => {
-    const stakingDays = 10;
+    const stakingDays = 5;
     const amount = ethers.utils.parseEther('10');
 
     await token.connect(_staker).approve(staking.address, amount);
@@ -277,7 +278,7 @@ describe('Staking', async () => {
       previousInterest = interest;
     }
 
-    // DAY 11
+    // DAY 6
     await TestUtil.increaseTime(SECONDS_IN_DAY);
 
     await staking.makePayout();
@@ -578,6 +579,42 @@ describe('Staking', async () => {
     );
   });
 
+  it('should update share rate daily', async () => {
+    const stakingDays = 5;
+    const amount = ethers.utils.parseEther('10');
+
+    await token.connect(_staker).approve(staking.address, amount);
+
+    await staking.connect(_staker).stake(amount, stakingDays);
+
+    let _initialShareRate = await staking.shareRate();
+    let initialShareRate = parseFloat(
+      web3.utils.fromWei(_initialShareRate.toString())
+    );
+    let previousShareRate = initialShareRate;
+
+    for (let i = 0; i < stakingDays; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+
+      const _shareRate = await staking.shareRate();
+      const shareRate = parseFloat(web3.utils.fromWei(_shareRate.toString()));
+
+      expect(shareRate).to.be.greaterThan(previousShareRate);
+      previousShareRate = shareRate;
+    }
+
+    // DAY 6
+    await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+    await staking.makePayout();
+
+    const _shareRate = await staking.shareRate();
+    const shareRate = parseFloat(web3.utils.fromWei(_shareRate.toString()));
+    expect(shareRate).to.be.greaterThan(previousShareRate);
+  });
+
   it('should not upgrade stakes to max share if event is off', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
@@ -622,10 +659,6 @@ describe('Staking', async () => {
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
 
     const sessionId = await staking.sessionsOf(_staker.address, 0);
-    const sessionDataBefore = await staking.sessionDataOf(
-      _staker.address,
-      sessionId
-    );
 
     await staking.connect(_staker).maxShare(sessionId);
 
@@ -676,19 +709,13 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(`10000000000000000000`);
     await staking.setTotalStakedAmount(`10000000000000000000`);
 
-    for (let i = 0; i < stakingDays; i++) {
+    for (let i = 0; i < 10; i++) {
       await TestUtil.increaseTime(SECONDS_IN_DAY);
 
       await staking.makePayout();
     }
 
-    await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
-
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
-    const sessionDataV1 = await stakingV1.sessionDataOf(
-      _staker.address,
-      sessionId
-    );
 
     await staking.connect(_staker).maxShareV1(sessionId);
 
@@ -717,16 +744,11 @@ describe('Staking', async () => {
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
-    const sessionDataV1 = await stakingV1.sessionDataOf(
-      _staker.address,
-      sessionId
-    );
-    console.log(sessionDataV1);
 
     await staking.connect(_staker).maxShareV1(sessionId);
 
     const sessionData = await staking.sessionDataOf(_staker.address, sessionId);
-    console.log(sessionData);
+
     expect(sessionData.firstPayout.toString()).to.equal('10');
     expect(sessionData.lastPayout.toString()).to.equal('5565');
   });
