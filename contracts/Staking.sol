@@ -685,10 +685,16 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 tokenInterestEarned =
             getTokenInterestEarnedInternal(msg.sender, tokenAddress);
 
-        IERC20Upgradeable(tokenAddress).transfer(
-            msg.sender,
-            tokenInterestEarned
-        );
+        if (
+            tokenAddress != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
+        ) {
+            IERC20Upgradeable(tokenAddress).transfer(
+                msg.sender,
+                tokenInterestEarned
+            );
+        } else {
+            msg.sender.transfer(tokenInterestEarned);
+        }
 
         deductBalances[msg.sender][tokenAddress] = totalSharesOf[msg.sender]
             .mul(tokenPricePerShare[tokenAddress]);
@@ -789,7 +795,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     ) external payable override onlyAuction {
         uint256 amountForBidder = amountBought.mul(10).div(100);
 
-        if (tokenAddress != address(0)) {
+        if (
+            tokenAddress != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
+        ) {
             IERC20Upgradeable(tokenAddress).transfer(
                 bidderAddress,
                 amountForBidder
@@ -797,7 +805,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         } else {
             bidderAddress.transfer(amountForBidder);
         }
-        
+
         tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add(
             amountBought.sub(amountForBidder).mul(1e18).div(sharesTotalSupply)
         );
