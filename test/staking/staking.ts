@@ -587,14 +587,6 @@ describe('Staking', async () => {
 
     await staking.connect(_staker).stake(amount, stakingDays);
 
-    const sessionId = await staking.sessionsOf(_staker.address, 0);
-
-    // const session = await staking.sessionDataOf(_staker.address, sessionId);
-
-    // let _totalStakedAmount = await staking.totalStakedAmount();
-    // let totalStakedAmount = parseFloat(
-    //   web3.utils.fromWei(_totalStakedAmount.toString())
-    // );
     let _initialShareRate = await staking.shareRate();
     let initialShareRate = parseFloat(
       web3.utils.fromWei(_initialShareRate.toString())
@@ -606,17 +598,10 @@ describe('Staking', async () => {
 
       await staking.makePayout();
 
-      // const _payout = await staking.payouts(i);
-      // const payout = parseFloat(web3.utils.fromWei(_payout.payout.toString()));
-
       const _shareRate = await staking.shareRate();
       const shareRate = parseFloat(web3.utils.fromWei(_shareRate.toString()));
 
-      // const shareRateAddedBy =
-      //   (previousShareRate * (payout + 1)) / (totalStakedAmount + 1);
-
       expect(shareRate).to.be.greaterThan(previousShareRate);
-      // expect(shareRate).to.be.equal(previousShareRate + shareRateAddedBy);
       previousShareRate = shareRate;
     }
 
