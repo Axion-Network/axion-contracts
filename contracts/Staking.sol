@@ -109,8 +109,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     uint256 public totalStakedAmount;
 
     bool private maxShareEventActive;
-
-    uint256 public shareRateScalingFactor;
+    uint16 private maxShareMaxDays;
+    uint256 private shareRateScalingFactor;
 
     /* New variables must go below here. */
 
@@ -833,6 +833,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             maxShareEventActive == true,
             'STAKING: Max Share event is not active'
         );
+        require(
+            lastPayout - firstPayout <= maxShareMaxDays,
+            'STAKING: Max Share Upgrade - Stake must be less then max share max days'
+        );
 
         uint256 stakingInterest =
             calculateStakingInterest(firstPayout, lastPayout, shares);
@@ -888,6 +892,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     function getMaxShareEventActive() external view returns (bool) {
         return maxShareEventActive;
+    }
+
+    function setMaxShareMaxDays(uint16 _maxShareMaxDays) external onlyManager {
+        maxShareMaxDays = _maxShareMaxDays;
+    }
+
+    function getMaxShareMaxDays() external view returns (uint16) {
+        return maxShareMaxDays;
     }
 
     /** Roles management - only for multi sig address */
