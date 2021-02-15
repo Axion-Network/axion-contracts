@@ -819,6 +819,28 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
     }
 
+    function updateShareRate(uint256 _payout) internal {
+        uint256 currentTokenTotalSupply =
+            IERC20Upgradeable(addresses.mainToken).totalSupply();
+        uint256 growthFactor =
+            _payout.mul(1e18).div(currentTokenTotalSupply + totalStakedAmount);
+
+        if (shareRateScalingFactor == 0) {
+            shareRateScalingFactor = 1;
+        }
+
+        shareRate = shareRate
+            .mul(1e18 + shareRateScalingFactor.mul(growthFactor))
+            .div(1e18);
+    }
+
+    function setShareRateScalingFactor(uint256 _scalingFactor)
+        external
+        onlyManager
+    {
+        shareRateScalingFactor = _scalingFactor;
+    }
+
     function maxShare(uint256 sessionId) external {
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
@@ -1045,25 +1067,5 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     function getTotalSharesOf() external view returns (uint256) {
         return totalSharesOf[msg.sender];
-    }
-
-    function updateShareRate(uint256 _payout) internal {
-        uint256 currentTokenTotalSupply =
-            IERC20Upgradeable(addresses.mainToken).totalSupply();
-        uint256 growthFactor =
-            _payout.div(currentTokenTotalSupply + totalStakedAmount);
-
-        if (shareRateScalingFactor == 0) {
-            shareRateScalingFactor = 1;
-        }
-
-        shareRate = shareRate.mul(1 + shareRateScalingFactor.mul(growthFactor));
-    }
-
-    function setShareRateScalingFactor(uint256 _scalingFactor)
-        external
-        onlyManager
-    {
-        shareRateScalingFactor = _scalingFactor;
     }
 }
