@@ -783,7 +783,7 @@ describe('Staking', async () => {
     ).to.be.revertedWith('Stake withdrawn');
   });
 
-  it.only('should not upgrade a stake to max share that is has stake days > max share max days', async () => {
+  it('should not upgrade a stake to max share that is has stake days > max share max days', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
     await staking.connect(_setter).setMaxShareEventActive(true);
