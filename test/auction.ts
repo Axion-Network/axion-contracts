@@ -102,7 +102,7 @@ describe('Auction', () => {
     });
   });
 
-  describe('withdraw', () => {	
+  describe.only('withdraw', () => {	
     it(`should correctly withdraw non venture auction bid, and fail if not between ${AUCTIONSTAKE_MIN} and 5555 days`, async () => {	
       let auctionID = await auction.lastAuctionEventId();	
       const [account1, account2] = await ethers.getSigners();	
@@ -168,11 +168,13 @@ describe('Auction', () => {
       ).to.be.revertedWith('Auction: stakeDays < minimum days');
     });
 
-    it.only(`should correctly withdraw venture auction bid, and fail if not between ${AUCTIONSTAKE_MIN} and 5555 days`, async () => {	
+    it(`should correctly withdraw venture auction bid, and fail if not between ${AUCTIONSTAKE_MIN} and 5555 days`, async () => {	
       let auctionID = await auction.lastAuctionEventId();	
       const [account1, account2] = await ethers.getSigners();	
+
+      await staking.setSharesTotalSupply("1000000000000000000000000");
 	
-      await auction.setTokensOfDay(0, [token.address], [100]);
+      await auction.setTokensOfDay(0, ["0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF"], [100]);
 
       console.log(await staking.getDivTokens());
 

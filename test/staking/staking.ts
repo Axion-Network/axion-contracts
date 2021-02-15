@@ -629,7 +629,7 @@ describe('Staking', async () => {
   it('should not upgrade stakes to max share if event is off', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
-    const eventActive = await staking.connect(_setter).getMaxShareEventActive();
+    const eventActive = await staking.getMaxShareEventActive();
     expect(eventActive).to.equal(false);
 
     await token.connect(_staker).approve(staking.address, amount);
@@ -656,7 +656,7 @@ describe('Staking', async () => {
   it('should upgrade v2 stakes to max share', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
-    await staking.connect(_setter).setMaxShareEventActive(true);
+    await staking.setMaxShareEventActive(true);
 
     await token.connect(_staker).approve(staking.address, amount);
     await staking.connect(_staker).stake(amount, stakingDays);
@@ -685,7 +685,7 @@ describe('Staking', async () => {
   it('should not upgrade v2 stakes that have been withdrawn', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
-    await staking.connect(_setter).setMaxShareEventActive(true);
+    await staking.setMaxShareEventActive(true);
 
     await token.connect(_staker).approve(staking.address, amount);
     await staking.connect(_staker).stake(amount, stakingDays);
@@ -712,7 +712,7 @@ describe('Staking', async () => {
   it('should upgrade v1 stakes to max share', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
-    await staking.connect(_setter).setMaxShareEventActive(true);
+    await staking.setMaxShareEventActive(true);
 
     await token.connect(_staker).approve(staking.address, amount);
     await stakingV1.connect(_staker).stake(amount, stakingDays);
@@ -734,7 +734,7 @@ describe('Staking', async () => {
   it('should upgrade v1 5555 stakes to max share', async () => {
     const stakingDays = 5555;
     const amount = ethers.utils.parseEther('10');
-    await staking.connect(_setter).setMaxShareEventActive(true);
+    await staking.setMaxShareEventActive(true);
 
     await token.connect(_staker).approve(staking.address, amount);
     await stakingV1.connect(_staker).stake(amount, stakingDays);
@@ -763,7 +763,7 @@ describe('Staking', async () => {
   it('should not upgrade v1 stakes that have been withdrawn', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
-    await staking.connect(_setter).setMaxShareEventActive(true);
+    await staking.setMaxShareEventActive(true);
 
     await token.connect(_staker).approve(staking.address, amount);
     await stakingV1.connect(_staker).stake(amount, stakingDays);
