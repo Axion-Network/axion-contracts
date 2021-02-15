@@ -48,7 +48,7 @@ describe('Auction', () => {
   });
 
   describe('withdraw', () => {
-    it.only(`should correctly withdraw, and fail if not between ${AUCTIONSTAKE_MIN} and 5555 days`, async () => {
+    it(`should correctly withdraw, and fail if not between ${AUCTIONSTAKE_MIN} and 5555 days`, async () => {
       let auctionID = await auction.lastAuctionEventId();
       const [account1, account2] = await ethers.getSigners();
 
