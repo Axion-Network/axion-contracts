@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { ethers, network } from 'hardhat';
-import { getDeployedContracts } from './utils/get_deployed_contracts';
+import { getRestorableDeployedContracts } from './utils/get_restorable_deployed_contracts';
 import { TEST_NETWORKS } from '../constants/common';
 
 // FOREIGN SWAP
@@ -60,15 +60,15 @@ const main = async () => {
     }
 
     const {
-      auction,
-      bpd,
-      foreignSwap,
-      nativeSwap,
-      token,
+      auctionRestorable,
+      bpdRestorable,
+      foreignSwapRestorable,
+      nativeSwapRestorable,
+      tokenRestorable,
       hex4Token,
-      subBalances,
-      staking,
-    } = await getDeployedContracts(networkName);
+      subBalancesRestorable,
+      stakingRestorable,
+    } = await getRestorableDeployedContracts(networkName);
 
     const [
       fakeDeployer,
@@ -101,12 +101,12 @@ const main = async () => {
     console.log('usedSetter', usedSetter);
 
     // Staking
-    await staking
+    await stakingRestorable
       .init(
-        token.address,
-        auction.address,
-        subBalances.address,
-        foreignSwap.address,
+        tokenRestorable.address,
+        auctionRestorable.address,
+        subBalancesRestorable.address,
+        foreignSwapRestorable.address,
         usedStakingV1Address,
         TIME_IN_DAY.toString(),
         0
@@ -114,16 +114,19 @@ const main = async () => {
       .then(() => console.log('Staking init'));
 
     // AXN
-    await token
-      .initSwapperAndSwapToken(usedSwapTokenAddress, nativeSwap.address)
+    await tokenRestorable
+      .initSwapperAndSwapToken(
+        usedSwapTokenAddress,
+        nativeSwapRestorable.address
+      )
       .then(() => console.log('AXN initSwapperAndSwapToken'));
-    await token
+    await tokenRestorable
       .init([
-        nativeSwap.address,
-        foreignSwap.address,
-        staking.address,
-        auction.address,
-        subBalances.address,
+        nativeSwapRestorable.address,
+        foreignSwapRestorable.address,
+        stakingRestorable.address,
+        auctionRestorable.address,
+        subBalancesRestorable.address,
       ])
       .then(() => console.log('AXN init'));
 
@@ -135,61 +138,65 @@ const main = async () => {
     }
 
     // NativeSwap
-    await nativeSwap
+    await nativeSwapRestorable
       .init(
         STAKE_PERIOD.toString(),
         TIME_IN_DAY.toString(),
         usedSwapTokenAddress,
-        token.address,
-        auction.address
+        tokenRestorable.address,
+        auctionRestorable.address
       )
       .then(() => console.log('nativeSwap init'));
 
     // BPD
-    await bpd
-      .init(token.address, foreignSwap.address, subBalances.address)
+    await bpdRestorable
+      .init(
+        tokenRestorable.address,
+        foreignSwapRestorable.address,
+        subBalancesRestorable.address
+      )
       .then(() => console.log('bpd init'));
 
     // ForeignSwap
-    await foreignSwap
+    await foreignSwapRestorable
       .init(
         SIGNER_ADDRESS,
         TIME_IN_DAY.toString(),
         STAKE_PERIOD.toString(),
         MAX_CLAIM_AMOUNT,
-        token.address,
-        auction.address,
-        staking.address,
-        bpd.address,
+        tokenRestorable.address,
+        auctionRestorable.address,
+        stakingRestorable.address,
+        bpdRestorable.address,
         TOTAL_SNAPSHOT_AMOUNT,
         TOTAL_SNAPSHOT_ADDRESS
       )
       .then(() => console.log('foreignSwap init'));
 
     // Auction
-    await auction
+    await auctionRestorable
       .init(
         TIME_IN_DAY.toString(),
-        token.address,
-        staking.address,
+        tokenRestorable.address,
+        stakingRestorable.address,
         usedUniswapAddress,
         usedRecipientAddress,
-        nativeSwap.address,
-        foreignSwap.address,
-        subBalances.address,
+        nativeSwapRestorable.address,
+        foreignSwapRestorable.address,
+        subBalancesRestorable.address,
         usedAuctionV1Address
       )
       .then(() => console.log('auction init'));
 
     // SubBalances
-    await subBalances
+    await subBalancesRestorable
       .init(
-        token.address,
-        foreignSwap.address,
-        bpd.address,
-        auction.address,
+        tokenRestorable.address,
+        foreignSwapRestorable.address,
+        bpdRestorable.address,
+        auctionRestorable.address,
         usedSubBalancesV1Address,
-        staking.address,
+        stakingRestorable.address,
         TIME_IN_DAY.toString(),
         STAKE_PERIOD.toString()
       )

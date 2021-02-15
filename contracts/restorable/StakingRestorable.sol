@@ -12,6 +12,50 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '../Staking.sol';
 
 contract StakingRestorable is Staking {
+    function init(
+        address _mainTokenAddress,
+        address _auctionAddress,
+        address _subBalancesAddress,
+        address _foreignSwapAddress,
+        address _stakingV1Address,
+        uint256 _stepTimestamp,
+        uint256 _lastSessionIdV1
+    ) external onlyMigrator {
+        require(!init_, 'Staking: init is active');
+        init_ = true;
+        /** Setup */
+        _setupRole(EXTERNAL_STAKER_ROLE, _foreignSwapAddress);
+        _setupRole(EXTERNAL_STAKER_ROLE, _auctionAddress);
+
+        addresses = Addresses({
+            mainToken: _mainTokenAddress,
+            auction: _auctionAddress,
+            subBalances: _subBalancesAddress
+        });
+
+        stakingV1 = IStakingV1(_stakingV1Address);
+        stepTimestamp = _stepTimestamp;
+
+        if (startContract == 0) {
+            startContract = now;
+            nextPayoutCall = startContract.add(_stepTimestamp);
+        }
+        if (_lastSessionIdV1 != 0) {
+            lastSessionIdV1 = _lastSessionIdV1;
+        }
+        if (shareRate == 0) {
+            shareRate = 1e18;
+        }
+    }
+
+    function addStakedAmount(uint256 _staked) external onlyMigrator {
+        totalStakedAmount = totalStakedAmount.add(_staked);
+    }
+
+    function addShareTotalSupply(uint256 _shares) external onlyMigrator {
+        sharesTotalSupply = sharesTotalSupply.add(_shares);
+    }
+
     // migration functions
     function setOtherVars(
         uint256 _startTime,
