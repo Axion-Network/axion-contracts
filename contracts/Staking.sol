@@ -798,7 +798,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address tokenAddress,
         uint256 amountBought
     ) external payable override onlyAuction {
-        uint256 amountForBidder = amountBought.mul(10526).div(10000);
+        uint256 amountForBidder = amountBought.mul(10526).div(100000);
 
         if (
             tokenAddress != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
