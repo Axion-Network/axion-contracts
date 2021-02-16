@@ -723,7 +723,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 .mul(tokenPricePerShare[tokenAddress])
                 .sub(deductBalances[accountAddress][tokenAddress])
                 .div(1e18);
-        // TODO I think the 1e18 should be 10 ** token decimals
     }
 
     function rebalance(address staker, uint256 oldTotalSharesOf) internal {
@@ -811,9 +810,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
 
         tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add(
-            amountBought.sub(amountForBidder).mul(1e18).div(sharesTotalSupply)
+            amountBought.sub(amountForBidder).mul(1e18).div(sharesTotalSupply) // best to use registered shares
         );
-        // TODO I think the 1e18 should be 10 ** token decimals
     }
 
     function addDivToken(address tokenAddress) external override onlyAuction {
