@@ -619,7 +619,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 oldTotalSharesOf = totalSharesOf[msg.sender];
         totalSharesOf[msg.sender] = totalSharesOf[msg.sender].sub(shares);
 
-        rebalance(oldTotalSharesOf);
+        rebalance(msg.sender, oldTotalSharesOf);
 
         (uint256 amountOut, uint256 penalty) =
             getAmountOutAndPenalty(amount, start, end, stakingInterest);
@@ -658,7 +658,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 oldTotalSharesOf = totalSharesOf[staker];
         totalSharesOf[staker] = totalSharesOf[staker].add(shares);
 
-        rebalance(oldTotalSharesOf);
+        rebalance(staker, oldTotalSharesOf);
 
         sessionDataOf[staker][sessionId] = Session({
             amount: amount,
@@ -725,15 +725,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 .div(1e18);
     }
 
-    function rebalance(uint256 oldTotalSharesOf) internal {
+    function rebalance(address staker, uint256 oldTotalSharesOf) internal {
         for (uint8 i = 0; i < divTokens.length(); i++) {
             uint256 tokenInterestEarned =
                 oldTotalSharesOf.mul(tokenPricePerShare[divTokens.at(i)]).sub(
-                    deductBalances[msg.sender][divTokens.at(i)]
+                    deductBalances[staker][divTokens.at(i)]
                 );
 
-            deductBalances[msg.sender][divTokens.at(i)] = totalSharesOf[
-                msg.sender
+            deductBalances[staker][divTokens.at(i)] = totalSharesOf[
+                staker
             ]
                 .mul(tokenPricePerShare[divTokens.at(i)])
                 .sub(tokenInterestEarned);
@@ -798,7 +798,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address tokenAddress,
         uint256 amountBought
     ) external payable override onlyAuction {
-        uint256 amountForBidder = amountBought.mul(10).div(100);
+        uint256 amountForBidder = amountBought.mul(10526).div(10000);
 
         if (
             tokenAddress != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)

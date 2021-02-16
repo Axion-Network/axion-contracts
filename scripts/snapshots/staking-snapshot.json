@@ -1,18 +1,11 @@
 {
-  "payouts": [
-    {
-      "0": "33590606653620352250489",
-      "1": "5257142857142857142857142",
-      "payout": "33590606653620352250489",
-      "sharesTotalSupply": "5257142857142857142857142"
-    }
-  ],
+  "payouts": [],
   "shareRate": "1000000000000000000",
-  "sharesTotalSupply": "181641208791208791208791204",
-  "nextPayoutCall": "1612992680",
-  "startContract": "1612991480",
+  "sharesTotalSupply": "12154945054945054945054944",
+  "nextPayoutCall": "1613480219",
+  "startContract": "1613479619",
   "globalPayout": "0",
-  "globalPayin": "33590606653620352250489",
+  "globalPayin": "0",
   "balanceOf": "0",
-  "_sessionsIds": "11"
+  "_sessionsIds": "6"
 }

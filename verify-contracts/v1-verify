@@ -1,9 +1,9 @@
 
-        npx hardhat verify --network ropsten 0x476E1596A6Bf6466d506164DA937bd794C637b89 Axion AXN 0x76d6C333a2F14009AF483691dFc49345371b20BF
-        npx hardhat verify --network ropsten 0x905A88bb25cd6354DF178E0444090540Ad0BFe92
-        npx hardhat verify --network ropsten 0x02412586785F88ef476a0bE51e5e5cF2b2A22de1
-        npx hardhat verify --network ropsten 0x13190464e355cFA7FDf5C70CeC41cEC7ae60CEf4
-        npx hardhat verify --network ropsten 0xb334dC4602F342cc07588ACA58878AAbA90113A8
-        npx hardhat verify --network ropsten 0x359c85d83D39A7A5F8d6CbC81aF82613B3D9FE63
-        npx hardhat verify --network ropsten 0x36287d5e67Cb50eE12e7e4d0737B384707c998d9
+        npx hardhat verify --network ropsten 0xb5a392799d73132d26f5ff963f138166cCAA7d0E Axion AXN 0x76d6C333a2F14009AF483691dFc49345371b20BF
+        npx hardhat verify --network ropsten 0xc481C96D594fabA8ef8ae863349EA48095693A8e
+        npx hardhat verify --network ropsten 0xe2c0E648220708B1Dd8C4a74268b0C8eb145e309
+        npx hardhat verify --network ropsten 0x88FE1C8d63df085E51734c4993277fc475b106EF
+        npx hardhat verify --network ropsten 0xDc0Ec991d0e758012d7ae077889d2CC0742A1c8B
+        npx hardhat verify --network ropsten 0x79d9449f99Bd914A69d83d76E3872aC3e8D5D3e8
+        npx hardhat verify --network ropsten 0xf9C26BaB3C8245A1a799302d7262eEb4027b5986
       

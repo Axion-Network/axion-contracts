@@ -8,7 +8,7 @@ import { Web3Util } from '../libs/web3.util';
 
 require('dotenv').config();
 
-const ADDRESSES = require('../../deployed-addresses/v1addresses.json');
+const ADDRESSES = require('../../../deployed-addresses/v1addresses.json');
 const { SUBBALANCES_ADDRESS, TOKEN_ADDRESS } = ADDRESSES;
 
 interface SubBalance {

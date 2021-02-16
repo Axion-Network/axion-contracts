@@ -55,7 +55,7 @@ describe('Auction', () => {
   });
 
   describe('venture auction', () => {
-    it('should get correct day of week && correct auction type', async () => {
+    it('should get correct day of week & correct auction type', async () => {
 
       await auction.setupAuctionTypes(DEFAULT_AUCTION_TYPES);
 
@@ -168,7 +168,7 @@ describe('Auction', () => {
       ).to.be.revertedWith('Auction: stakeDays < minimum days');
     });
 
-    it.only(`should correctly withdraw venture auction bid, and fail if not between ${AUCTIONSTAKE_MIN} and 5555 days`, async () => {	
+    it(`should correctly withdraw venture auction bid, and fail if not between ${AUCTIONSTAKE_MIN} and 5555 days`, async () => {	
       let auctionID = await auction.lastAuctionEventId();	
       const [account1, account2] = await ethers.getSigners();	
 	
