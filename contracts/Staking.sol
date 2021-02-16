@@ -723,7 +723,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 .mul(tokenPricePerShare[tokenAddress])
                 .sub(deductBalances[accountAddress][tokenAddress])
                 .div(1e18);
-                // TODO I think the 1e18 should be 10 ** token decimals
+        // TODO I think the 1e18 should be 10 ** token decimals
     }
 
     function rebalance(address staker, uint256 oldTotalSharesOf) internal {
@@ -733,9 +733,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                     deductBalances[staker][divTokens.at(i)]
                 );
 
-            deductBalances[staker][divTokens.at(i)] = totalSharesOf[
-                staker
-            ]
+            deductBalances[staker][divTokens.at(i)] = totalSharesOf[staker]
                 .mul(tokenPricePerShare[divTokens.at(i)])
                 .sub(tokenInterestEarned);
         }
@@ -849,7 +847,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         shareRateScalingFactor = _scalingFactor;
     }
 
-    // TODO make sure to rebalance
     function maxShare(uint256 sessionId) external {
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
@@ -1030,6 +1027,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     ) internal {
         sharesTotalSupply = sharesTotalSupply.add(newShares - oldShares);
         totalStakedAmount = totalStakedAmount.add(newAmount - oldAmount);
+
+        uint256 oldTotalSharesOf = totalSharesOf[msg.sender];
+        totalSharesOf[msg.sender] = totalSharesOf[msg.sender].add(
+            newShares - oldShares
+        );
+
+        rebalance(msg.sender, oldTotalSharesOf);
 
         emit MaxShareUpgrade(
             msg.sender,
