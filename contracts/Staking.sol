@@ -849,6 +849,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         shareRateScalingFactor = _scalingFactor;
     }
 
+    // TODO make sure to rebalance
     function maxShare(uint256 sessionId) external {
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
