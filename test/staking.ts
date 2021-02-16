@@ -630,8 +630,13 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(`10000000000000000000`);
     await staking.setTotalStakedAmount(`10000000000000000000`);
 
+    for (let i = 0; i < stakingDays; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
+
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
-    await staking.makePayout();
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
@@ -650,8 +655,13 @@ describe('Staking', async () => {
     await token.connect(_staker).approve(staking.address, amount);
     await staking.connect(_staker).stake(amount, stakingDays);
 
+    for (let i = 0; i < stakingDays; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
+
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
-    await staking.makePayout();
 
     const sessionId = await staking.sessionsOf(_staker.address, 0);
 
@@ -678,8 +688,13 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(`20000000000000000000`);
     await staking.setTotalStakedAmount(`20000000000000000000`);
 
+    for (let i = 0; i < stakingDays; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
+
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
-    await staking.makePayout();
 
     const sessionId = await staking.sessionsOf(_staker.address, 0);
 
@@ -702,8 +717,11 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(`10000000000000000000`);
     await staking.setTotalStakedAmount(`10000000000000000000`);
 
-    await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
-    await staking.makePayout();
+    for (let i = 0; i < stakingDays; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
@@ -727,8 +745,13 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(`10000000000000000000`);
     await staking.setTotalStakedAmount(`10000000000000000000`);
 
+    for (let i = 0; i < 10; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
+
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
-    await staking.makePayout();
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
@@ -752,8 +775,13 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(`20000000000000000000`);
     await staking.setTotalStakedAmount(`20000000000000000000`);
 
+    for (let i = 0; i < stakingDays; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
+
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
-    await staking.makePayout();
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
@@ -773,8 +801,13 @@ describe('Staking', async () => {
     await token.connect(_staker).approve(staking.address, amount);
     await staking.connect(_staker).stake(amount, stakingDays);
 
+    for (let i = 0; i < stakingDays; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
+
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
-    await staking.makePayout();
 
     const sessionId = await staking.sessionsOf(_staker.address, 0);
 
