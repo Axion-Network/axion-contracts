@@ -2,6 +2,7 @@ import { initTestSmartContracts } from './utils/initTestSmartContracts';
 import { ContractFactory } from '../libs/ContractFactory';
 import { TestUtil } from './utils/TestUtil';
 import { ethers } from 'hardhat';
+import web3 from 'web3';
 import { expect } from 'chai';
 import { Token, StakingV1, SubBalancesMock, StakingRestorable } from '../typechain';
 import { BigNumber } from 'ethers';
@@ -249,7 +250,7 @@ describe('Staking', async () => {
   });
 
   it('should stop accruing interest after stake end date', async () => {
-    const stakingDays = 10;
+    const stakingDays = 5;
     const amount = ethers.utils.parseEther('10');
 
     await token.connect(_staker).approve(staking.address, amount);
@@ -278,7 +279,7 @@ describe('Staking', async () => {
       previousInterest = interest;
     }
 
-    // DAY 11
+    // DAY 6
     await TestUtil.increaseTime(SECONDS_IN_DAY);
 
     await staking.makePayout();
@@ -580,6 +581,42 @@ describe('Staking', async () => {
     );
   });
 
+  it('should update share rate daily', async () => {
+    const stakingDays = 5;
+    const amount = ethers.utils.parseEther('10');
+
+    await token.connect(_staker).approve(staking.address, amount);
+
+    await staking.connect(_staker).stake(amount, stakingDays);
+
+    let _initialShareRate = await staking.shareRate();
+    let initialShareRate = parseFloat(
+      web3.utils.fromWei(_initialShareRate.toString())
+    );
+    let previousShareRate = initialShareRate;
+
+    for (let i = 0; i < stakingDays; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+
+      const _shareRate = await staking.shareRate();
+      const shareRate = parseFloat(web3.utils.fromWei(_shareRate.toString()));
+
+      expect(shareRate).to.be.greaterThan(previousShareRate);
+      previousShareRate = shareRate;
+    }
+
+    // DAY 6
+    await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+    await staking.makePayout();
+
+    const _shareRate = await staking.shareRate();
+    const shareRate = parseFloat(web3.utils.fromWei(_shareRate.toString()));
+    expect(shareRate).to.be.greaterThan(previousShareRate);
+  });
+
   it('should not upgrade stakes to max share if event is off', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
@@ -593,13 +630,8 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(`10000000000000000000`);
     await staking.setTotalStakedAmount(`10000000000000000000`);
 
-    for (let i = 0; i < stakingDays; i++) {
-      await TestUtil.increaseTime(SECONDS_IN_DAY);
-
-      await staking.makePayout();
-    }
-
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+    await staking.makePayout();
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
@@ -613,17 +645,13 @@ describe('Staking', async () => {
     const amount = ethers.utils.parseEther('10');
 
     await staking.setMaxShareEventActive(true);
+    await staking.setMaxShareMaxDays(5555);
 
     await token.connect(_staker).approve(staking.address, amount);
     await staking.connect(_staker).stake(amount, stakingDays);
 
-    for (let i = 0; i < stakingDays; i++) {
-      await TestUtil.increaseTime(SECONDS_IN_DAY);
-
-      await staking.makePayout();
-    }
-
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+    await staking.makePayout();
 
     const sessionId = await staking.sessionsOf(_staker.address, 0);
 
@@ -650,13 +678,8 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(`20000000000000000000`);
     await staking.setTotalStakedAmount(`20000000000000000000`);
 
-    for (let i = 0; i < stakingDays; i++) {
-      await TestUtil.increaseTime(SECONDS_IN_DAY);
-
-      await staking.makePayout();
-    }
-
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+    await staking.makePayout();
 
     const sessionId = await staking.sessionsOf(_staker.address, 0);
 
@@ -671,6 +694,7 @@ describe('Staking', async () => {
     const amount = ethers.utils.parseEther('10');
 
     await staking.setMaxShareEventActive(true);
+    await staking.setMaxShareMaxDays(5555);
 
     await token.connect(_staker).approve(staking.address, amount);
     await stakingV1.connect(_staker).stake(amount, stakingDays);
@@ -678,13 +702,8 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(`10000000000000000000`);
     await staking.setTotalStakedAmount(`10000000000000000000`);
 
-    for (let i = 0; i < stakingDays; i++) {
-      await TestUtil.increaseTime(SECONDS_IN_DAY);
-
-      await staking.makePayout();
-    }
-
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+    await staking.makePayout();
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
@@ -700,6 +719,7 @@ describe('Staking', async () => {
     const amount = ethers.utils.parseEther('10');
 
     await staking.setMaxShareEventActive(true);
+    await staking.setMaxShareMaxDays(5555);
 
     await token.connect(_staker).approve(staking.address, amount);
     await stakingV1.connect(_staker).stake(amount, stakingDays);
@@ -707,13 +727,8 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(`10000000000000000000`);
     await staking.setTotalStakedAmount(`10000000000000000000`);
 
-    for (let i = 0; i < 10; i++) {
-      await TestUtil.increaseTime(SECONDS_IN_DAY);
-
-      await staking.makePayout();
-    }
-
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+    await staking.makePayout();
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
@@ -737,13 +752,8 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(`20000000000000000000`);
     await staking.setTotalStakedAmount(`20000000000000000000`);
 
-    for (let i = 0; i < stakingDays; i++) {
-      await TestUtil.increaseTime(SECONDS_IN_DAY);
-
-      await staking.makePayout();
-    }
-
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+    await staking.makePayout();
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
@@ -754,33 +764,39 @@ describe('Staking', async () => {
     ).to.be.revertedWith('Stake withdrawn');
   });
 
-  // TODO
-  it('should set total shares of account', async () => {
+  it('should not upgrade a stake to max share that is has stake days > max share max days', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
-
-    await staking.setMaxShareEventActive(true);
+    await staking.connect(_setter).setMaxShareEventActive(true);
+    await staking.connect(_setter).setMaxShareMaxDays(1825);
 
     await token.connect(_staker).approve(staking.address, amount);
-    await stakingV1.connect(_staker).stake(amount, stakingDays);
-
-    await staking.setSharesTotalSupply(`20000000000000000000`);
-    await staking.setTotalStakedAmount(`20000000000000000000`);
-
-    for (let i = 0; i < stakingDays; i++) {
-      await TestUtil.increaseTime(SECONDS_IN_DAY);
-
-      await staking.makePayout();
-    }
+    await staking.connect(_staker).stake(amount, stakingDays);
 
     await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+    await staking.makePayout();
 
-    const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
+    const sessionId = await staking.sessionsOf(_staker.address, 0);
 
-    await staking.connect(_staker).setTotalSharesOfAccount();
-    await staking.connect(_staker).unstakeV1(sessionId);
+    await staking.connect(_staker).maxShare(sessionId);
+
+    const sessionDataAfter = await staking.sessionDataOf(
+      _staker.address,
+      sessionId
+    );
+
+    expect(sessionDataAfter.firstPayout.toString()).to.equal('10');
+    expect(sessionDataAfter.lastPayout.toString()).to.equal('5565');
+
     await expect(
-      staking.connect(_staker).maxShareV1(sessionId)
-    ).to.be.revertedWith('Stake withdrawn');
+      staking.connect(_staker).maxShare(sessionId)
+    ).to.be.revertedWith(
+      'Max Share Upgrade - Stake must be less then max share max days'
+    );
+  });
+
+  // TODO
+  it('should set total shares of account', async () => {
+    expect(false).to.be.true;
   });
 });

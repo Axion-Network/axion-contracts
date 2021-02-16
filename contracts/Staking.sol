@@ -116,6 +116,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     bool private maxShareEventActive;
 
+    uint16 private maxShareMaxDays;
+    uint256 private shareRateScalingFactor;
+
     EnumerableSetUpgradeable.AddressSet internal divTokens;
     mapping(address => uint256) internal totalSharesOf;
     mapping(address => uint256) public tokenPricePerShare;
@@ -342,6 +345,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
 
         nextPayoutCall = nextPayoutCall.add(stepTimestamp);
+
+        updateShareRate(payout);
 
         emit MakePayout(payout, sharesTotalSupply, now);
     }
@@ -817,6 +822,31 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
     }
 
+    function updateShareRate(uint256 _payout) internal {
+        uint256 currentTokenTotalSupply =
+            IERC20Upgradeable(addresses.mainToken).totalSupply();
+
+        uint256 growthFactor =
+            _payout.mul(1e18).div(
+                currentTokenTotalSupply + totalStakedAmount + 1
+            );
+
+        if (shareRateScalingFactor == 0) {
+            shareRateScalingFactor = 1;
+        }
+
+        shareRate = shareRate
+            .mul(1e18 + shareRateScalingFactor.mul(growthFactor))
+            .div(1e18);
+    }
+
+    function setShareRateScalingFactor(uint256 _scalingFactor)
+        external
+        onlyManager
+    {
+        shareRateScalingFactor = _scalingFactor;
+    }
+
     function maxShare(uint256 sessionId) external {
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
@@ -964,6 +994,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             maxShareEventActive == true,
             'STAKING: Max Share event is not active'
         );
+        require(
+            lastPayout - firstPayout <= maxShareMaxDays,
+            'STAKING: Max Share Upgrade - Stake must be less then max share max days'
+        );
 
         uint256 stakingInterest =
             calculateStakingInterest(firstPayout, lastPayout, shares);
@@ -1019,6 +1053,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     function getMaxShareEventActive() external view returns (bool) {
         return maxShareEventActive;
+    }
+
+    function setMaxShareMaxDays(uint16 _maxShareMaxDays) external onlyManager {
+        maxShareMaxDays = _maxShareMaxDays;
+    }
+
+    function getMaxShareMaxDays() external view returns (uint16) {
+        return maxShareMaxDays;
     }
 
     /** Roles management - only for multi sig address */
