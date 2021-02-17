@@ -119,9 +119,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     uint16 private maxShareMaxDays;
     uint256 private shareRateScalingFactor;
 
-    EnumerableSetUpgradeable.AddressSet internal divTokens;
-    mapping(address => uint256) internal totalSharesOf;
+    uint256 public totalVcaRegisteredShares;
+
     mapping(address => uint256) public tokenPricePerShare;
+    EnumerableSetUpgradeable.AddressSet internal divTokens;
+
+    mapping(address => uint256) internal totalSharesOf;
     mapping(address => mapping(address => uint256)) public deductBalances;
 
     /* New variables must go below here. */
@@ -615,6 +618,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         sharesTotalSupply = sharesTotalSupply.sub(shares);
         totalStakedAmount = totalStakedAmount.sub(amount);
+        totalVcaRegisteredShares = totalVcaRegisteredShares.sub(shares);
 
         uint256 oldTotalSharesOf = totalSharesOf[msg.sender];
         totalSharesOf[msg.sender] = totalSharesOf[msg.sender].sub(shares);
@@ -652,8 +656,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address staker
     ) internal {
         uint256 shares = _getStakersSharesAmount(amount, start, end);
+
         sharesTotalSupply = sharesTotalSupply.add(shares);
         totalStakedAmount = totalStakedAmount.add(amount);
+        totalVcaRegisteredShares = totalVcaRegisteredShares.add(shares);
 
         uint256 oldTotalSharesOf = totalSharesOf[staker];
         totalSharesOf[staker] = totalSharesOf[staker].add(shares);
@@ -782,6 +788,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             'STAKING: totalSharesOf already set.'
         );
 
+        if (totalSharesOf[msg.sender] != 0) {
+            totalVcaRegisteredShares = totalVcaRegisteredShares.sub(
+                totalSharesOf[msg.sender]
+            );
+        }
+
+        totalVcaRegisteredShares = totalVcaRegisteredShares.add(totalShares);
+
         for (uint256 i = 0; i < divTokens.length(); i++) {
             deductBalances[msg.sender][divTokens.at(i)] = totalShares.mul(
                 tokenPricePerShare[divTokens.at(i)]
@@ -810,7 +824,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
 
         tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add(
-            amountBought.sub(amountForBidder).mul(1e18).div(sharesTotalSupply) // best to use registered shares
+            amountBought.sub(amountForBidder).mul(1e18).div(
+                totalVcaRegisteredShares
+            )
         );
     }
 
@@ -1025,6 +1041,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     ) internal {
         sharesTotalSupply = sharesTotalSupply.add(newShares - oldShares);
         totalStakedAmount = totalStakedAmount.add(newAmount - oldAmount);
+        totalVcaRegisteredShares = totalVcaRegisteredShares.add(newShares - oldShares);
 
         uint256 oldTotalSharesOf = totalSharesOf[msg.sender];
         totalSharesOf[msg.sender] = totalSharesOf[msg.sender].add(
