@@ -198,7 +198,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address staker
     ) internal {
         if (now >= nextPayoutCall) makePayout();
-        if(isVcaRegistered[staker] == false) setTotalSharesOfAccountInternal(staker);
+        if (isVcaRegistered[staker] == false)
+            setTotalSharesOfAccountInternal(staker);
 
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
@@ -614,7 +615,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 lastPayout
     ) internal returns (uint256) {
         if (now >= nextPayoutCall) makePayout();
-        if(isVcaRegistered[msg.sender] == false) setTotalSharesOfAccountInternal(msg.sender);
+        if (isVcaRegistered[msg.sender] == false)
+            setTotalSharesOfAccountInternal(msg.sender);
 
         uint256 stakingInterest =
             calculateStakingInterest(firstPayout, lastPayout, shares);
@@ -748,7 +750,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     function setTotalSharesOfAccountInternal(address account) internal {
-        require(isVcaRegistered[account] == false, "STAKING: Account already registered.");
+        require(
+            isVcaRegistered[account] == false,
+            'STAKING: Account already registered.'
+        );
 
         uint256 totalShares;
         uint256[] storage sessionsOfAccount = sessionsOf[account];
@@ -759,8 +764,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             );
         }
 
-        uint256[] memory v1SessionsOfAccount =
-            stakingV1.sessionsOf_(account);
+        uint256[] memory v1SessionsOfAccount = stakingV1.sessionsOf_(account);
 
         for (uint256 i = 0; i < v1SessionsOfAccount.length; i++) {
             if (v1SessionsOfAccount[i] > lastSessionIdV1) {
@@ -787,21 +791,23 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             totalShares = totalShares.add(shares);
         }
 
-        for (uint256 i = 0; i < divTokens.length(); i++) {
-            deductBalances[account][divTokens.at(i)] = totalShares.mul(
-                tokenPricePerShare[divTokens.at(i)]
-            );
-        }
-
         isVcaRegistered[account] = true;
 
         if (totalShares != 0) {
             totalSharesOf[account] = totalShares;
-            totalVcaRegisteredShares = totalVcaRegisteredShares.add(totalShares);
+            totalVcaRegisteredShares = totalVcaRegisteredShares.add(
+                totalShares
+            );
+
+            for (uint256 i = 0; i < divTokens.length(); i++) {
+                deductBalances[account][divTokens.at(i)] = totalShares.mul(
+                    tokenPricePerShare[divTokens.at(i)]
+                );
+            }
         }
     }
 
-    function setTotalSharesOfAccount() external { 
+    function setTotalSharesOfAccount() external {
         setTotalSharesOfAccountInternal(msg.sender);
     }
 
@@ -814,7 +820,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         // uint256 amountForBidder = amountBought.mul(10526315789473685).div(1e17);
         uint256 amountForOrigin = amountBought.mul(5).div(100);
         uint256 amountForBidder = amountBought.mul(10).div(100);
-        uint256 amountForDivs = amountBought.sub(amountForOrigin).sub(amountForBidder);
+        uint256 amountForDivs =
+            amountBought.sub(amountForOrigin).sub(amountForBidder);
 
         if (
             tokenAddress != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
@@ -834,9 +841,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
 
         tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add(
-            amountForDivs.mul(1e18).div(
-                totalVcaRegisteredShares
-            )
+            amountForDivs.mul(1e18).div(totalVcaRegisteredShares)
         );
     }
 
@@ -1050,11 +1055,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 newEnd
     ) internal {
         if (now >= nextPayoutCall) makePayout();
-        if(isVcaRegistered[msg.sender] == false) setTotalSharesOfAccountInternal(msg.sender);
+        if (isVcaRegistered[msg.sender] == false)
+            setTotalSharesOfAccountInternal(msg.sender);
 
         sharesTotalSupply = sharesTotalSupply.add(newShares - oldShares);
         totalStakedAmount = totalStakedAmount.add(newAmount - oldAmount);
-        totalVcaRegisteredShares = totalVcaRegisteredShares.add(newShares - oldShares);
+        totalVcaRegisteredShares = totalVcaRegisteredShares.add(
+            newShares - oldShares
+        );
 
         uint256 oldTotalSharesOf = totalSharesOf[msg.sender];
         totalSharesOf[msg.sender] = totalSharesOf[msg.sender].add(
