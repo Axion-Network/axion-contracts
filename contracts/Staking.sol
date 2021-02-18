@@ -787,12 +787,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             totalShares = totalShares.add(shares);
         }
 
-        if (totalSharesOf[account] != 0) {
-            totalVcaRegisteredShares = totalVcaRegisteredShares.sub(
-                totalSharesOf[account]
-            );
-        }
-
         totalVcaRegisteredShares = totalVcaRegisteredShares.add(totalShares);
 
         for (uint256 i = 0; i < divTokens.length(); i++) {
@@ -802,7 +796,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
 
         isVcaRegistered[account] = true;
-        totalSharesOf[account] = totalShares;
+
+        if (totalShares != 0) {
+            totalSharesOf[account] = totalShares;
+        }
     }
 
     function setTotalSharesOfAccount() external { 
