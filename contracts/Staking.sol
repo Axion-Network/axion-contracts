@@ -787,8 +787,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             totalShares = totalShares.add(shares);
         }
 
-        totalVcaRegisteredShares = totalVcaRegisteredShares.add(totalShares);
-
         for (uint256 i = 0; i < divTokens.length(); i++) {
             deductBalances[account][divTokens.at(i)] = totalShares.mul(
                 tokenPricePerShare[divTokens.at(i)]
@@ -799,6 +797,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         if (totalShares != 0) {
             totalSharesOf[account] = totalShares;
+            totalVcaRegisteredShares = totalVcaRegisteredShares.add(totalShares);
         }
     }
 
