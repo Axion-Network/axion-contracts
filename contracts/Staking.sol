@@ -124,6 +124,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     mapping(address => uint256) public tokenPricePerShare;
     EnumerableSetUpgradeable.AddressSet internal divTokens;
 
+    mapping(address => bool) internal isVcaRegistered;
     mapping(address => uint256) internal totalSharesOf;
     mapping(address => mapping(address => uint256)) public deductBalances;
 
@@ -197,6 +198,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address staker
     ) internal {
         if (now >= nextPayoutCall) makePayout();
+        if(isVcaRegistered[staker] == false) setTotalSharesOfAccount(staker);
 
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
@@ -612,6 +614,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 lastPayout
     ) internal returns (uint256) {
         if (now >= nextPayoutCall) makePayout();
+        if(isVcaRegistered[staker] == false) setTotalSharesOfAccount(msg.sender);
 
         uint256 stakingInterest =
             calculateStakingInterest(firstPayout, lastPayout, shares);
@@ -744,19 +747,20 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
     }
 
-    function setTotalSharesOfAccount() external {
-        // TO DISCUSS - This would negate all liq divs if account not registered and there was a new stake created
+    function setTotalSharesOfAccount(address account) external {
+        require(isVcaRegistered[account] == false, "STAKING: Account already registered.");
+
         uint256 totalShares;
-        uint256[] storage sessionsOfAccount = sessionsOf[msg.sender];
+        uint256[] storage sessionsOfAccount = sessionsOf[account];
 
         for (uint256 i = 0; i < sessionsOfAccount.length; i++) {
             totalShares = totalShares.add(
-                sessionDataOf[msg.sender][sessionsOfAccount[i]].shares
+                sessionDataOf[account][sessionsOfAccount[i]].shares
             );
         }
 
         uint256[] memory v1SessionsOfAccount =
-            stakingV1.sessionsOf_(msg.sender);
+            stakingV1.sessionsOf_(account);
 
         for (uint256 i = 0; i < v1SessionsOfAccount.length; i++) {
             if (v1SessionsOfAccount[i] > lastSessionIdV1) {
@@ -769,7 +773,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 uint256 end,
                 uint256 shares,
                 uint256 firstPayout
-            ) = stakingV1.sessionDataOf(msg.sender, v1SessionsOfAccount[i]);
+            ) = stakingV1.sessionDataOf(account, v1SessionsOfAccount[i]);
 
             (amount);
             (start);
@@ -783,34 +787,34 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             totalShares = totalShares.add(shares);
         }
 
-        require(
-            totalSharesOf[msg.sender] != totalShares,
-            'STAKING: totalSharesOf already set.'
-        );
-
-        if (totalSharesOf[msg.sender] != 0) {
+        if (totalSharesOf[account] != 0) {
             totalVcaRegisteredShares = totalVcaRegisteredShares.sub(
-                totalSharesOf[msg.sender]
+                totalSharesOf[account]
             );
         }
 
         totalVcaRegisteredShares = totalVcaRegisteredShares.add(totalShares);
 
         for (uint256 i = 0; i < divTokens.length(); i++) {
-            deductBalances[msg.sender][divTokens.at(i)] = totalShares.mul(
+            deductBalances[account][divTokens.at(i)] = totalShares.mul(
                 tokenPricePerShare[divTokens.at(i)]
             );
         }
 
-        totalSharesOf[msg.sender] = totalShares;
+        isVcaRegistered[account] = true;
+        totalSharesOf[account] = totalShares;
     }
 
     function updateTokenPricePerShare(
         address payable bidderAddress,
+        address payable originAddress,
         address tokenAddress,
         uint256 amountBought
     ) external payable override onlyAuction {
-        uint256 amountForBidder = amountBought.mul(10526).div(100000);
+        // uint256 amountForBidder = amountBought.mul(10526315789473685).div(1e17);
+        uint256 amountForOrigin = amountBought.mul(5).div(100);
+        uint256 amountForBidder = amountBought.mul(10).div(100);
+        uint256 amountForDivs = amountBought.sub(amountForOrigin).sub(amountForBidder);
 
         if (
             tokenAddress != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
@@ -819,12 +823,18 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 bidderAddress,
                 amountForBidder
             );
+
+            IERC20Upgradeable(tokenAddress).transfer(
+                originAddress,
+                amountForOrigin
+            );
         } else {
             bidderAddress.transfer(amountForBidder);
+            originAddress.transfer(amountForOrigin);
         }
 
         tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add(
-            amountBought.sub(amountForBidder).mul(1e18).div(
+            amountForDivs.mul(1e18).div(
                 totalVcaRegisteredShares
             )
         );
@@ -1039,6 +1049,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 newStart,
         uint256 newEnd
     ) internal {
+        if (now >= nextPayoutCall) makePayout();
+        if(isVcaRegistered[staker] == false) setTotalSharesOfAccount(msg.sender);
+
         sharesTotalSupply = sharesTotalSupply.add(newShares - oldShares);
         totalStakedAmount = totalStakedAmount.add(newAmount - oldAmount);
         totalVcaRegisteredShares = totalVcaRegisteredShares.add(newShares - oldShares);
