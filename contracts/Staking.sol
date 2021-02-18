@@ -198,7 +198,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address staker
     ) internal {
         if (now >= nextPayoutCall) makePayout();
-        if(isVcaRegistered[staker] == false) setTotalSharesOfAccount(staker);
+        if(isVcaRegistered[staker] == false) setTotalSharesOfAccountInternal(staker);
 
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
@@ -614,7 +614,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 lastPayout
     ) internal returns (uint256) {
         if (now >= nextPayoutCall) makePayout();
-        if(isVcaRegistered[staker] == false) setTotalSharesOfAccount(msg.sender);
+        if(isVcaRegistered[msg.sender] == false) setTotalSharesOfAccountInternal(msg.sender);
 
         uint256 stakingInterest =
             calculateStakingInterest(firstPayout, lastPayout, shares);
@@ -747,7 +747,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
     }
 
-    function setTotalSharesOfAccount(address account) external {
+    function setTotalSharesOfAccountInternal(address account) internal {
         require(isVcaRegistered[account] == false, "STAKING: Account already registered.");
 
         uint256 totalShares;
@@ -803,6 +803,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         isVcaRegistered[account] = true;
         totalSharesOf[account] = totalShares;
+    }
+
+    function setTotalSharesOfAccount() external { 
+        setTotalSharesOfAccountInternal(msg.sender);
     }
 
     function updateTokenPricePerShare(
@@ -1050,7 +1054,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 newEnd
     ) internal {
         if (now >= nextPayoutCall) makePayout();
-        if(isVcaRegistered[staker] == false) setTotalSharesOfAccount(msg.sender);
+        if(isVcaRegistered[msg.sender] == false) setTotalSharesOfAccountInternal(msg.sender);
 
         sharesTotalSupply = sharesTotalSupply.add(newShares - oldShares);
         totalStakedAmount = totalStakedAmount.add(newAmount - oldAmount);

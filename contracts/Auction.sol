@@ -207,7 +207,9 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             auctionBidOf[stepsFromStart][_msgSender()].ref = ref;
         }
 
-        bidCommon(stepsFromStart, toRecipient);
+        bidCommon(stepsFromStart);
+
+        addresses.recipient.transfer(toRecipient);
 
         emit Bid(msg.sender, msg.value, stepsFromStart, now);
     }
@@ -220,8 +222,8 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _saveAuctionData();
         _updatePrice();
 
-        (uint256 amountForOrigin, uint256 amountForStaking) =
-            _calculateVentureEthAmounts();
+        // (uint256 amountForOrigin, uint256 amountForStaking) =
+        //     _calculateVentureEthAmounts();
 
         VentureToken[] storage tokens = auctions[currentDay].tokens;
 
@@ -232,7 +234,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             uint256 amountBought;
 
             uint256 amountToBuy =
-                amountForStaking.mul(tokens[i].percentage).div(100);
+                msg.value.mul(tokens[i].percentage).div(100);
 
             if (tokens[i].coin != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)) {
                 amountBought = _swapEthForToken(
@@ -244,6 +246,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
                 IStaking(addresses.staking).updateTokenPricePerShare(
                     msg.sender,
+                    addresses.recipient,
                     tokens[i].coin,
                     amountBought
                 );
@@ -252,7 +255,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
                 IStaking(addresses.staking).updateTokenPricePerShare{
                     value: amountToBuy
-                }(msg.sender, tokens[i].coin, amountToBuy);
+                }(msg.sender, addresses.recipient, tokens[i].coin, amountToBuy);
             }
 
             coinsBought[i] = tokens[i].coin;
@@ -260,7 +263,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         }
 
         uint256 stepsFromStart = calculateStepsFromStart();
-        bidCommon(stepsFromStart, amountForOrigin);
+        bidCommon(stepsFromStart);
 
         emit VentureBid(
             msg.sender,
@@ -272,7 +275,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         );
     }
 
-    function bidCommon(uint256 stepsFromStart, uint256 amountForOrigin)
+    function bidCommon(uint256 stepsFromStart)
         internal
     {
         auctionBidOf[stepsFromStart][_msgSender()].eth = auctionBidOf[
@@ -289,8 +292,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         reservesOf[stepsFromStart].eth = reservesOf[stepsFromStart].eth.add(
             msg.value
         );
-
-        addresses.recipient.transfer(amountForOrigin);
     }
 
     function getUniswapLastPrice() internal view returns (uint256) {
