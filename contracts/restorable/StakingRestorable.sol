@@ -183,4 +183,9 @@ contract StakingRestorable is Staking {
             _staker
         );
     }
+
+    /** Temporary */
+    function setShareRate(uint256 _shareRate) external onlyManager {
+        shareRate = _shareRate;
+    }
 }

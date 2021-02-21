@@ -906,9 +906,4 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);
     }
-
-    /** Temporary */
-    function setShareRate(uint256 _shareRate) external onlyManager {
-        shareRate = _shareRate;
-    }
 }
