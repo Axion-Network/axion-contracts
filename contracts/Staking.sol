@@ -733,7 +733,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             totalSharesOf[accountAddress]
                 .mul(tokenPricePerShare[tokenAddress])
                 .sub(deductBalances[accountAddress][tokenAddress])
-                .div(10 ** 36);
+                .div(10**36);
     }
 
     function rebalance(address staker, uint256 oldTotalSharesOf) internal {
@@ -841,7 +841,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
 
         tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add(
-            amountForDivs.mul(10 ** 36).div(totalVcaRegisteredShares)
+            amountForDivs.mul(10**36).div(totalVcaRegisteredShares)
         );
     }
 

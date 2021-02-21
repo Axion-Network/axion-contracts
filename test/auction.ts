@@ -82,6 +82,7 @@ describe('Auction', () => {
 
       await auction.setTokensOfDay(0, [token.address], [100]); // Set token of day to axn 100%
       tokenOfDay0 = await auction.getTokensOfDay(0); // Get token of day
+      console.log(tokenOfDay0);
 
       expect(tokenOfDay0[0][0]).to.be.eq(token.address); // Expect first token to be axn
       expect(tokenOfDay0[1][0]).to.be.eq(100); // expect first percent to be 100
@@ -91,11 +92,11 @@ describe('Auction', () => {
         [token.address, swaptoken.address],
         [65, 35]
       );
-      tokenOfDay0 = await auction.tokensOfTheDay(5);
+      tokenOfDay0 = await auction.getTokensOfDay(5);
 
       expect(tokenOfDay0[0][0]).to.be.eq(token.address);
       expect(tokenOfDay0[1][0]).to.be.eq(65);
-      expect(tokenOfDay0[1][0]).to.be.eq(swaptoken.address);
+      expect(tokenOfDay0[0][1]).to.be.eq(swaptoken.address);
       expect(tokenOfDay0[1][1]).to.be.eq(35);
     });
   });
@@ -173,10 +174,11 @@ describe('Auction', () => {
     it(`should correctly withdraw venture auction bid, and fail if not between ${AUCTIONSTAKE_MIN} and 5555 days`, async () => {
       let auctionID = await auction.lastAuctionEventId();
       const [account1, account2] = await ethers.getSigners();
+      await staking.setTotalVcaRegisteredShares(1);
 
       await auction.setTokensOfDay(0, [token.address], [100]);
 
-      console.log(await staking.getDivTokens());
+      await staking.getDivTokens();
 
       await auction.connect(account1).bid([0], DEADLINE, account2.address, {
         value: ethers.utils.parseEther('1'),

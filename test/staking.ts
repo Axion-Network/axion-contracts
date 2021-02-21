@@ -666,8 +666,6 @@ describe('Staking', async () => {
       await staking.makePayout();
     }
 
-    await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
-
     const sessionId = await staking.sessionsOf(_staker.address, 0);
 
     await staking.connect(_staker).maxShare(sessionId);
@@ -812,8 +810,6 @@ describe('Staking', async () => {
       await staking.makePayout();
     }
 
-    await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
-
     const sessionId = await staking.sessionsOf(_staker.address, 0);
 
     await staking.connect(_staker).maxShare(sessionId);
@@ -833,8 +829,8 @@ describe('Staking', async () => {
     );
   });
 
-  // TODO
-  it('should set total shares of account', async () => {
-    expect(false).to.be.true;
-  });
+  // // TODO
+  // xit('should set total shares of account', async () => {
+  //   expect(false).to.be.true;
+  // });
 });
