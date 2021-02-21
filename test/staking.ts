@@ -234,7 +234,7 @@ describe('Staking', async () => {
 
     await TestUtil.timeout(1000);
 
-    await staking.connect(_staker).setTotalSharesOfAccount(_staker);
+    await staking.connect(_staker).setTotalSharesOfAccount(_staker.address);
     await staking.connect(_staker).unstakeV1(sessionId);
 
     const afterUnstakeSessionData = await staking.sessionDataOf(
@@ -407,7 +407,7 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(preUnstakeSessionData.shares);
     await staking.setTotalStakedAmount(preUnstakeSessionData.amount);
 
-    await staking.connect(_staker).setTotalSharesOfAccount(_staker);
+    await staking.connect(_staker).setTotalSharesOfAccount(_staker.address);
     await staking.connect(_staker).unstakeV1(sessionId);
 
     expect(
@@ -435,7 +435,7 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(preUnstakeSessionData.shares);
     await staking.setTotalStakedAmount(preUnstakeSessionData.amount);
 
-    await staking.connect(_staker).setTotalSharesOfAccount(_staker);
+    await staking.connect(_staker).setTotalSharesOfAccount(_staker.address);
     await staking.connect(_staker).unstakeV1(sessionId);
 
     expect(
@@ -560,7 +560,7 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(preRestakeSessionV1Data.shares);
     await staking.setTotalStakedAmount(preRestakeSessionV1Data.amount);
 
-    await staking.connect(_staker).setTotalSharesOfAccount(_staker);
+    await staking.connect(_staker).setTotalSharesOfAccount(_staker.address);
     await staking
       .connect(_staker)
       .restakeV1(preRestakeSessionV1Id, restakeDays, 0);
@@ -790,7 +790,7 @@ describe('Staking', async () => {
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
-    await staking.connect(_staker).setTotalSharesOfAccount(_staker);
+    await staking.connect(_staker).setTotalSharesOfAccount(_staker.address);
     await staking.connect(_staker).unstakeV1(sessionId);
     await expect(
       staking.connect(_staker).maxShareV1(sessionId)
