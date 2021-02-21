@@ -188,4 +188,9 @@ contract StakingRestorable is Staking {
     function resetTotalSharesOfAccount() external {
         totalSharesOf[msg.sender] = 0;
     }
+
+    /** No longer needed */
+    function setShareRate(uint256 _shareRate) external onlyManager {
+        shareRate = _shareRate;
+    }
 }

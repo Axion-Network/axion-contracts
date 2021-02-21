@@ -807,8 +807,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
     }
 
-    function setTotalSharesOfAccount() external {
-        setTotalSharesOfAccountInternal(msg.sender);
+    function setTotalSharesOfAccount(address _address) external {
+        setTotalSharesOfAccountInternal(_address);
     }
 
     function updateTokenPricePerShare(
@@ -1109,11 +1109,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     /** Roles management - only for multi sig address */
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);
-    }
-
-    /** Temporary */
-    function setShareRate(uint256 _shareRate) external onlyManager {
-        shareRate = _shareRate;
     }
 
     function getDivTokens() external view returns (address[] memory) {
