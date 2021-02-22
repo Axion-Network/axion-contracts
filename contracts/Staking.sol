@@ -54,8 +54,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 indexed time
     );
 
+    event AccountRegistered(
+        address indexed account,
+        uint256 indexed totalShares
+    );
+
     event WithdrawLiquidDiv(
-        address indexed accountAddress,
+        address indexed account,
         address indexed tokenAddress,
         uint256 indexed interest
     );
@@ -119,14 +124,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     uint16 private maxShareMaxDays;
     uint256 private shareRateScalingFactor;
 
-    uint256 public totalVcaRegisteredShares;
+    uint256 internal totalVcaRegisteredShares;
 
-    mapping(address => uint256) public tokenPricePerShare;
+    mapping(address => uint256) internal tokenPricePerShare;
     EnumerableSetUpgradeable.AddressSet internal divTokens;
 
     mapping(address => bool) internal isVcaRegistered;
     mapping(address => uint256) internal totalSharesOf;
-    mapping(address => mapping(address => uint256)) public deductBalances;
+    mapping(address => mapping(address => uint256)) internal deductBalances;
 
     /* New variables must go below here. */
 
@@ -701,6 +706,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 tokenInterestEarned =
             getTokenInterestEarnedInternal(msg.sender, tokenAddress);
 
+        /** 0xFF... is our ethereum placeholder address */
         if (
             tokenAddress != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
         ) {
@@ -759,6 +765,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256[] storage sessionsOfAccount = sessionsOf[account];
 
         for (uint256 i = 0; i < sessionsOfAccount.length; i++) {
+            if (sessionDataOf[account][sessionsOfAccount[i]].withdrawn)
+                continue;
+
             totalShares = totalShares.add(
                 sessionDataOf[account][sessionsOfAccount[i]].shares
             );
@@ -805,6 +814,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 );
             }
         }
+
+        emit AccountRegistered(account, totalShares);
     }
 
     function setTotalSharesOfAccount(address _address) external {
@@ -1123,5 +1134,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     function getTotalSharesOf(address account) external view returns (uint256) {
         return totalSharesOf[account];
+    }
+
+    function getTotalVcaRegisteredShares() external view returns (uint256) {
+        return totalVcaRegisteredShares;
     }
 }

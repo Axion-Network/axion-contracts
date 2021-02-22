@@ -100,8 +100,9 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     uint256 public middlePriceDays;
 
     struct VentureToken {
-        address coin;
-        uint256 percentage;
+        // total bit 256
+        address coin; // 160 bits
+        uint96 percentage; // 96 bits
     }
 
     struct AuctionData {
@@ -222,9 +223,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _saveAuctionData();
         _updatePrice();
 
-        // (uint256 amountForOrigin, uint256 amountForStaking) =
-        //     _calculateVentureEthAmounts();
-
         VentureToken[] storage tokens = auctions[currentDay].tokens;
 
         address[] memory coinsBought = new address[](tokens.length);
@@ -233,10 +231,12 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         for (uint8 i = 0; i < tokens.length; i++) {
             uint256 amountBought;
 
-            uint256 amountToBuy =
-                msg.value.mul(tokens[i].percentage).div(100);
+            uint256 amountToBuy = msg.value.mul(tokens[i].percentage).div(100);
 
-            if (tokens[i].coin != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)) {
+            if (
+                tokens[i].coin !=
+                address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
+            ) {
                 amountBought = _swapEthForToken(
                     tokens[i].coin,
                     amountOutMin[i],
@@ -275,9 +275,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         );
     }
 
-    function bidCommon(uint256 stepsFromStart)
-        internal
-    {
+    function bidCommon(uint256 stepsFromStart) internal {
         auctionBidOf[stepsFromStart][_msgSender()].eth = auctionBidOf[
             stepsFromStart
         ][_msgSender()]
@@ -572,13 +570,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         return (toRecipient, toUniswap);
     }
 
-    function _calculateVentureEthAmounts() private returns (uint256, uint256) {
-        uint256 toOrigin = msg.value.mul(5).div(100);
-        uint256 toUniswap = msg.value.sub(toOrigin);
-
-        return (toOrigin, toUniswap);
-    }
-
     function _calculateRefAndUserAmountsToMint(uint256 amount)
         private
         view
@@ -612,52 +603,6 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _setupRole(MANAGER_ROLE, _manager);
         _setupRole(MIGRATOR_ROLE, _migrator);
         init_ = false;
-    }
-
-    function init(
-        uint256 _stepTimestamp,
-        address _mainTokenAddress,
-        address _stakingAddress,
-        address payable _uniswapAddress,
-        address payable _recipientAddress,
-        address _nativeSwapAddress,
-        address _foreignSwapAddress,
-        address _subbalancesAddress,
-        address _auctionV1Address
-    ) external onlyMigrator {
-        require(!init_, 'Init is active');
-        init_ = true;
-        /** Roles */
-        _setupRole(CALLER_ROLE, _nativeSwapAddress);
-        _setupRole(CALLER_ROLE, _foreignSwapAddress);
-        _setupRole(CALLER_ROLE, _stakingAddress);
-        _setupRole(CALLER_ROLE, _subbalancesAddress);
-
-        // Timer
-        if (start == 0) {
-            start = now;
-        }
-
-        stepTimestamp = _stepTimestamp;
-
-        // Options
-        options = Options({
-            autoStakeDays: 14,
-            referrerPercent: 20,
-            referredPercent: 10,
-            referralsOn: true,
-            discountPercent: 20,
-            premiumPercent: 0
-        });
-
-        // Addresses
-        auctionV1 = IAuctionV1(_auctionV1Address);
-        addresses = Addresses({
-            mainToken: _mainTokenAddress,
-            staking: _stakingAddress,
-            uniswap: _uniswapAddress,
-            recipient: _recipientAddress
-        });
     }
 
     /** Public Setter Functions */

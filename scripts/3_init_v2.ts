@@ -127,6 +127,7 @@ const main = async () => {
         stakingRestorable.address,
         auctionRestorable.address,
         subBalancesRestorable.address,
+        DEPLOYER_ADDRESS,
       ])
       .then(() => console.log('AXN init'));
 
