@@ -829,7 +829,7 @@ describe('Staking', async () => {
     );
   });
 
-  it.only('Account registration: should should only include stakes that are not withdrawn', async () => {
+  it('Account registration: should should only include stakes that are not withdrawn', async () => {
     await token
       .connect(_staker)
       .approve(staking.address, ethers.utils.parseEther('10'));
@@ -872,6 +872,10 @@ describe('Staking', async () => {
     expect(totalVCAShares.toString()).to.be.equal(
       sessionData2.shares.toString()
     );
+
+    await expect(
+      staking.setTotalSharesOfAccount(_staker.address)
+    ).to.be.revertedWith('Account already registered.');
   });
 
   // // TODO
