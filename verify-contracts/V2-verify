@@ -1,9 +1,9 @@
 
-        npx hardhat verify --network ropsten 0xe3bA9211204fDd697cbCef1A3A5b1B82E8F8755f
-        npx hardhat verify --network ropsten 0x596F93D59edee4c948F03d8724523253007eCdc4
-        npx hardhat verify --network ropsten 0x8E3700182CA43813cdD582faDb31cddB0928B48a
-        npx hardhat verify --network ropsten 0x7D31113ebCF80D75b7De7A3B4BaDaC5FD7751444
-        npx hardhat verify --network ropsten 0x9b69A6e33Efb46cb0335214d5AAdbD2E4750d517
-        npx hardhat verify --network ropsten 0xF2FEe07bB85A7af9B2d31Fa3b01A0150b289AaE4
-        npx hardhat verify --network ropsten 0xD8A47562598841fe0465Aca6DB5D183595A8C511
+        npx hardhat verify --network ropsten 0x51F8dC388D196c80E2f4edFBc1391E34e7a65928
+        npx hardhat verify --network ropsten 0xCA2EB609DEE593b4e093C98d6006C23d96122018
+        npx hardhat verify --network ropsten 0x74e33e18620e6c7C0aD2C58Ca650679334642f7C
+        npx hardhat verify --network ropsten 0x5b9f4674B252AEde1Ac581aa0C9d6655240f4C37
+        npx hardhat verify --network ropsten 0xc2272F8D6D10a165325c3b230BA6641d624ba67f
+        npx hardhat verify --network ropsten 0x9905D0FCF3149C08386204e6d8eB2803E4ff54e8
+        npx hardhat verify --network ropsten 0x5a756C7e7b1ed926034e09cc91259684145b1313
       
