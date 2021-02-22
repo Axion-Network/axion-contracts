@@ -186,6 +186,7 @@ contract StakingRestorable is Staking {
 
     // Used for tests only
     function resetTotalSharesOfAccount() external {
+        isVcaRegistered[msg.sender] == false;
         totalSharesOf[msg.sender] = 0;
     }
 

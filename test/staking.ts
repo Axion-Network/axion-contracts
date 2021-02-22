@@ -829,6 +829,51 @@ describe('Staking', async () => {
     );
   });
 
+  it.only('Account registration: should should only include stakes that are not withdrawn', async () => {
+    await token
+      .connect(_staker)
+      .approve(staking.address, ethers.utils.parseEther('10'));
+
+    const stakeAmount = 5;
+    const stakingDays = 5;
+
+    await staking
+      .connect(_staker)
+      .stake(ethers.utils.parseEther(stakeAmount.toString()), stakingDays);
+
+    const sessionId1 = await staking.sessionsOf(_staker.address, 0);
+    // const sessionData1 = await staking.sessionDataOf(
+    //   _staker.address,
+    //   sessionId1
+    // );
+
+    for (let i = 0; i < stakingDays; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
+
+    await staking.connect(_staker).unstake(sessionId1);
+
+    await staking.connect(_staker).resetTotalSharesOfAccount();
+
+    await staking
+      .connect(_staker)
+      .stake(ethers.utils.parseEther(stakeAmount.toString()), stakingDays);
+
+    const sessionId2 = await staking.sessionsOf(_staker.address, 1);
+    const sessionData2 = await staking.sessionDataOf(
+      _staker.address,
+      sessionId2
+    );
+
+    const totalVCAShares = await staking.getTotalSharesOf(_staker.address);
+
+    expect(totalVCAShares.toString()).to.be.equal(
+      sessionData2.shares.toString()
+    );
+  });
+
   // // TODO
   // xit('should set total shares of account', async () => {
   //   expect(false).to.be.true;
