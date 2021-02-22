@@ -133,6 +133,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     mapping(address => uint256) internal totalSharesOf;
     mapping(address => mapping(address => uint256)) internal deductBalances;
 
+    bool internal paused;
+
     /* New variables must go below here. */
 
     modifier onlyManager() {
@@ -161,6 +163,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         _;
     }
 
+    modifier pausable() {
+        require(paused == false, 'Contract is paused');
+        _;
+    }
+
     function initialize(address _manager, address _migrator)
         public
         initializer
@@ -178,7 +185,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return sessionsOf[account];
     }
 
-    function stake(uint256 amount, uint256 stakingDays) external {
+    function stake(uint256 amount, uint256 stakingDays) external pausable {
         require(stakingDays != 0, 'Staking: Staking days < 1');
         require(stakingDays <= 5555, 'Staking: Staking days > 5555');
 
@@ -190,7 +197,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 amount,
         uint256 stakingDays,
         address staker
-    ) external override onlyExternalStaker {
+    ) external override onlyExternalStaker pausable {
         require(stakingDays != 0, 'Staking: Staking days < 1');
         require(stakingDays <= 5555, 'Staking: Staking days > 5555');
 
@@ -245,7 +252,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return stakingInterest;
     }
 
-    function unstake(uint256 sessionId) external {
+    function unstake(uint256 sessionId) external pausable {
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
         require(
@@ -261,7 +268,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         _initPayout(msg.sender, amountOut);
     }
 
-    function unstakeV1(uint256 sessionId) external {
+    function unstakeV1(uint256 sessionId) external pausable {
         require(sessionId <= lastSessionIdV1, 'Staking: Invalid sessionId');
 
         Session storage session = sessionDataOf[msg.sender][sessionId];
@@ -443,7 +450,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 sessionId,
         uint256 stakingDays,
         uint256 topup
-    ) external {
+    ) external pausable {
         require(stakingDays != 0, 'Staking: Staking days < 1');
         require(stakingDays <= 5555, 'Staking: Staking days > 5555');
 
@@ -472,7 +479,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 sessionId,
         uint256 stakingDays,
         uint256 topup
-    ) external {
+    ) external pausable {
         require(sessionId <= lastSessionIdV1, 'Staking: Invalid sessionId');
         require(stakingDays != 0, 'Staking: Staking days < 1');
         require(stakingDays <= 5555, 'Staking: Staking days > 5555');
@@ -755,11 +762,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
     }
 
-    function setTotalSharesOfAccountInternal(address account) internal {
-        require(
-            isVcaRegistered[account] == false,
-            'STAKING: Account already registered.'
-        );
+    function setTotalSharesOfAccountInternal(address account) internal pausable {
+        // require(
+        //     isVcaRegistered[account] == false,
+        //     'STAKING: Account already registered.'
+        // );
 
         uint256 totalShares;
         uint256[] storage sessionsOfAccount = sessionsOf[account];
@@ -776,6 +783,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256[] memory v1SessionsOfAccount = stakingV1.sessionsOf_(account);
 
         for (uint256 i = 0; i < v1SessionsOfAccount.length; i++) {
+            if (sessionDataOf[account][v1SessionsOfAccount[i]].withdrawn)
+                continue;
+
             if (v1SessionsOfAccount[i] > lastSessionIdV1) {
                 continue;
             }
@@ -887,7 +897,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         shareRateScalingFactor = _scalingFactor;
     }
 
-    function maxShare(uint256 sessionId) external {
+    function maxShare(uint256 sessionId) external pausable {
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
         require(
@@ -945,7 +955,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         sessionDataOf[msg.sender][sessionId].lastPayout = payouts.length + 5555;
     }
 
-    function maxShareV1(uint256 sessionId) external {
+    function maxShareV1(uint256 sessionId) external pausable {
         require(sessionId <= lastSessionIdV1, 'STAKING: Invalid sessionId');
 
         Session storage session = sessionDataOf[msg.sender][sessionId];
@@ -1111,6 +1121,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     function setMaxShareMaxDays(uint16 _maxShareMaxDays) external onlyManager {
         maxShareMaxDays = _maxShareMaxDays;
+    }
+
+    function setPaused(bool _paused) external onlyManager {
+        paused = _paused;
+    }
+
+    function getPaused() external view returns (bool) {
+        return paused;
     }
 
     function getMaxShareMaxDays() external view returns (uint16) {
