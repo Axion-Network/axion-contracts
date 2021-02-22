@@ -1,11 +1,11 @@
-import { ContractFactory } from '../../libs/ContractFactory';
-import { initTestSmartContracts } from '../utils/initTestSmartContracts';
-import { ROLES } from '../../constants/roles';
+import { ContractFactory } from '../libs/ContractFactory';
+import { initTestSmartContracts } from './utils/initTestSmartContracts';
+import { ROLES } from '../constants/roles';
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
-import { SubBalancesMock } from '../../typechain';
-import { SECONDS_IN_DAY } from '../utils/constants';
-import { TestUtil } from '../utils/TestUtil';
+import { SubBalancesMock } from '../typechain';
+import { SECONDS_IN_DAY } from './utils/constants';
+import { TestUtil } from './utils/TestUtil';
 
 xdescribe('Fix Share Rates & Stakes', () => {
   it('should set share rate', async () => {

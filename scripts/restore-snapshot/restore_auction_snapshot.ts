@@ -1,6 +1,6 @@
 import { Auction, Token } from '../../typechain';
 
-const auctionSnapshot = require('../../snapshots/auction-snapshot.json');
+const auctionSnapshot = require('../snapshots/auction-snapshot.json');
 import _ from 'lodash';
 
 export async function restoreAuctionSnapshot(auction: Auction, token: Token) {

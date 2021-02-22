@@ -1,6 +1,6 @@
 import { Token } from '../../typechain';
 
-const tokenSnapshot = require('../../snapshots/main-token-snapshot.json');
+const tokenSnapshot = require('../snapshots/main-token-snapshot.json');
 import BN from 'bn.js';
 
 export async function airdropTokens(token: Token, airdropper: string) {

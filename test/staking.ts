@@ -1,12 +1,17 @@
-import { initTestSmartContracts } from '../utils/initTestSmartContracts';
-import { ContractFactory } from '../../libs/ContractFactory';
-import { TestUtil } from '../utils/TestUtil';
+import { initTestSmartContracts } from './utils/initTestSmartContracts';
+import { ContractFactory } from '../libs/ContractFactory';
+import { TestUtil } from './utils/TestUtil';
 import { ethers } from 'hardhat';
 import web3 from 'web3';
 import { expect } from 'chai';
-import { Token, Staking, StakingV1, SubBalancesMock } from '../../typechain';
+import {
+  Token,
+  StakingV1,
+  SubBalancesMock,
+  StakingRestorable,
+} from '../typechain';
 import { BigNumber } from 'ethers';
-import { SECONDS_IN_DAY, STAKE_PERIOD } from '../utils/constants';
+import { SECONDS_IN_DAY, STAKE_PERIOD } from './utils/constants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
 const lastSessionIdV1 = 1;
@@ -14,7 +19,7 @@ const lastSessionIdV1 = 1;
 describe('Staking', async () => {
   let _staker: SignerWithAddress;
   let token: Token;
-  let staking: Staking;
+  let staking: StakingRestorable;
   let stakingV1: StakingV1;
   let subBalancesMock: SubBalancesMock;
   let _setter: SignerWithAddress;
@@ -229,6 +234,7 @@ describe('Staking', async () => {
 
     await TestUtil.timeout(1000);
 
+    await staking.connect(_staker).setTotalSharesOfAccount(_staker.address);
     await staking.connect(_staker).unstakeV1(sessionId);
 
     const afterUnstakeSessionData = await staking.sessionDataOf(
@@ -401,6 +407,7 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(preUnstakeSessionData.shares);
     await staking.setTotalStakedAmount(preUnstakeSessionData.amount);
 
+    await staking.connect(_staker).setTotalSharesOfAccount(_staker.address);
     await staking.connect(_staker).unstakeV1(sessionId);
 
     expect(
@@ -428,6 +435,7 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(preUnstakeSessionData.shares);
     await staking.setTotalStakedAmount(preUnstakeSessionData.amount);
 
+    await staking.connect(_staker).setTotalSharesOfAccount(_staker.address);
     await staking.connect(_staker).unstakeV1(sessionId);
 
     expect(
@@ -457,7 +465,6 @@ describe('Staking', async () => {
     const stakingDays = 10;
     const restakeDays = 15;
     const amount = ethers.utils.parseEther('10');
-    const preStakeBalance = await token.balanceOf(_staker.address);
 
     await token.connect(_staker).approve(staking.address, amount);
 
@@ -533,7 +540,6 @@ describe('Staking', async () => {
     const stakingDays = 10;
     const restakeDays = 15;
     const amount = ethers.utils.parseEther('10');
-    const preStakeBalance = await token.balanceOf(_staker.address);
 
     await token.connect(_staker).approve(staking.address, amount);
 
@@ -554,6 +560,7 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(preRestakeSessionV1Data.shares);
     await staking.setTotalStakedAmount(preRestakeSessionV1Data.amount);
 
+    await staking.connect(_staker).setTotalSharesOfAccount(_staker.address);
     await staking
       .connect(_staker)
       .restakeV1(preRestakeSessionV1Id, restakeDays, 0);
@@ -618,7 +625,8 @@ describe('Staking', async () => {
   it('should not upgrade stakes to max share if event is off', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
-    const eventActive = await staking.connect(_setter).getMaxShareEventActive();
+
+    const eventActive = await staking.getMaxShareEventActive();
     expect(eventActive).to.equal(false);
 
     await token.connect(_staker).approve(staking.address, amount);
@@ -645,8 +653,9 @@ describe('Staking', async () => {
   it('should upgrade v2 stakes to max share', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
-    await staking.connect(_setter).setMaxShareEventActive(true);
-    await staking.connect(_setter).setMaxShareMaxDays(5555);
+
+    await staking.setMaxShareEventActive(true);
+    await staking.setMaxShareMaxDays(5555);
 
     await token.connect(_staker).approve(staking.address, amount);
     await staking.connect(_staker).stake(amount, stakingDays);
@@ -656,8 +665,6 @@ describe('Staking', async () => {
 
       await staking.makePayout();
     }
-
-    await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
 
     const sessionId = await staking.sessionsOf(_staker.address, 0);
 
@@ -675,7 +682,8 @@ describe('Staking', async () => {
   it('should not upgrade v2 stakes that have been withdrawn', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
-    await staking.connect(_setter).setMaxShareEventActive(true);
+
+    await staking.setMaxShareEventActive(true);
 
     await token.connect(_staker).approve(staking.address, amount);
     await staking.connect(_staker).stake(amount, stakingDays);
@@ -702,8 +710,9 @@ describe('Staking', async () => {
   it('should upgrade v1 stakes to max share', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
-    await staking.connect(_setter).setMaxShareEventActive(true);
-    await staking.connect(_setter).setMaxShareMaxDays(5555);
+
+    await staking.setMaxShareEventActive(true);
+    await staking.setMaxShareMaxDays(5555);
 
     await token.connect(_staker).approve(staking.address, amount);
     await stakingV1.connect(_staker).stake(amount, stakingDays);
@@ -711,7 +720,7 @@ describe('Staking', async () => {
     await staking.setSharesTotalSupply(`10000000000000000000`);
     await staking.setTotalStakedAmount(`10000000000000000000`);
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < stakingDays; i++) {
       await TestUtil.increaseTime(SECONDS_IN_DAY);
 
       await staking.makePayout();
@@ -729,8 +738,9 @@ describe('Staking', async () => {
   it('should upgrade v1 5555 stakes to max share', async () => {
     const stakingDays = 5555;
     const amount = ethers.utils.parseEther('10');
-    await staking.connect(_setter).setMaxShareEventActive(true);
-    await staking.connect(_setter).setMaxShareMaxDays(5555);
+
+    await staking.setMaxShareEventActive(true);
+    await staking.setMaxShareMaxDays(5555);
 
     await token.connect(_staker).approve(staking.address, amount);
     await stakingV1.connect(_staker).stake(amount, stakingDays);
@@ -759,7 +769,8 @@ describe('Staking', async () => {
   it('should not upgrade v1 stakes that have been withdrawn', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('10');
-    await staking.connect(_setter).setMaxShareEventActive(true);
+
+    await staking.setMaxShareEventActive(true);
 
     await token.connect(_staker).approve(staking.address, amount);
     await stakingV1.connect(_staker).stake(amount, stakingDays);
@@ -777,6 +788,7 @@ describe('Staking', async () => {
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
+    await staking.connect(_staker).setTotalSharesOfAccount(_staker.address);
     await staking.connect(_staker).unstakeV1(sessionId);
     await expect(
       staking.connect(_staker).maxShareV1(sessionId)
@@ -798,8 +810,6 @@ describe('Staking', async () => {
       await staking.makePayout();
     }
 
-    await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
-
     const sessionId = await staking.sessionsOf(_staker.address, 0);
 
     await staking.connect(_staker).maxShare(sessionId);
@@ -818,4 +828,58 @@ describe('Staking', async () => {
       'Max Share Upgrade - Stake must be less then max share max days'
     );
   });
+
+  it('Account registration: should should only include stakes that are not withdrawn', async () => {
+    await token
+      .connect(_staker)
+      .approve(staking.address, ethers.utils.parseEther('10'));
+
+    const stakeAmount = 5;
+    const stakingDays = 5;
+
+    await staking
+      .connect(_staker)
+      .stake(ethers.utils.parseEther(stakeAmount.toString()), stakingDays);
+
+    const sessionId1 = await staking.sessionsOf(_staker.address, 0);
+    // const sessionData1 = await staking.sessionDataOf(
+    //   _staker.address,
+    //   sessionId1
+    // );
+
+    for (let i = 0; i < stakingDays; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
+
+    await staking.connect(_staker).unstake(sessionId1);
+
+    await staking.connect(_staker).resetTotalSharesOfAccount();
+
+    await staking
+      .connect(_staker)
+      .stake(ethers.utils.parseEther(stakeAmount.toString()), stakingDays);
+
+    const sessionId2 = await staking.sessionsOf(_staker.address, 1);
+    const sessionData2 = await staking.sessionDataOf(
+      _staker.address,
+      sessionId2
+    );
+
+    const totalVCAShares = await staking.getTotalSharesOf(_staker.address);
+
+    expect(totalVCAShares.toString()).to.be.equal(
+      sessionData2.shares.toString()
+    );
+
+    await expect(
+      staking.setTotalSharesOfAccount(_staker.address)
+    ).to.be.revertedWith('Account already registered.');
+  });
+
+  // // TODO
+  // xit('should set total shares of account', async () => {
+  //   expect(false).to.be.true;
+  // });
 });

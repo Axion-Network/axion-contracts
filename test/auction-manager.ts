@@ -1,5 +1,5 @@
-import { initTestSmartContracts } from '../utils/initTestSmartContracts';
-import { ROLES } from '../../constants/roles';
+import { initTestSmartContracts } from './utils/initTestSmartContracts';
+import { ROLES } from '../constants/roles';
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
 

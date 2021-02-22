@@ -12,6 +12,52 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '../Auction.sol';
 
 contract AuctionRestorable is Auction {
+    function init(
+        uint256 _stepTimestamp,
+        address _mainTokenAddress,
+        address _stakingAddress,
+        address payable _uniswapAddress,
+        address payable _recipientAddress,
+        address _nativeSwapAddress,
+        address _foreignSwapAddress,
+        address _subbalancesAddress,
+        address _auctionV1Address
+    ) external onlyMigrator {
+        require(!init_, 'Init is active');
+        init_ = true;
+        /** Roles */
+        _setupRole(CALLER_ROLE, _nativeSwapAddress);
+        _setupRole(CALLER_ROLE, _foreignSwapAddress);
+        _setupRole(CALLER_ROLE, _stakingAddress);
+        _setupRole(CALLER_ROLE, _subbalancesAddress);
+
+        // Timer
+        if (start == 0) {
+            start = now;
+        }
+
+        stepTimestamp = _stepTimestamp;
+
+        // Options
+        options = Options({
+            autoStakeDays: 14,
+            referrerPercent: 20,
+            referredPercent: 10,
+            referralsOn: true,
+            discountPercent: 20,
+            premiumPercent: 0
+        });
+
+        // Addresses
+        auctionV1 = IAuctionV1(_auctionV1Address);
+        addresses = Addresses({
+            mainToken: _mainTokenAddress,
+            staking: _stakingAddress,
+            uniswap: _uniswapAddress,
+            recipient: _recipientAddress
+        });
+    }
+
     /** Setter methods for contract migration */
     function setNormalVariables(uint256 _lastAuctionEventId, uint256 _start)
         external

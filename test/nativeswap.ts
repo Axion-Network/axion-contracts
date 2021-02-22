@@ -1,10 +1,10 @@
-import { initTestSmartContracts } from '../utils/initTestSmartContracts';
-import { ROLES } from '../../constants/roles';
+import { initTestSmartContracts } from './utils/initTestSmartContracts';
+import { ROLES } from '../constants/roles';
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
 
-import { SECONDS_IN_DAY, STAKE_PERIOD } from '../utils/constants';
-import { TestUtil } from '../utils/TestUtil';
+import { SECONDS_IN_DAY, STAKE_PERIOD } from './utils/constants';
+import { TestUtil } from './utils/TestUtil';
 
 describe('Native Swap', () => {
   describe('initialize', () => {

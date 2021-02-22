@@ -2,13 +2,12 @@
 
 pragma solidity >=0.4.25 <0.7.0;
 
-/** OpenZeppelin Dependencies */
-// import "@openzeppelin/contracts-upgradeable/contracts/proxy/Initializable.sol";
 import '@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
-/** Local Interfaces */
+import '@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol';
+
 import './interfaces/IToken.sol';
 import './interfaces/IAuction.sol';
 import './interfaces/IStaking.sol';
@@ -17,6 +16,7 @@ import './interfaces/IStakingV1.sol';
 
 contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     /** Events */
     event Stake(
@@ -52,6 +52,17 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 indexed value,
         uint256 indexed sharesTotalSupply,
         uint256 indexed time
+    );
+
+    event AccountRegistered(
+        address indexed account,
+        uint256 indexed totalShares
+    );
+
+    event WithdrawLiquidDiv(
+        address indexed account,
+        address indexed tokenAddress,
+        uint256 indexed interest
     );
 
     /** Structs */
@@ -109,16 +120,26 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     uint256 public totalStakedAmount;
 
     bool private maxShareEventActive;
+
     uint16 private maxShareMaxDays;
     uint256 private shareRateScalingFactor;
 
+    uint256 internal totalVcaRegisteredShares;
+
+    mapping(address => uint256) internal tokenPricePerShare;
+    EnumerableSetUpgradeable.AddressSet internal divTokens;
+
+    mapping(address => bool) internal isVcaRegistered;
+    mapping(address => uint256) internal totalSharesOf;
+    mapping(address => mapping(address => uint256)) internal deductBalances;
+
     /* New variables must go below here. */
 
-    /** Roles */
     modifier onlyManager() {
         require(hasRole(MANAGER_ROLE, _msgSender()), 'Caller is not a manager');
         _;
     }
+
     modifier onlyMigrator() {
         require(
             hasRole(MIGRATOR_ROLE, _msgSender()),
@@ -126,6 +147,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
         _;
     }
+
     modifier onlyExternalStaker() {
         require(
             hasRole(EXTERNAL_STAKER_ROLE, _msgSender()),
@@ -134,7 +156,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         _;
     }
 
-    /** Init functions */
+    modifier onlyAuction() {
+        require(msg.sender == addresses.auction, 'Caller is not the auction');
+        _;
+    }
+
     function initialize(address _manager, address _migrator)
         public
         initializer
@@ -143,8 +169,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         _setupRole(MIGRATOR_ROLE, _migrator);
         init_ = false;
     }
-
-    /** End init functions */
 
     function sessionsOf_(address account)
         external
@@ -179,6 +203,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address staker
     ) internal {
         if (now >= nextPayoutCall) makePayout();
+        if (isVcaRegistered[staker] == false)
+            setTotalSharesOfAccountInternal(staker);
 
         uint256 start = now;
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
@@ -594,12 +620,20 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 lastPayout
     ) internal returns (uint256) {
         if (now >= nextPayoutCall) makePayout();
+        if (isVcaRegistered[msg.sender] == false)
+            setTotalSharesOfAccountInternal(msg.sender);
 
         uint256 stakingInterest =
             calculateStakingInterest(firstPayout, lastPayout, shares);
 
         sharesTotalSupply = sharesTotalSupply.sub(shares);
         totalStakedAmount = totalStakedAmount.sub(amount);
+        totalVcaRegisteredShares = totalVcaRegisteredShares.sub(shares);
+
+        uint256 oldTotalSharesOf = totalSharesOf[msg.sender];
+        totalSharesOf[msg.sender] = totalSharesOf[msg.sender].sub(shares);
+
+        rebalance(msg.sender, oldTotalSharesOf);
 
         (uint256 amountOut, uint256 penalty) =
             getAmountOutAndPenalty(amount, start, end, stakingInterest);
@@ -632,8 +666,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address staker
     ) internal {
         uint256 shares = _getStakersSharesAmount(amount, start, end);
+
         sharesTotalSupply = sharesTotalSupply.add(shares);
         totalStakedAmount = totalStakedAmount.add(amount);
+        totalVcaRegisteredShares = totalVcaRegisteredShares.add(shares);
+
+        uint256 oldTotalSharesOf = totalSharesOf[staker];
+        totalSharesOf[staker] = totalSharesOf[staker].add(shares);
+
+        rebalance(staker, oldTotalSharesOf);
 
         sessionDataOf[staker][sessionId] = Session({
             amount: amount,
@@ -659,6 +700,166 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
 
         emit Stake(staker, sessionId, amount, start, end, shares);
+    }
+
+    function withdrawDivToken(address tokenAddress) external {
+        uint256 tokenInterestEarned =
+            getTokenInterestEarnedInternal(msg.sender, tokenAddress);
+
+        /** 0xFF... is our ethereum placeholder address */
+        if (
+            tokenAddress != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
+        ) {
+            IERC20Upgradeable(tokenAddress).transfer(
+                msg.sender,
+                tokenInterestEarned
+            );
+        } else {
+            msg.sender.transfer(tokenInterestEarned);
+        }
+
+        deductBalances[msg.sender][tokenAddress] = totalSharesOf[msg.sender]
+            .mul(tokenPricePerShare[tokenAddress]);
+
+        emit WithdrawLiquidDiv(msg.sender, tokenAddress, tokenInterestEarned);
+    }
+
+    function getTokenInterestEarned(
+        address accountAddress,
+        address tokenAddress
+    ) external view returns (uint256) {
+        return getTokenInterestEarnedInternal(accountAddress, tokenAddress);
+    }
+
+    function getTokenInterestEarnedInternal(
+        address accountAddress,
+        address tokenAddress
+    ) internal view returns (uint256) {
+        return
+            totalSharesOf[accountAddress]
+                .mul(tokenPricePerShare[tokenAddress])
+                .sub(deductBalances[accountAddress][tokenAddress])
+                .div(10**36);
+    }
+
+    function rebalance(address staker, uint256 oldTotalSharesOf) internal {
+        for (uint8 i = 0; i < divTokens.length(); i++) {
+            uint256 tokenInterestEarned =
+                oldTotalSharesOf.mul(tokenPricePerShare[divTokens.at(i)]).sub(
+                    deductBalances[staker][divTokens.at(i)]
+                );
+
+            deductBalances[staker][divTokens.at(i)] = totalSharesOf[staker]
+                .mul(tokenPricePerShare[divTokens.at(i)])
+                .sub(tokenInterestEarned);
+        }
+    }
+
+    function setTotalSharesOfAccountInternal(address account) internal {
+        require(
+            isVcaRegistered[account] == false,
+            'STAKING: Account already registered.'
+        );
+
+        uint256 totalShares;
+        uint256[] storage sessionsOfAccount = sessionsOf[account];
+
+        for (uint256 i = 0; i < sessionsOfAccount.length; i++) {
+            if (sessionDataOf[account][sessionsOfAccount[i]].withdrawn)
+                continue;
+
+            totalShares = totalShares.add(
+                sessionDataOf[account][sessionsOfAccount[i]].shares
+            );
+        }
+
+        uint256[] memory v1SessionsOfAccount = stakingV1.sessionsOf_(account);
+
+        for (uint256 i = 0; i < v1SessionsOfAccount.length; i++) {
+            if (v1SessionsOfAccount[i] > lastSessionIdV1) {
+                continue;
+            }
+
+            (
+                uint256 amount,
+                uint256 start,
+                uint256 end,
+                uint256 shares,
+                uint256 firstPayout
+            ) = stakingV1.sessionDataOf(account, v1SessionsOfAccount[i]);
+
+            (amount);
+            (start);
+            (end);
+            (firstPayout);
+
+            if (shares == 0) {
+                continue;
+            }
+
+            totalShares = totalShares.add(shares);
+        }
+
+        isVcaRegistered[account] = true;
+
+        if (totalShares != 0) {
+            totalSharesOf[account] = totalShares;
+            totalVcaRegisteredShares = totalVcaRegisteredShares.add(
+                totalShares
+            );
+
+            for (uint256 i = 0; i < divTokens.length(); i++) {
+                deductBalances[account][divTokens.at(i)] = totalShares.mul(
+                    tokenPricePerShare[divTokens.at(i)]
+                );
+            }
+        }
+
+        emit AccountRegistered(account, totalShares);
+    }
+
+    function setTotalSharesOfAccount(address _address) external {
+        setTotalSharesOfAccountInternal(_address);
+    }
+
+    function updateTokenPricePerShare(
+        address payable bidderAddress,
+        address payable originAddress,
+        address tokenAddress,
+        uint256 amountBought
+    ) external payable override onlyAuction {
+        // uint256 amountForBidder = amountBought.mul(10526315789473685).div(1e17);
+        uint256 amountForOrigin = amountBought.mul(5).div(100);
+        uint256 amountForBidder = amountBought.mul(10).div(100);
+        uint256 amountForDivs =
+            amountBought.sub(amountForOrigin).sub(amountForBidder);
+
+        if (
+            tokenAddress != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
+        ) {
+            IERC20Upgradeable(tokenAddress).transfer(
+                bidderAddress,
+                amountForBidder
+            );
+
+            IERC20Upgradeable(tokenAddress).transfer(
+                originAddress,
+                amountForOrigin
+            );
+        } else {
+            bidderAddress.transfer(amountForBidder);
+            originAddress.transfer(amountForOrigin);
+        }
+
+        tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add(
+            amountForDivs.mul(10**36).div(totalVcaRegisteredShares)
+        );
+    }
+
+    function addDivToken(address tokenAddress) external override onlyAuction {
+        if (!divTokens.contains(tokenAddress)) {
+            divTokens.add(tokenAddress);
+        }
     }
 
     function updateShareRate(uint256 _payout) internal {
@@ -864,8 +1065,22 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 newStart,
         uint256 newEnd
     ) internal {
+        if (now >= nextPayoutCall) makePayout();
+        if (isVcaRegistered[msg.sender] == false)
+            setTotalSharesOfAccountInternal(msg.sender);
+
         sharesTotalSupply = sharesTotalSupply.add(newShares - oldShares);
         totalStakedAmount = totalStakedAmount.add(newAmount - oldAmount);
+        totalVcaRegisteredShares = totalVcaRegisteredShares.add(
+            newShares - oldShares
+        );
+
+        uint256 oldTotalSharesOf = totalSharesOf[msg.sender];
+        totalSharesOf[msg.sender] = totalSharesOf[msg.sender].add(
+            newShares - oldShares
+        );
+
+        rebalance(msg.sender, oldTotalSharesOf);
 
         emit MaxShareUpgrade(
             msg.sender,
@@ -905,5 +1120,23 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     /** Roles management - only for multi sig address */
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);
+    }
+
+    function getDivTokens() external view returns (address[] memory) {
+        address[] memory divTokenAddresses = new address[](divTokens.length());
+
+        for (uint8 i = 0; i < divTokens.length(); i++) {
+            divTokenAddresses[i] = divTokens.at(i);
+        }
+
+        return divTokenAddresses;
+    }
+
+    function getTotalSharesOf(address account) external view returns (uint256) {
+        return totalSharesOf[account];
+    }
+
+    function getTotalVcaRegisteredShares() external view returns (uint256) {
+        return totalVcaRegisteredShares;
     }
 }

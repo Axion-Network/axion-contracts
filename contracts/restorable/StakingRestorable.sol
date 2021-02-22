@@ -184,7 +184,17 @@ contract StakingRestorable is Staking {
         );
     }
 
-    /** Temporary */
+    // Used for tests only
+    function resetTotalSharesOfAccount() external {
+        isVcaRegistered[msg.sender] == false;
+        totalSharesOf[msg.sender] = 0;
+    }
+
+    function setTotalVcaRegisteredShares(uint256 _shares) external {
+        totalVcaRegisteredShares = _shares;
+    }
+
+    /** No longer needed */
     function setShareRate(uint256 _shareRate) external onlyManager {
         shareRate = _shareRate;
     }

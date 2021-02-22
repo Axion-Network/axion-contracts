@@ -1,5 +1,5 @@
-import { initTestSmartContracts } from '../utils/initTestSmartContracts';
-import { ROLES } from '../../constants/roles';
+import { initTestSmartContracts } from './utils/initTestSmartContracts';
+import { ROLES } from '../constants/roles';
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
 
@@ -11,8 +11,8 @@ import {
   TOTAL_SNAPSHOT_ADDRESS,
   TOTAL_SNAPSHOT_AMOUNT,
   TEST_SIGNER_PRIV,
-} from '../utils/constants';
-import { TestUtil } from '../utils/TestUtil';
+} from './utils/constants';
+import { TestUtil } from './utils/TestUtil';
 
 describe('Foreign Swap', () => {
   describe('initialize', () => {

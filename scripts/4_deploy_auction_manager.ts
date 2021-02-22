@@ -40,11 +40,20 @@ const main = async () => {
     )) as AuctionManager;
     console.log('Deployed: Auction Manager', auctionManager.address);
 
+    const auction = await ContractFactory.getAuctionAt(ADDRESSES.AUCTION_ADDRESS);
+    const token = await ContractFactory.getTokenAt(ADDRESSES.TOKEN_ADDRESS);
+
+    const callerRole = await auction.CALLER_ROLE();
+    const minterRole = await token.getMinterRole();
+
+    await auction.setupRole(callerRole, auctionManager.address);
+    await token.setupRole(minterRole, auctionManager.address);
+
     const addressFilePath = path.join(
       __dirname,
       '..',
       'deployed-addresses',
-      'addresses.json'
+      'auction-manager.json'
     );
 
     fs.writeFileSync(

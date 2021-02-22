@@ -17,25 +17,32 @@ import './interfaces/IAuctionV1.sol';
 contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
 
-    /** Events */
     event Bid(
         address indexed account,
         uint256 value,
         uint256 indexed auctionId,
-        uint256 indexed time
+        uint256 time
+    );
+
+    event VentureBid(
+        address indexed account,
+        uint256 ethBid,
+        uint256 indexed auctionId,
+        uint256 time,
+        address[] coins,
+        uint256[] amountBought
     );
 
     event Withdraval(
         address indexed account,
         uint256 value,
         uint256 indexed auctionId,
-        uint256 indexed time,
+        uint256 time,
         uint256 stakeDays
     );
 
     event AuctionIsOver(uint256 eth, uint256 token, uint256 indexed auctionId);
 
-    /** Struct */
     struct AuctionReserves {
         uint256 eth;
         uint256 token;
@@ -88,12 +95,25 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
     bool public init_;
 
-    /** Variables after initial contract launch must go below here. https://github.com/OpenZeppelin/openzeppelin-sdk/issues/37 */
-    /** End Variables after launch */
+    mapping(uint256 => mapping(address => uint256)) public autoStakeDaysOf; // NOT USED
 
-    /** Store autoStake duration (auctionID, address) */
-    mapping(uint256 => mapping(address => uint256)) public autoStakeDaysOf;
     uint256 public middlePriceDays;
+
+    struct VentureToken {
+        // total bit 256
+        address coin; // 160 bits
+        uint96 percentage; // 96 bits
+    }
+
+    struct AuctionData {
+        uint8 mode;
+        VentureToken[] tokens;
+    }
+
+    AuctionData[7] internal auctions;
+    uint8 internal ventureAutoStakeDays;
+
+    /* New variables must go below here. */
 
     /** modifiers */
     modifier onlyCaller() {
@@ -120,100 +140,159 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _;
     }
 
-    function initialize(address _manager, address _migrator)
-        public
-        initializer
-    {
-        _setupRole(MANAGER_ROLE, _manager);
-        _setupRole(MIGRATOR_ROLE, _migrator);
-        init_ = false;
+    function _updatePrice() internal {
+        uint256 stepsFromStart = calculateStepsFromStart();
+
+        reservesOf[stepsFromStart].uniswapLastPrice = getUniswapLastPrice();
+
+        reservesOf[stepsFromStart]
+            .uniswapMiddlePrice = getUniswapMiddlePriceForDays();
     }
 
-    function init(
-        uint256 _stepTimestamp,
-        address _mainTokenAddress,
-        address _stakingAddress,
-        address payable _uniswapAddress,
-        address payable _recipientAddress,
-        address _nativeSwapAddress,
-        address _foreignSwapAddress,
-        address _subbalancesAddress,
-        address _auctionV1Address
-    ) external onlyMigrator {
-        require(!init_, 'Init is active');
-        init_ = true;
-        /** Roles */
-        _setupRole(CALLER_ROLE, _nativeSwapAddress);
-        _setupRole(CALLER_ROLE, _foreignSwapAddress);
-        _setupRole(CALLER_ROLE, _stakingAddress);
-        _setupRole(CALLER_ROLE, _subbalancesAddress);
+    function _swapEthForToken(
+        address tokenAddress,
+        uint256 amountOutMin,
+        uint256 amount,
+        uint256 deadline
+    ) private returns (uint256) {
+        address[] memory path = new address[](2);
 
-        // Timer
-        if (start == 0) {
-            start = now;
+        path[0] = IUniswapV2Router02(addresses.uniswap).WETH();
+        path[1] = tokenAddress;
+
+        return
+            IUniswapV2Router02(addresses.uniswap).swapExactETHForTokens{
+                value: amount
+            }(amountOutMin, path, addresses.staking, deadline)[1];
+    }
+
+    function bid(
+        uint256[] calldata amountOutMin,
+        uint256 deadline,
+        address ref
+    ) external payable {
+        uint256 currentDay = getCurrentDay();
+        uint8 auctionMode = auctions[currentDay].mode;
+
+        if (auctionMode == 0) {
+            bidInternal(amountOutMin[0], deadline, ref);
+        } else if (auctionMode == 1) {
+            ventureBid(amountOutMin, deadline, currentDay);
+        }
+    }
+
+    function bidInternal(
+        uint256 amountOutMin,
+        uint256 deadline,
+        address ref
+    ) internal {
+        _saveAuctionData();
+        _updatePrice();
+
+        require(_msgSender() != ref, 'msg.sender == ref');
+
+        (uint256 toRecipient, uint256 toUniswap) =
+            _calculateRecipientAndUniswapAmountsToSend();
+
+        _swapEthForToken(
+            addresses.mainToken,
+            amountOutMin,
+            toUniswap,
+            deadline
+        );
+
+        uint256 stepsFromStart = calculateStepsFromStart();
+
+        /** If referralsOn is true allow to set ref */
+        if (options.referralsOn == true) {
+            auctionBidOf[stepsFromStart][_msgSender()].ref = ref;
         }
 
-        stepTimestamp = _stepTimestamp;
+        bidCommon(stepsFromStart);
 
-        // Options
-        options = Options({
-            autoStakeDays: 14,
-            referrerPercent: 20,
-            referredPercent: 10,
-            referralsOn: true,
-            discountPercent: 20,
-            premiumPercent: 0
-        });
+        addresses.recipient.transfer(toRecipient);
 
-        // Addresses
-        auctionV1 = IAuctionV1(_auctionV1Address);
-        addresses = Addresses({
-            mainToken: _mainTokenAddress,
-            staking: _stakingAddress,
-            uniswap: _uniswapAddress,
-            recipient: _recipientAddress
-        });
+        emit Bid(msg.sender, msg.value, stepsFromStart, now);
     }
 
-    /** Public Setter Functions */
-    function setReferrerPercentage(uint256 percent) external onlyManager {
-        options.referrerPercent = percent;
+    function ventureBid(
+        uint256[] memory amountOutMin,
+        uint256 deadline,
+        uint256 currentDay
+    ) internal {
+        _saveAuctionData();
+        _updatePrice();
+
+        VentureToken[] storage tokens = auctions[currentDay].tokens;
+
+        address[] memory coinsBought = new address[](tokens.length);
+        uint256[] memory amountsBought = new uint256[](tokens.length);
+
+        for (uint8 i = 0; i < tokens.length; i++) {
+            uint256 amountBought;
+
+            uint256 amountToBuy = msg.value.mul(tokens[i].percentage).div(100);
+
+            if (
+                tokens[i].coin !=
+                address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
+            ) {
+                amountBought = _swapEthForToken(
+                    tokens[i].coin,
+                    amountOutMin[i],
+                    amountToBuy,
+                    deadline
+                );
+
+                IStaking(addresses.staking).updateTokenPricePerShare(
+                    msg.sender,
+                    addresses.recipient,
+                    tokens[i].coin,
+                    amountBought
+                );
+            } else {
+                amountBought = amountToBuy;
+
+                IStaking(addresses.staking).updateTokenPricePerShare{
+                    value: amountToBuy
+                }(msg.sender, addresses.recipient, tokens[i].coin, amountToBuy);
+            }
+
+            coinsBought[i] = tokens[i].coin;
+            amountsBought[i] = amountBought;
+        }
+
+        uint256 stepsFromStart = calculateStepsFromStart();
+        bidCommon(stepsFromStart);
+
+        emit VentureBid(
+            msg.sender,
+            msg.value,
+            stepsFromStart,
+            now,
+            coinsBought,
+            amountsBought
+        );
     }
 
-    function setReferredPercentage(uint256 percent) external onlyManager {
-        options.referredPercent = percent;
+    function bidCommon(uint256 stepsFromStart) internal {
+        auctionBidOf[stepsFromStart][_msgSender()].eth = auctionBidOf[
+            stepsFromStart
+        ][_msgSender()]
+            .eth
+            .add(msg.value);
+
+        if (!existAuctionsOf[stepsFromStart][_msgSender()]) {
+            auctionsOf[_msgSender()].push(stepsFromStart);
+            existAuctionsOf[stepsFromStart][_msgSender()] = true;
+        }
+
+        reservesOf[stepsFromStart].eth = reservesOf[stepsFromStart].eth.add(
+            msg.value
+        );
     }
 
-    function setReferralsOn(bool _referralsOn) external onlyManager {
-        options.referralsOn = _referralsOn;
-    }
-
-    function setAutoStakeDays(uint256 _autoStakeDays) external onlyManager {
-        options.autoStakeDays = _autoStakeDays;
-    }
-
-    function setDiscountPercent(uint256 percent) external onlyManager {
-        options.discountPercent = percent;
-    }
-
-    function setPremiumPercent(uint256 percent) external onlyManager {
-        options.premiumPercent = percent;
-    }
-
-    function setMiddlePriceDays(uint256 _middleDays) external onlyManager {
-        middlePriceDays = _middleDays;
-    }
-
-    /** Public Getter functions */
-    function auctionsOf_(address account)
-        public
-        view
-        returns (uint256[] memory)
-    {
-        return auctionsOf[account];
-    }
-
-    function getUniswapLastPrice() public view returns (uint256) {
+    function getUniswapLastPrice() internal view returns (uint256) {
         address[] memory path = new address[](2);
 
         path[0] = IUniswapV2Router02(addresses.uniswap).WETH();
@@ -225,7 +304,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         return price;
     }
 
-    function getUniswapMiddlePriceForDays() public view returns (uint256) {
+    function getUniswapMiddlePriceForDays() internal view returns (uint256) {
         uint256 stepsFromStart = calculateStepsFromStart();
 
         uint256 index = stepsFromStart;
@@ -247,86 +326,24 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         else return sum.div(points);
     }
 
-    /** Core functionality */
-    /** Internal */
-    function _updatePrice() internal {
-        uint256 stepsFromStart = calculateStepsFromStart();
-
-        reservesOf[stepsFromStart].uniswapLastPrice = getUniswapLastPrice();
-
-        reservesOf[stepsFromStart]
-            .uniswapMiddlePrice = getUniswapMiddlePriceForDays();
-    }
-
-    /** Externals */
-    function _swapEth(
-        uint256 amountOutMin,
-        uint256 amount,
-        uint256 deadline
-    ) private {
-        address[] memory path = new address[](2);
-
-        path[0] = IUniswapV2Router02(addresses.uniswap).WETH();
-        path[1] = addresses.mainToken;
-
-        IUniswapV2Router02(addresses.uniswap).swapExactETHForTokens{
-            value: amount
-        }(amountOutMin, path, addresses.staking, deadline);
-    }
-
-    function bid(
-        uint256 amountOutMin,
-        uint256 deadline,
-        address ref
-    ) external payable {
-        _saveAuctionData();
-        _updatePrice();
-
-        require(_msgSender() != ref, 'msg.sender == ref');
-
-        (uint256 toRecipient, uint256 toUniswap) =
-            _calculateRecipientAndUniswapAmountsToSend();
-
-        _swapEth(amountOutMin, toUniswap, deadline);
-
-        uint256 stepsFromStart = calculateStepsFromStart();
-
-        /** If referralsOn is true sallow to set ref */
-        if (options.referralsOn == true) {
-            auctionBidOf[stepsFromStart][_msgSender()].ref = ref;
-        } else {
-            // Else set ref to 0x0 for this auction bid
-            auctionBidOf[stepsFromStart][_msgSender()].ref = address(0);
-        }
-
-        auctionBidOf[stepsFromStart][_msgSender()].eth = auctionBidOf[
-            stepsFromStart
-        ][_msgSender()]
-            .eth
-            .add(msg.value);
-
-        if (!existAuctionsOf[stepsFromStart][_msgSender()]) {
-            auctionsOf[_msgSender()].push(stepsFromStart);
-            existAuctionsOf[stepsFromStart][_msgSender()] = true;
-        }
-
-        reservesOf[stepsFromStart].eth = reservesOf[stepsFromStart].eth.add(
-            msg.value
-        );
-
-        addresses.recipient.transfer(toRecipient);
-
-        emit Bid(msg.sender, msg.value, stepsFromStart, now);
-    }
-
     function withdraw(uint256 auctionId, uint256 stakeDays) external {
         _saveAuctionData();
         _updatePrice();
 
-        require(
-            stakeDays >= options.autoStakeDays,
-            'Auction: stakeDays < minimum days'
-        );
+        uint8 auctionMode = auctions[auctionId.mod(7)].mode;
+
+        if (auctionMode == 0) {
+            require(
+                stakeDays >= options.autoStakeDays,
+                'Auction: stakeDays < minimum days'
+            );
+        } else if (auctionMode == 1) {
+            require(
+                stakeDays >= ventureAutoStakeDays,
+                'Auction: stakeDays < minimum days'
+            );
+        }
+
         require(stakeDays <= 5555, 'Auction: stakeDays > 5555');
 
         uint256 stepsFromStart = calculateStepsFromStart();
@@ -499,6 +516,15 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         return stepsFromStart.add(uint256(7).sub(stepsFromStart.mod(7)));
     }
 
+    /**
+     * @dev
+     * friday = 0, saturday = 1, sunday = 2 etc...
+     */
+    function getCurrentDay() internal view returns (uint256) {
+        uint256 stepsFromStart = calculateStepsFromStart();
+        return stepsFromStart.mod(7);
+    }
+
     function calculateStepsFromStart() public view returns (uint256) {
         return now.sub(start).div(stepTimestamp);
     }
@@ -570,8 +596,124 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         }
     }
 
+    function initialize(address _manager, address _migrator)
+        public
+        initializer
+    {
+        _setupRole(MANAGER_ROLE, _manager);
+        _setupRole(MIGRATOR_ROLE, _migrator);
+        init_ = false;
+    }
+
+    /** Public Setter Functions */
+    function setReferrerPercentage(uint256 percent) external onlyManager {
+        options.referrerPercent = percent;
+    }
+
+    function setReferredPercentage(uint256 percent) external onlyManager {
+        options.referredPercent = percent;
+    }
+
+    function setReferralsOn(bool _referralsOn) external onlyManager {
+        options.referralsOn = _referralsOn;
+    }
+
+    function setAutoStakeDays(uint256 _autoStakeDays) external onlyManager {
+        options.autoStakeDays = _autoStakeDays;
+    }
+
+    function setVentureAutoStakeDays(uint8 _autoStakeDays)
+        external
+        onlyManager
+    {
+        ventureAutoStakeDays = _autoStakeDays;
+    }
+
+    function setDiscountPercent(uint256 percent) external onlyManager {
+        options.discountPercent = percent;
+    }
+
+    function setPremiumPercent(uint256 percent) external onlyManager {
+        options.premiumPercent = percent;
+    }
+
+    function setMiddlePriceDays(uint256 _middleDays) external onlyManager {
+        middlePriceDays = _middleDays;
+    }
+
     /** Roles management - only for multi sig address */
     function setupRole(bytes32 role, address account) external onlyManager {
         _setupRole(role, account);
+    }
+
+    function setAuctionMode(uint8 _day, uint8 _mode) external onlyManager {
+        auctions[_day].mode = _mode;
+    }
+
+    function setTokensOfDay(
+        uint8 day,
+        address[] calldata coins,
+        uint8[] calldata percentages
+    ) external onlyManager {
+        AuctionData storage auction = auctions[day];
+
+        auction.mode = 1;
+
+        delete auction.tokens;
+
+        uint8 percent = 0;
+        for (uint8 i; i < coins.length; i++) {
+            auction.tokens.push(VentureToken(coins[i], percentages[i]));
+
+            percent = percentages[i] + percent;
+
+            IStaking(addresses.staking).addDivToken(coins[i]);
+        }
+
+        require(
+            percent == 100,
+            'AUCTION: Percentage for venture day must equal 100'
+        );
+    }
+
+    /** Getter functions */
+    function auctionsOf_(address account)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return auctionsOf[account];
+    }
+
+    function getAuctionModes() external view returns (uint8[7] memory) {
+        uint8[7] memory auctionModes;
+
+        for (uint8 i; i < auctions.length; i++) {
+            auctionModes[i] = auctions[i].mode;
+        }
+
+        return auctionModes;
+    }
+
+    function getTokensOfDay(uint8 _day)
+        external
+        view
+        returns (address[] memory, uint256[] memory)
+    {
+        VentureToken[] memory ventureTokens = auctions[_day].tokens;
+
+        address[] memory tokens = new address[](ventureTokens.length);
+        uint256[] memory percentages = new uint256[](ventureTokens.length);
+
+        for (uint8 i; i < ventureTokens.length; i++) {
+            tokens[i] = ventureTokens[i].coin;
+            percentages[i] = ventureTokens[i].percentage;
+        }
+
+        return (tokens, percentages);
+    }
+
+    function getVentureAutoStakeDays() external view returns (uint8) {
+        return ventureAutoStakeDays;
     }
 }
