@@ -790,12 +790,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256[] memory v1SessionsOfAccount = stakingV1.sessionsOf_(account);
 
         for (uint256 i = 0; i < v1SessionsOfAccount.length; i++) {
-            if (sessionDataOf[account][v1SessionsOfAccount[i]].withdrawn)
+            if (sessionDataOf[account][v1SessionsOfAccount[i]].shares != 0)
                 continue;
 
-            if (v1SessionsOfAccount[i] > lastSessionIdV1) {
+            if (v1SessionsOfAccount[i] > lastSessionIdV1)
                 continue;
-            }
 
             (
                 uint256 amount,
@@ -810,9 +809,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             (end);
             (firstPayout);
 
-            if (shares == 0) {
+            if (shares == 0)
                 continue;
-            }
 
             totalShares = totalShares.add(shares);
         }
