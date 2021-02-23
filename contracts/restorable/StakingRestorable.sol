@@ -190,10 +190,6 @@ contract StakingRestorable is Staking {
         totalSharesOf[msg.sender] = 0;
     }
 
-    function setTotalVcaRegisteredShares(uint256 _shares) external {
-        totalVcaRegisteredShares = _shares;
-    }
-
     /** No longer needed */
     function setShareRate(uint256 _shareRate) external onlyManager {
         shareRate = _shareRate;

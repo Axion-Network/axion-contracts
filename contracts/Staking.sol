@@ -164,7 +164,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     modifier pausable() {
-        require(paused == false, 'Contract is paused');
+        require(
+            paused == false || hasRole(MIGRATOR_ROLE, _msgSender()),
+            'Contract is paused'
+        );
         _;
     }
 
@@ -762,11 +765,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
     }
 
-    function setTotalSharesOfAccountInternal(address account) internal pausable {
-        // require(
-        //     isVcaRegistered[account] == false,
-        //     'STAKING: Account already registered.'
-        // );
+    function setTotalSharesOfAccountInternal(address account)
+        internal
+        pausable
+    {
+        require(
+            isVcaRegistered[account] == false ||
+                hasRole(MIGRATOR_ROLE, msg.sender),
+            'STAKING: Account already registered.'
+        );
 
         uint256 totalShares;
         uint256[] storage sessionsOfAccount = sessionsOf[account];
@@ -1123,7 +1130,19 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         maxShareMaxDays = _maxShareMaxDays;
     }
 
-    function setPaused(bool _paused) external onlyManager {
+    function setTotalVcaRegisteredShares(uint256 _shares)
+        external
+        onlyMigrator
+    {
+        totalVcaRegisteredShares = _shares;
+    }
+
+    function setPaused(bool _paused) external {
+        require(
+            hasRole(MIGRATOR_ROLE, msg.sender) ||
+                hasRole(MANAGER_ROLE, msg.sender),
+            'STAKING: User must be manager or migrator'
+        );
         paused = _paused;
     }
 
