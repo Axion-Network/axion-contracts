@@ -754,7 +754,7 @@ describe('Staking', async () => {
       await staking.makePayout();
     }
 
-    await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+    // await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
@@ -874,7 +874,7 @@ describe('Staking', async () => {
     );
 
     await expect(
-      staking.setTotalSharesOfAccount(_staker.address)
+      staking.connect(_staker).setTotalSharesOfAccount(_staker.address)
     ).to.be.revertedWith('Account already registered.');
   });
 
