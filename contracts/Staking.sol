@@ -793,8 +793,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             if (sessionDataOf[account][v1SessionsOfAccount[i]].shares != 0)
                 continue;
 
-            if (v1SessionsOfAccount[i] > lastSessionIdV1)
-                continue;
+            if (v1SessionsOfAccount[i] > lastSessionIdV1) continue;
 
             (
                 uint256 amount,
@@ -809,8 +808,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             (end);
             (firstPayout);
 
-            if (shares == 0)
-                continue;
+            if (shares == 0) continue;
 
             totalShares = totalShares.add(shares);
         }
@@ -1006,6 +1004,16 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             );
         }
 
+        maxShareInternal(
+            sessionId,
+            shares,
+            newShares,
+            amount,
+            newAmount,
+            newStart,
+            newEnd
+        );
+
         sessionDataOf[msg.sender][sessionId] = Session({
             amount: newAmount,
             start: newStart,
@@ -1018,16 +1026,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         });
 
         sessionsOf[msg.sender].push(sessionId);
-
-        maxShareInternal(
-            sessionId,
-            shares,
-            newShares,
-            amount,
-            newAmount,
-            newStart,
-            newEnd
-        );
     }
 
     function maxShareUpgrade(
@@ -1173,5 +1171,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     function getTotalVcaRegisteredShares() external view returns (uint256) {
         return totalVcaRegisteredShares;
+    }
+
+    function getIsVCARegistered(address staker) external view returns (bool) {
+        return isVcaRegistered[staker];
     }
 }
