@@ -935,7 +935,39 @@ describe('Staking', async () => {
     expect(sessionData.shares.toString()).to.be.equal(shares.toString());
   });
 
-  it.only('Account registration: should register a v2 stake using max share', async () => {
+  it('Account registration: should register on stake', async () => {
+    const stakingDays = 10;
+    const amount = ethers.utils.parseEther('500');
+
+    await staking.setMaxShareEventActive(true);
+    await staking.setMaxShareMaxDays(5555);
+
+    await token.connect(_staker).approve(staking.address, amount);
+    await staking.connect(_staker).stake(amount, stakingDays);
+    await staking.connect(_staker).resetTotalSharesOfAccount();
+    await staking.connect(_staker).stake(amount, stakingDays);
+
+    const sessionId1 = await staking.sessionsOf(_staker.address, 0);
+    const sessionId2 = await staking.sessionsOf(_staker.address, 1);
+
+    const sessionData1 = await staking.sessionDataOf(
+      _staker.address,
+      sessionId1
+    );
+    const sessionData2 = await staking.sessionDataOf(
+      _staker.address,
+      sessionId2
+    );
+    const shares = await staking.getTotalSharesOf(_staker.address);
+
+    const totalVCAShares = await staking.getTotalVcaRegisteredShares();
+    expect(totalVCAShares.toString()).to.be.equal(shares.toString());
+    expect(sessionData1.shares.add(sessionData2.shares).toString()).to.be.equal(
+      shares.toString()
+    );
+  });
+
+  it('Account registration: should register on unstake', async () => {
     const stakingDays = 10;
     const amount = ethers.utils.parseEther('500');
 
