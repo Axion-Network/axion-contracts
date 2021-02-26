@@ -33,7 +33,6 @@ const main = async () => {
     //   auction.address,
     //   await ContractFactory.getAuctionFactory(),
     //   {
-    //     unsafeAllowCustomTypes: true,
     //     unsafeAllowLinkedLibraries: true,
     //   }
     // );
@@ -43,7 +42,6 @@ const main = async () => {
     //   bpd.address,
     //   await ContractFactory.getBPDFactory(),
     //   {
-    //     unsafeAllowCustomTypes: true,
     //     unsafeAllowLinkedLibraries: true,
     //   }
     // );
@@ -53,7 +51,6 @@ const main = async () => {
     //   foreignSwap.address,
     //   await ContractFactory.getForeignSwapFactory(),
     //   {
-    //     unsafeAllowCustomTypes: true,
     //     unsafeAllowLinkedLibraries: true,
     //   }
     // );
@@ -63,7 +60,6 @@ const main = async () => {
     //   nativeSwap.address,
     //   await ContractFactory.getNativeSwapFactory(),
     //   {
-    //     unsafeAllowCustomTypes: true,
     //     unsafeAllowLinkedLibraries: true,
     //   }
     // );
@@ -73,7 +69,6 @@ const main = async () => {
       staking.address,
       await ContractFactory.getStakingFactory(),
       {
-        unsafeAllowCustomTypes: true,
         unsafeAllowLinkedLibraries: true,
       }
     );
@@ -83,7 +78,6 @@ const main = async () => {
     //   subBalances.address,
     //   await ContractFactory.getSubBalancesFactory(),
     //   {
-    //     unsafeAllowCustomTypes: true,
     //     unsafeAllowLinkedLibraries: true,
     //   }
     // );
@@ -93,7 +87,6 @@ const main = async () => {
     //   token.address,
     //   await ContractFactory.getTokenFactory(),
     //   {
-    //     unsafeAllowCustomTypes: true,
     //     unsafeAllowLinkedLibraries: true,
     //   }
     // );

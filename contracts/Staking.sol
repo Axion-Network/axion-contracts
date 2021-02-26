@@ -164,7 +164,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     }
 
     modifier pausable() {
-        require(paused == false, 'Contract is paused');
+        require(
+            paused == false || hasRole(MIGRATOR_ROLE, _msgSender()),
+            'Contract is paused'
+        );
         _;
     }
 
@@ -762,11 +765,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
     }
 
-    function setTotalSharesOfAccountInternal(address account) internal pausable {
-        // require(
-        //     isVcaRegistered[account] == false,
-        //     'STAKING: Account already registered.'
-        // );
+    function setTotalSharesOfAccountInternal(address account)
+        internal
+        pausable
+    {
+        require(
+            isVcaRegistered[account] == false ||
+                hasRole(MIGRATOR_ROLE, msg.sender),
+            'STAKING: Account already registered.'
+        );
 
         uint256 totalShares;
         uint256[] storage sessionsOfAccount = sessionsOf[account];
@@ -786,8 +793,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             if (sessionDataOf[account][v1SessionsOfAccount[i]].shares != 0)
                 continue;
 
-            if (v1SessionsOfAccount[i] > lastSessionIdV1)
-                continue;
+            if (v1SessionsOfAccount[i] > lastSessionIdV1) continue;
 
             (
                 uint256 amount,
@@ -802,8 +808,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             (end);
             (firstPayout);
 
-            if (shares == 0)
-                continue;
+            if (shares == 0) continue;
 
             totalShares = totalShares.add(shares);
         }
@@ -999,6 +1004,16 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             );
         }
 
+        maxShareInternal(
+            sessionId,
+            shares,
+            newShares,
+            amount,
+            newAmount,
+            newStart,
+            newEnd
+        );
+
         sessionDataOf[msg.sender][sessionId] = Session({
             amount: newAmount,
             start: newStart,
@@ -1011,16 +1026,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         });
 
         sessionsOf[msg.sender].push(sessionId);
-
-        maxShareInternal(
-            sessionId,
-            shares,
-            newShares,
-            amount,
-            newAmount,
-            newStart,
-            newEnd
-        );
     }
 
     function maxShareUpgrade(
@@ -1121,7 +1126,19 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         maxShareMaxDays = _maxShareMaxDays;
     }
 
-    function setPaused(bool _paused) external onlyManager {
+    function setTotalVcaRegisteredShares(uint256 _shares)
+        external
+        onlyMigrator
+    {
+        totalVcaRegisteredShares = _shares;
+    }
+
+    function setPaused(bool _paused) external {
+        require(
+            hasRole(MIGRATOR_ROLE, msg.sender) ||
+                hasRole(MANAGER_ROLE, msg.sender),
+            'STAKING: User must be manager or migrator'
+        );
         paused = _paused;
     }
 
@@ -1154,5 +1171,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
     function getTotalVcaRegisteredShares() external view returns (uint256) {
         return totalVcaRegisteredShares;
+    }
+
+    function getIsVCARegistered(address staker) external view returns (bool) {
+        return isVcaRegistered[staker];
     }
 }

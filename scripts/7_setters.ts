@@ -55,10 +55,12 @@ const main = async () => {
       });
     }
 
-    const {
-      stakingRestorable,
-      subBalancesRestorable,
-    } = await getRestorableDeployedContracts(networkName);
+    const { stakingRestorable } = await getRestorableDeployedContracts(
+      networkName
+    );
+
+    const r = await stakingRestorable.setMaxShareMaxDays(1887);
+    r.wait();
 
     console.log(
       `============================ ${SCRIPT_NAME}: DONE ===============================`

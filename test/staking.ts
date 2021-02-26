@@ -754,7 +754,7 @@ describe('Staking', async () => {
       await staking.makePayout();
     }
 
-    await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
+    // await TestUtil.increaseTime(SECONDS_IN_DAY * stakingDays);
 
     const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
 
@@ -874,8 +874,129 @@ describe('Staking', async () => {
     );
 
     await expect(
-      staking.setTotalSharesOfAccount(_staker.address)
+      staking.connect(_staker).setTotalSharesOfAccount(_staker.address)
     ).to.be.revertedWith('Account already registered.');
+  });
+
+  it('Account registration: should register a v1 stake using max shares', async () => {
+    const stakingDays = 10;
+    const amount = ethers.utils.parseEther('10');
+
+    await staking.setMaxShareEventActive(true);
+    await staking.setMaxShareMaxDays(5555);
+
+    await token.connect(_staker).approve(staking.address, amount);
+    await stakingV1.connect(_staker).stake(amount, stakingDays);
+
+    await staking.setSharesTotalSupply(`10000000000000000000`);
+    await staking.setTotalStakedAmount(`10000000000000000000`);
+
+    for (let i = 0; i < stakingDays; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
+
+    const sessionId = await stakingV1.sessionsOf(_staker.address, 0);
+    await staking.connect(_staker).resetTotalSharesOfAccount();
+    await staking.connect(_staker).maxShareV1(sessionId);
+
+    const sessionData = await staking.sessionDataOf(_staker.address, sessionId);
+    const shares = await staking.getTotalSharesOf(_staker.address);
+
+    expect(sessionData.shares.toString()).to.be.equal(shares.toString());
+  });
+
+  it('Account registration: should register a v2 stake using max share', async () => {
+    const stakingDays = 10;
+    const amount = ethers.utils.parseEther('500');
+
+    await staking.setMaxShareEventActive(true);
+    await staking.setMaxShareMaxDays(5555);
+
+    await token.connect(_staker).approve(staking.address, amount);
+    await staking.connect(_staker).stake(amount, stakingDays);
+
+    for (let i = 0; i < stakingDays; i++) {
+      await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+      await staking.makePayout();
+    }
+
+    const sessionId = await staking.sessionsOf(_staker.address, 0);
+    await staking.connect(_staker).resetTotalSharesOfAccount();
+    await staking.connect(_staker).maxShare(sessionId);
+
+    const sessionData = await staking.sessionDataOf(_staker.address, sessionId);
+    const shares = await staking.getTotalSharesOf(_staker.address);
+
+    const totalVCAShares = await staking.getTotalVcaRegisteredShares();
+    expect(totalVCAShares.toString()).to.be.equal(shares.toString());
+    expect(sessionData.shares.toString()).to.be.equal(shares.toString());
+  });
+
+  it('Account registration: should register on stake', async () => {
+    const stakingDays = 10;
+    const amount = ethers.utils.parseEther('500');
+
+    await staking.setMaxShareEventActive(true);
+    await staking.setMaxShareMaxDays(5555);
+
+    await token.connect(_staker).approve(staking.address, amount);
+    await staking.connect(_staker).stake(amount, stakingDays);
+    await staking.connect(_staker).resetTotalSharesOfAccount();
+    await staking.connect(_staker).stake(amount, stakingDays);
+
+    const sessionId1 = await staking.sessionsOf(_staker.address, 0);
+    const sessionId2 = await staking.sessionsOf(_staker.address, 1);
+
+    const sessionData1 = await staking.sessionDataOf(
+      _staker.address,
+      sessionId1
+    );
+    const sessionData2 = await staking.sessionDataOf(
+      _staker.address,
+      sessionId2
+    );
+    const shares = await staking.getTotalSharesOf(_staker.address);
+
+    const totalVCAShares = await staking.getTotalVcaRegisteredShares();
+    expect(totalVCAShares.toString()).to.be.equal(shares.toString());
+    expect(sessionData1.shares.add(sessionData2.shares).toString()).to.be.equal(
+      shares.toString()
+    );
+  });
+
+  it('Account registration: should register on unstake', async () => {
+    const stakingDays = 10;
+    const amount = ethers.utils.parseEther('500');
+
+    await staking.setMaxShareEventActive(true);
+    await staking.setMaxShareMaxDays(5555);
+
+    await token.connect(_staker).approve(staking.address, amount);
+    await staking.connect(_staker).stake(amount, stakingDays);
+    await staking.connect(_staker).resetTotalSharesOfAccount();
+    await staking.connect(_staker).stake(amount, stakingDays);
+
+    const sessionId1 = await staking.sessionsOf(_staker.address, 0);
+    const sessionId2 = await staking.sessionsOf(_staker.address, 1);
+
+    const sessionData1 = await staking.sessionDataOf(
+      _staker.address,
+      sessionId1
+    );
+    const sessionData2 = await staking.sessionDataOf(
+      _staker.address,
+      sessionId2
+    );
+    const shares = await staking.getTotalSharesOf(_staker.address);
+
+    const totalVCAShares = await staking.getTotalVcaRegisteredShares();
+    expect(totalVCAShares.toString()).to.be.equal(shares.toString());
+    expect(sessionData1.shares.add(sessionData2.shares).toString()).to.be.equal(
+      shares.toString()
+    );
   });
 
   // // TODO
