@@ -98,39 +98,45 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     bytes32 public constant MANAGER_ROLE = keccak256('MANAGER_ROLE');
 
     /** Public Variables */
-    uint256 public shareRate;
-    uint256 public sharesTotalSupply;
-    uint256 public nextPayoutCall;
-    uint256 public stepTimestamp;
-    uint256 public startContract;
+    uint256 public shareRate; //shareRate used to calculate the number of shares
+    uint256 public sharesTotalSupply; //total shares supply
+    uint256 public nextPayoutCall; //used to calculate when the daily makePayout() should run
+    uint256 public stepTimestamp; // 24h * 60 * 60
+    uint256 public startContract; //time the contract started
     uint256 public globalPayout;
     uint256 public globalPayin;
-    uint256 public lastSessionId;
-    uint256 public lastSessionIdV1;
+    uint256 public lastSessionId; //the ID of the last stake
+    uint256 public lastSessionIdV1; //the ID of the last stake from layer 1 staking contract
 
     /** Mappings / Arrays */
+    // individual staking sessions
     mapping(address => mapping(uint256 => Session)) public sessionDataOf;
+    //array with staking sessions of an address
     mapping(address => uint256[]) public sessionsOf;
+    //array with daily payouts
     Payout[] public payouts;
 
     /** Booleans */
     bool public init_;
 
-    uint256 public basePeriod;
-    uint256 public totalStakedAmount;
+    uint256 public basePeriod; //350 days, time of the first BPD
+    uint256 public totalStakedAmount; //total amount of staked AXN
 
-    bool private maxShareEventActive;
+    bool private maxShareEventActive; //true if maxShare upgrade is enabled
 
-    uint16 private maxShareMaxDays;
-    uint256 private shareRateScalingFactor;
+    uint16 private maxShareMaxDays; //maximum number of days a stake length can be in order to qualify for maxShare upgrade
+    uint256 private shareRateScalingFactor; //scaling factor, default 1 to be used on the shareRate calculation
 
-    uint256 internal totalVcaRegisteredShares;
+    uint256 internal totalVcaRegisteredShares; //total number of shares from accounts that registered for the VCA
 
-    mapping(address => uint256) internal tokenPricePerShare;
-    EnumerableSetUpgradeable.AddressSet internal divTokens;
+    mapping(address => uint256) internal tokenPricePerShare; //price per share for every token that is going to be offered as divident through the VCA
+    EnumerableSetUpgradeable.AddressSet internal divTokens; //list of dividends tokens
 
+    //keep track if an address registered for VCA
     mapping(address => bool) internal isVcaRegistered;
+    //total shares of active stakes for an address
     mapping(address => uint256) internal totalSharesOf;
+    //mapping address-> VCA token used for VCA divs calculation. The way the system works is that deductBalances is starting as totalSharesOf x price of the respective token. So when the token price appreciates, the interest earned is the difference between totalSharesOf x new price - deductBalance [respective token]
     mapping(address => mapping(address => uint256)) internal deductBalances;
 
     bool internal paused;
@@ -179,7 +185,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         _setupRole(MIGRATOR_ROLE, _migrator);
         init_ = false;
     }
-
+    // @param account {address} - address of account
     function sessionsOf_(address account)
         external
         view
@@ -188,14 +194,24 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return sessionsOf[account];
     }
 
+    //staking function which receives AXN and creates the stake - takes as param the amount of AXN and the number of days to be staked
+    //staking days need to be >0 and lower than max days which is 5555
+    // @param amount {uint256} - AXN amount to be staked
+    // @param stakingDays {uint256} - number of days to be staked
     function stake(uint256 amount, uint256 stakingDays) external pausable {
         require(stakingDays != 0, 'Staking: Staking days < 1');
         require(stakingDays <= 5555, 'Staking: Staking days > 5555');
 
+        //call stake internal method
         stakeInternal(amount, stakingDays, msg.sender);
+        //on stake axion gets burned
         IToken(addresses.mainToken).burn(msg.sender, amount);
     }
 
+    //external stake creates a stake for a different account than the caller. It takes an extra param the staker address
+    // @param amount {uint256} - AXN amount to be staked
+    // @param stakingDays {uint256} - number of days to be staked
+    // @param staker {address} - account address to create the stake for
     function externalStake(
         uint256 amount,
         uint256 stakingDays,
@@ -207,18 +223,27 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         stakeInternal(amount, stakingDays, staker);
     }
 
+    // @param amount {uint256} - AXN amount to be staked
+    // @param stakingDays {uint256} - number of days to be staked
+    // @param staker {address} - account address to create the stake for
     function stakeInternal(
         uint256 amount,
         uint256 stakingDays,
         address staker
     ) internal {
+        //once a day we need to call makePayout which takes the interest earned for the last day and adds it into the payout array
         if (now >= nextPayoutCall) makePayout();
+
+        //ensure the user is registered for VCA if not call it
         if (isVcaRegistered[staker] == false)
             setTotalSharesOfAccountInternal(staker);
 
+        //time of staking start is now
         uint256 start = now;
+        //time of stake end is now + number of days * stepTimestamp which is 24 hours
         uint256 end = now.add(stakingDays.mul(stepTimestamp));
 
+        //increase the last stake ID
         lastSessionId = lastSessionId.add(1);
 
         stakeInternalCommon(
@@ -232,17 +257,25 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         );
     }
 
-    function _initPayout(address to, uint256 amount) internal {
+    //payment function uses param address and amount to be paid. Amount is minted to address
+    // @param to {address} - account address to send the payment to
+    // @param amount {uint256} - AXN amount to be paid
+       function _initPayout(address to, uint256 amount) internal {
         IToken(addresses.mainToken).mint(to, amount);
         globalPayout = globalPayout.add(amount);
     }
 
+    //staking interest calculation goes through the payout array and calculates the interest based on the number of shares the user has and the payout for every day
+    // @param firstPayout {uint256} - id of the first day of payout for the stake
+    // @param lastPayout {uint256} - id of the last day of payout for the stake
+    // @param shares {uint256} - number of shares of the stake
     function calculateStakingInterest(
         uint256 firstPayout,
         uint256 lastPayout,
         uint256 shares
     ) public view returns (uint256) {
         uint256 stakingInterest;
+        //calculate lastIndex as minimum of lastPayout from stake session and current day (payouts.length).
         uint256 lastIndex = MathUpgradeable.min(payouts.length, lastPayout);
 
         for (uint256 i = firstPayout; i < lastIndex; i++) {
@@ -255,23 +288,29 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return stakingInterest;
     }
 
-    function unstake(uint256 sessionId) external pausable {
+    //unstake function 
+    // @param sessionID {uint256} - id of the stake 
+      function unstake(uint256 sessionId) external pausable {
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
+        //ensure the stake hasn't been withdrawn before
         require(
             session.shares != 0 && session.withdrawn == false,
             'Staking: Stake withdrawn or not set'
         );
 
         uint256 actualEnd = now;
-
+        //calculate the amount the stake earned; to be paid
         uint256 amountOut = unstakeInternal(session, sessionId, actualEnd);
 
         // To account
         _initPayout(msg.sender, amountOut);
     }
 
+    //unstake function for layer1 stakes
+    // @param sessionID {uint256} - id of the layer 1 stake 
     function unstakeV1(uint256 sessionId) external pausable {
+        //lastSessionIdv1 is the last stake ID from v1 layer
         require(sessionId <= lastSessionIdV1, 'Staking: Invalid sessionId');
 
         Session storage session = sessionDataOf[msg.sender][sessionId];
@@ -297,7 +336,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 lastPayout = stakingDays + firstPayout;
 
         uint256 actualEnd = now;
-
+        //calculate amount to be paid
         uint256 amountOut =
             unstakeV1Internal(
                 sessionId,
@@ -314,7 +353,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         // To account
         _initPayout(msg.sender, amountOut);
     }
-
+    
+    //calculate the amount the stake earned and any penalty because of early/late unstake
+    // @param amount {uint256} - amount of AXN staked 
+    // @param start {uint256} - start date of the stake 
+    // @param end {uint256} - end date of the stake 
+    // @param stakingInterest {uint256} - interest earned of the stake 
     function getAmountOutAndPenalty(
         uint256 amount,
         uint256 start,
@@ -356,6 +400,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
     }
 
+    //makePayout function runs once per day and takes all the AXN earned as interest and puts it into payout array for the day
     function makePayout() public {
         require(now >= nextPayoutCall, 'Staking: Wrong payout time');
 
@@ -367,6 +412,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         nextPayoutCall = nextPayoutCall.add(stepTimestamp);
 
+        //call updateShareRate once a day as sharerate increases based on the daily Payout amount
         updateShareRate(payout);
 
         emit MakePayout(payout, sharesTotalSupply, now);
@@ -388,8 +434,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         return amountTokenInDay.add(inflation);
     }
-
+    
+    
     function _getPayout() internal returns (uint256) {
+        //amountTokenInDay - AXN from auction buybacks goes into the staking contract
         uint256 amountTokenInDay =
             IERC20Upgradeable(addresses.mainToken).balanceOf(address(this));
 
@@ -409,7 +457,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             );
 
         IToken(addresses.mainToken).burn(address(this), amountTokenInDay);
-
+        //we add 8% inflation
         uint256 inflation =
             uint256(8).mul(currentTokenTotalSupply.add(totalStakedAmount)).div(
                 36500
@@ -420,6 +468,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return amountTokenInDay.add(inflation);
     }
 
+    // formula for shares calculation given a number of AXN and a start and end date
+    // @param amount {uint256} - amount of AXN
+    // @param start {uint256} - start date of the stake 
+    // @param end {uint256} - end date of the stake
     function _getStakersSharesAmount(
         uint256 amount,
         uint256 start,
@@ -432,6 +484,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return (numerator).mul(1e18).div(denominator);
     }
 
+    // @param amount {uint256} - amount of AXN
+    // @param shares {uint256} - number of shares 
+    // @param start {uint256} - start date of the stake
+    // @param end {uint256} - end date of the stake
+    // @param stakingInterest {uint256} - interest earned by the stake
     function _getShareRate(
         uint256 amount,
         uint256 shares,
@@ -449,6 +506,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return (numerator).mul(1e18).div(denominator);
     }
 
+    //takes a matures stake and allows restake instead of having to withdraw the axn and stake it back into another stake
+    //restake will take the principal + interest earned + allow a topup
+    // @param sessionID {uint256} - id of the stake 
+    // @param stakingDays {uint256} - number of days to be staked 
+    // @param topup {uint256} - amount of AXN to be added as topup to the stake
     function restake(
         uint256 sessionId,
         uint256 stakingDays,
@@ -477,7 +539,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         stakeInternal(amountOut, stakingDays, msg.sender);
     }
-
+    //same as restake but for layer 1 stakes
+    // @param sessionID {uint256} - id of the stake 
+    // @param stakingDays {uint256} - number of days to be staked 
+    // @param topup {uint256} - amount of AXN to be added as topup to the stake
     function restakeV1(
         uint256 sessionId,
         uint256 stakingDays,
@@ -532,7 +597,9 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
         stakeInternal(amountOut, stakingDays, msg.sender);
     }
-
+    // @param session {Session} - session of the stake
+    // @param sessionId {uint256} - id of the stake 
+    // @param actualEnd {uint256} - the date when the stake was actually been unstaked
     function unstakeInternal(
         Session storage session,
         uint256 sessionId,
@@ -569,6 +636,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return amountOut;
     }
 
+    // @param sessionID {uint256} - id of the stake 
+    // @param amount {uint256} - amount of AXN 
+    // @param start {uint256} - start date of the stake
+    // @param end {uint256} - end date of the stake
+    // @param actualEnd {uint256} - actual end date of the stake 
+    // @param shares {uint256} - number of stares of the stake
+    // @param firstPayout {uint256} - id of the first payout for the stake
+    // @param lastPayout {uint256} - if of the last payout for the stake
+    // @param stakingDays {uint256} - number of staking days
     function unstakeV1Internal(
         uint256 sessionId,
         uint256 amount,
@@ -619,7 +695,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return amountOut;
     }
 
-    function unstakeInternalCommon(
+    // @param sessionID {uint256} - id of the stake 
+    // @param amount {uint256} - amount of AXN 
+    // @param start {uint256} - start date of the stake
+    // @param end {uint256} - end date of the stake
+    // @param actualEnd {uint256} - actual end date of the stake 
+    // @param shares {uint256} - number of stares of the stake
+    // @param firstPayout {uint256} - id of the first payout for the stake
+    // @param lastPayout {uint256} - if of the last payout for the stake
+       function unstakeInternalCommon(
         uint256 sessionId,
         uint256 amount,
         uint256 start,
@@ -666,6 +750,14 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return amountOut;
     }
 
+    // @param sessionID {uint256} - id of the stake 
+    // @param amount {uint256} - amount of AXN 
+    // @param start {uint256} - start date of the stake
+    // @param end {uint256} - end date of the stake
+    // @param stakingDays {uint256} - number of staking days
+    // @param firstPayout {uint256} - id of the first payout for the stake
+    // @param lastPayout {uint256} - if of the last payout for the stake
+    // @param staker {address} - address of the staker account
     function stakeInternalCommon(
         uint256 sessionId,
         uint256 amount,
@@ -712,6 +804,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         emit Stake(staker, sessionId, amount, start, end, shares);
     }
 
+    //function to withdraw the dividends earned for a specific token
+    // @param tokenAddress {address} - address of the dividend token
     function withdrawDivToken(address tokenAddress) external {
         uint256 tokenInterestEarned =
             getTokenInterestEarnedInternal(msg.sender, tokenAddress);
@@ -728,12 +822,16 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             msg.sender.transfer(tokenInterestEarned);
         }
 
+        //after divdents are paid we need to set the deductBalance of that token to current token price * total shares of the account
         deductBalances[msg.sender][tokenAddress] = totalSharesOf[msg.sender]
             .mul(tokenPricePerShare[tokenAddress]);
 
         emit WithdrawLiquidDiv(msg.sender, tokenAddress, tokenInterestEarned);
     }
 
+    //calculate the interest earned by an address for a specific dividend token
+    // @param accountAddress {address} - address of account
+    // @param tokenAddress {address} - address of the dividend token
     function getTokenInterestEarned(
         address accountAddress,
         address tokenAddress
@@ -741,6 +839,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return getTokenInterestEarnedInternal(accountAddress, tokenAddress);
     }
 
+    // @param accountAddress {address} - address of account
+    // @param tokenAddress {address} - address of the dividend token
     function getTokenInterestEarnedInternal(
         address accountAddress,
         address tokenAddress
@@ -749,9 +849,12 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             totalSharesOf[accountAddress]
                 .mul(tokenPricePerShare[tokenAddress])
                 .sub(deductBalances[accountAddress][tokenAddress])
-                .div(10**36);
+                .div(10**36); //we divide since we muliplied the price by 10**36 for precision
     }
 
+    //the rebalance function recalculates the deductBalances of an user after the total number of shares changes as a result of a stake/unstake
+    // @param staker {address} - address of account
+    // @param oldTotalSharesOf {uint256} - previous number of shares for the account
     function rebalance(address staker, uint256 oldTotalSharesOf) internal {
         for (uint8 i = 0; i < divTokens.length(); i++) {
             uint256 tokenInterestEarned =
@@ -765,35 +868,39 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         }
     }
 
+    //registration function that sets the total number of shares for an account and inits the deductBalances
+     // @param account {address} - address of account
     function setTotalSharesOfAccountInternal(address account)
         internal
         pausable
     {
         require(
             isVcaRegistered[account] == false ||
-                hasRole(MIGRATOR_ROLE, msg.sender),
+                hasRole(MIGRATOR_ROLE, msg.sender), 
             'STAKING: Account already registered.'
         );
 
         uint256 totalShares;
+        //pull the layer 2 staking sessions for the account
         uint256[] storage sessionsOfAccount = sessionsOf[account];
 
         for (uint256 i = 0; i < sessionsOfAccount.length; i++) {
-            if (sessionDataOf[account][sessionsOfAccount[i]].withdrawn)
+            if (sessionDataOf[account][sessionsOfAccount[i]].withdrawn) //make sure the stake is active; not withdrawn
                 continue;
 
-            totalShares = totalShares.add(
+            totalShares = totalShares.add( //sum total shares
                 sessionDataOf[account][sessionsOfAccount[i]].shares
             );
         }
 
+        //pull stakes from layer 1
         uint256[] memory v1SessionsOfAccount = stakingV1.sessionsOf_(account);
 
         for (uint256 i = 0; i < v1SessionsOfAccount.length; i++) {
-            if (sessionDataOf[account][v1SessionsOfAccount[i]].shares != 0)
+            if (sessionDataOf[account][v1SessionsOfAccount[i]].shares != 0) //make sure the stake was not withdran. 
                 continue;
 
-            if (v1SessionsOfAccount[i] > lastSessionIdV1) continue;
+            if (v1SessionsOfAccount[i] > lastSessionIdV1) continue; //make sure we only take layer 1 stakes in consideration
 
             (
                 uint256 amount,
@@ -810,17 +917,18 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
 
             if (shares == 0) continue;
 
-            totalShares = totalShares.add(shares);
+            totalShares = totalShares.add(shares); //calclate total shares
         }
 
-        isVcaRegistered[account] = true;
+        isVcaRegistered[account] = true; //confirm the registration was completed
 
         if (totalShares != 0) {
             totalSharesOf[account] = totalShares;
-            totalVcaRegisteredShares = totalVcaRegisteredShares.add(
+            totalVcaRegisteredShares = totalVcaRegisteredShares.add( //update the global total number of VCA registered shares
                 totalShares
             );
 
+            //init deductBalances with the present values
             for (uint256 i = 0; i < divTokens.length(); i++) {
                 deductBalances[account][divTokens.at(i)] = totalShares.mul(
                     tokenPricePerShare[divTokens.at(i)]
@@ -831,10 +939,17 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         emit AccountRegistered(account, totalShares);
     }
 
+    //function to allow anyone to call the registration of another address
+     // @param _address {address} - address of account
     function setTotalSharesOfAccount(address _address) external {
         setTotalSharesOfAccountInternal(_address);
     }
 
+    //function that will update the price per share for a dividend token. it is called from within the auction contract as a result of a venture auction bid
+    // @param bidderAddress {address} - the address of the bidder
+    // @param originAddress {address} - the address of origin/dev fee
+    // @param tokenAddress {address} - the divident token address
+    // @param amountBought {uint256} - the amount in ETH that was bid in the auction
     function updateTokenPricePerShare(
         address payable bidderAddress,
         address payable originAddress,
@@ -842,57 +957,64 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 amountBought
     ) external payable override onlyAuction {
         // uint256 amountForBidder = amountBought.mul(10526315789473685).div(1e17);
-        uint256 amountForOrigin = amountBought.mul(5).div(100);
-        uint256 amountForBidder = amountBought.mul(10).div(100);
+        uint256 amountForOrigin = amountBought.mul(5).div(100); //5% fee goes to dev
+        uint256 amountForBidder = amountBought.mul(10).div(100); //10% is being returned to bidder
         uint256 amountForDivs =
-            amountBought.sub(amountForOrigin).sub(amountForBidder);
+            amountBought.sub(amountForOrigin).sub(amountForBidder); //remaining is the actual amount that was used to buy the token
 
         if (
             tokenAddress != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
         ) {
             IERC20Upgradeable(tokenAddress).transfer(
-                bidderAddress,
+                bidderAddress, //pay the bidder the 10% 
                 amountForBidder
             );
 
             IERC20Upgradeable(tokenAddress).transfer(
-                originAddress,
+                originAddress,  //pay the dev fee the 5%
                 amountForOrigin
             );
-        } else {
+        } else { //if token is ETH we use the transfer function
             bidderAddress.transfer(amountForBidder);
             originAddress.transfer(amountForOrigin);
         }
 
-        tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add(
+        tokenPricePerShare[tokenAddress] = tokenPricePerShare[tokenAddress].add( //increase the token price per share with the amount bought divided by the total Vca registered shares
             amountForDivs.mul(10**36).div(totalVcaRegisteredShares)
         );
     }
 
+    //add a new dividend token
+    // @param tokenAddress {address} - dividend token address
     function addDivToken(address tokenAddress) external override onlyAuction {
-        if (!divTokens.contains(tokenAddress)) {
+        if (!divTokens.contains(tokenAddress)) { //make sure the token is not already added
             divTokens.add(tokenAddress);
         }
     }
 
+    //function to increase the share rate price
+    //the update happens daily and used the amount of AXN sold through regular auction to calculate the amount to increase the share rate with
+    // @param _payout {uint256} - amount of AXN that was bought back through the regular auction
     function updateShareRate(uint256 _payout) internal {
         uint256 currentTokenTotalSupply =
             IERC20Upgradeable(addresses.mainToken).totalSupply();
 
         uint256 growthFactor =
             _payout.mul(1e18).div(
-                currentTokenTotalSupply + totalStakedAmount + 1
+                currentTokenTotalSupply + totalStakedAmount + 1 //we calculate the total AXN supply as circulating + staked
             );
 
-        if (shareRateScalingFactor == 0) {
+        if (shareRateScalingFactor == 0) { //use a shareRateScalingFactor which can be set in order to tune the speed of shareRate increase
             shareRateScalingFactor = 1;
         }
 
         shareRate = shareRate
-            .mul(1e18 + shareRateScalingFactor.mul(growthFactor))
+            .mul(1e18 + shareRateScalingFactor.mul(growthFactor)) //1e18 used for precision. 
             .div(1e18);
     }
 
+    //function to set the shareRateScalingFactor
+    // @param _scalingFactor {uint256} - scaling factor number
     function setShareRateScalingFactor(uint256 _scalingFactor)
         external
         onlyManager
@@ -900,6 +1022,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         shareRateScalingFactor = _scalingFactor;
     }
 
+    //function that allows a stake to be upgraded to a stake with a length of 5555 days without incuring any penalties
+    //the function takes the current earned interest and uses the principal + interest to create a new stake
+    //for v2 stakes it's only updating the current existing stake info, it's not creating a new stake
+    // @param sessionId {uint256} - id of the staking session
     function maxShare(uint256 sessionId) external pausable {
         Session storage session = sessionDataOf[msg.sender][sessionId];
 
@@ -958,6 +1084,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         sessionDataOf[msg.sender][sessionId].lastPayout = payouts.length + 5555;
     }
 
+    //similar to the maxShare function, but for layer 1 stakes only
+    // @param sessionId {uint256} - id of the staking session
     function maxShareV1(uint256 sessionId) external pausable {
         require(sessionId <= lastSessionIdV1, 'STAKING: Invalid sessionId');
 
@@ -1028,6 +1156,11 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         sessionsOf[msg.sender].push(sessionId);
     }
 
+    //function to calculate the new start, end, new amount and new shares for a max share upgrade
+    // @param firstPayout {uint256} - id of the first Payout
+    // @param lasttPayout {uint256} - id of the last Payout
+    // @param shares {uint256} - number of shares
+    // @param amount {uint256} - amount of AXN
     function maxShareUpgrade(
         uint256 firstPayout,
         uint256 lastPayout,
@@ -1069,6 +1202,13 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         return (newStart, newEnd, newAmount, newShares);
     }
 
+    // @param sessionId {uint256} - id of the staking session
+    // @param oldShares {uint256} - previous number of shares
+    // @param newShares {uint256} - new number of shares
+    // @param oldAmount {uint256} - old amount of AXN
+    // @param newAmount {uint256} - new amount of AXN
+    // @param newStart {uint256} - new start date for the stake
+    // @param newEnd {uint256} - new end date for the stake
     function maxShareInternal(
         uint256 sessionId,
         uint256 oldShares,

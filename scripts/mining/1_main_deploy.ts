@@ -29,7 +29,8 @@ const main = async () => {
     OG_5555_25_NFT,
     OG_5555_100_NFT,
     LIQ_REP_NFT,
-    MINE_MANAGER,
+    MINE_MANAGER1,
+    MINE_MANAGER2,
   } = process.env;
 
   const { token } = await getDeployedContracts(networkName);
@@ -56,14 +57,14 @@ const main = async () => {
 
     await mineManager.setupRole(
       await mineManager.MANAGER_ROLE(),
-      MINE_MANAGER as string
+      MINE_MANAGER1 as string
     );
 
     console.log('Manager roles added');
 
     const addressFilePath = path.join(
       __dirname,
-      '..',
+      '../../',
       'deployed-addresses',
       'mineaddress.json'
     );

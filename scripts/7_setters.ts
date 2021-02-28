@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { ethers, network } from 'hardhat';
-import { getRestorableDeployedContracts } from './utils/get_restorable_deployed_contracts';
+import { getMiningContract } from './utils/get_mining_contract';
 import { TEST_NETWORKS } from '../constants/common';
 
 // FOREIGN SWAP
@@ -34,6 +34,7 @@ const main = async () => {
       STAKING_V1_ADDRESS,
       SUB_BALANCES_V1_ADDRESS,
       STAKE_PERIOD,
+      MINE_MANAGER2,
     } = process.env as any;
 
     if (!TEST_NETWORKS.includes(networkName)) {
@@ -48,19 +49,13 @@ const main = async () => {
         STAKING_V1_ADDRESS,
         SUB_BALANCES_V1_ADDRESS,
         STAKE_PERIOD,
+        MINE_MANAGER2,
       ].forEach((value) => {
         if (!value) {
           throw new Error('Please set the value in .env file');
         }
       });
     }
-
-    const { stakingRestorable } = await getRestorableDeployedContracts(
-      networkName
-    );
-
-    const r = await stakingRestorable.setMaxShareMaxDays(1887);
-    r.wait();
 
     console.log(
       `============================ ${SCRIPT_NAME}: DONE ===============================`

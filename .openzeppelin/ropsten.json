@@ -9216,6 +9216,150 @@
           }
         }
       }
+    },
+    "2722eef62b3980002e1266fae2a0924f0ab48cd3396fac63458a1411d9bd5060": {
+      "address": "0xF0E2E4D9F214E8B1C899925a5769B0191B034eb0",
+      "txHash": "0xd891b29f1a7573a1fde28f2790e11359e0f95e94ec5897c49b2bdb42e1513aad",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:25"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol:30"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "_roles",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)39_storage)",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:225"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "mineAddresses",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "contracts/mining/AxionMineManager.sol:13"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "uniswapFactory",
+            "type": "t_contract(IUniswapV2Factory)6736",
+            "src": "contracts/mining/AxionMineManager.sol:15"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "rewardTokenAddress",
+            "type": "t_address",
+            "src": "contracts/mining/AxionMineManager.sol:17"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "liqRepNFTAddress",
+            "type": "t_address",
+            "src": "contracts/mining/AxionMineManager.sol:18"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "OG5555_25NFTAddress",
+            "type": "t_address",
+            "src": "contracts/mining/AxionMineManager.sol:19"
+          },
+          {
+            "contract": "AxionMineManager",
+            "label": "OG5555_100NFTAddress",
+            "type": "t_address",
+            "src": "contracts/mining/AxionMineManager.sol:20"
+          }
+        ],
+        "types": {
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(IUniswapV2Factory)6736": {
+            "label": "contract IUniswapV2Factory"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)39_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_struct(RoleData)39_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_struct(AddressSet)2088_storage"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32"
+              }
+            ]
+          },
+          "t_struct(AddressSet)2088_storage": {
+            "label": "struct EnumerableSetUpgradeable.AddressSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)1823_storage"
+              }
+            ]
+          },
+          "t_struct(Set)1823_storage": {
+            "label": "struct EnumerableSetUpgradeable.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)"
+              }
+            ]
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
     }
   },
   "admin": {

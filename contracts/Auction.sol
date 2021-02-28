@@ -17,6 +17,7 @@ import './interfaces/IAuctionV1.sol';
 contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
 
+    /** Events */
     event Bid(
         address indexed account,
         uint256 value,
@@ -43,33 +44,34 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
     event AuctionIsOver(uint256 eth, uint256 token, uint256 indexed auctionId);
 
+    /** Structs */
     struct AuctionReserves {
-        uint256 eth;
-        uint256 token;
-        uint256 uniswapLastPrice;
-        uint256 uniswapMiddlePrice;
+        uint256 eth; // Amount of Eth in the auction
+        uint256 token; // Amount of Axn in auction for day
+        uint256 uniswapLastPrice; // Last known uniswap price from last bid
+        uint256 uniswapMiddlePrice; // Using middle price days to calculate avg price
     }
 
     struct UserBid {
-        uint256 eth;
-        address ref;
-        bool withdrawn;
+        uint256 eth; // Amount of ethereum
+        address ref; // Referrer address for bid
+        bool withdrawn; // Determine withdrawn
     }
 
     struct Addresses {
-        address mainToken;
-        address staking;
-        address payable uniswap;
-        address payable recipient;
+        address mainToken; // Axion token address
+        address staking; // Staking platform
+        address payable uniswap; // Uniswap Main Router
+        address payable recipient; // Origin address for excess ethereum in auction
     }
 
     struct Options {
-        uint256 autoStakeDays;
-        uint256 referrerPercent;
-        uint256 referredPercent;
-        bool referralsOn;
-        uint256 discountPercent;
-        uint256 premiumPercent;
+        uint256 autoStakeDays; // # of days bidder must stake once axion is won from auction
+        uint256 referrerPercent; // Referral Bonus %
+        uint256 referredPercent; // Referral Bonus %
+        bool referralsOn; // If on referrals are used on auction
+        uint256 discountPercent; // Discount in comparison to uniswap price in auction
+        uint256 premiumPercent; // Premium in comparions to unsiwap price in auction
     }
 
     /** Roles */
@@ -78,42 +80,41 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
     bytes32 public constant CALLER_ROLE = keccak256('CALLER_ROLE');
 
     /** Mapping */
-    mapping(uint256 => AuctionReserves) public reservesOf;
+    mapping(uint256 => AuctionReserves) public reservesOf; // [day],
     mapping(address => uint256[]) public auctionsOf;
     mapping(uint256 => mapping(address => UserBid)) public auctionBidOf;
     mapping(uint256 => mapping(address => bool)) public existAuctionsOf;
 
     /** Simple types */
-    uint256 public lastAuctionEventId;
-    uint256 public lastAuctionEventIdV1;
-    uint256 public start;
-    uint256 public stepTimestamp;
+    uint256 public lastAuctionEventId; // Index for Auction
+    uint256 public lastAuctionEventIdV1; // Last index for layer 1 auction
+    uint256 public start; // Beginning of contract
+    uint256 public stepTimestamp; // # of seconds per "axion day" (86400)
 
-    Options public options;
-    Addresses public addresses;
-    IAuctionV1 public auctionV1;
+    Options public options; // Auction options (see struct above)
+    Addresses public addresses; // (See Address struct above)
+    IAuctionV1 public auctionV1; // V1 Auction contract for backwards compatibility
 
-    bool public init_;
+    bool public init_; // Unneeded legacy variable to ensure init is only called once.
 
     mapping(uint256 => mapping(address => uint256)) public autoStakeDaysOf; // NOT USED
 
-    uint256 public middlePriceDays;
+    uint256 public middlePriceDays; // When calculating auction price this is used to determine average
 
     struct VentureToken {
-        // total bit 256
-        address coin; // 160 bits
-        uint96 percentage; // 96 bits
+        address coin; // address of token to buy from swap
+        uint96 percentage; // % of token to buy NOTE: (On a VCA day all Venture tokens % should add up to 100%)
     }
 
     struct AuctionData {
-        uint8 mode;
-        VentureToken[] tokens;
+        uint8 mode; // 1 = VCA, 0 = Normal Auction
+        VentureToken[] tokens; // Tokens to buy in VCA
     }
 
-    AuctionData[7] internal auctions;
-    uint8 internal ventureAutoStakeDays;
+    AuctionData[7] internal auctions; // 7 values for 7 days of the week
+    uint8 internal ventureAutoStakeDays; // # of auto stake days for VCA Auction
 
-    /* New variables must go below here. */
+    /* UGPADEABILITY: New variables must go below here. */
 
     /** modifiers */
     modifier onlyCaller() {
@@ -140,15 +141,29 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _;
     }
 
+    /** Update Price of current auction
+        Get current axion day
+        Get uniswapLastPrice
+        Set middlePrice
+     */
     function _updatePrice() internal {
-        uint256 stepsFromStart = calculateStepsFromStart();
+        uint256 currentAuctionId = getCurrentAuctionId();
 
-        reservesOf[stepsFromStart].uniswapLastPrice = getUniswapLastPrice();
-
-        reservesOf[stepsFromStart]
+        /** Set reserves of */
+        reservesOf[currentAuctionId].uniswapLastPrice = getUniswapLastPrice();
+        reservesOf[currentAuctionId]
             .uniswapMiddlePrice = getUniswapMiddlePriceForDays();
     }
 
+    /**
+        Get token paths
+        Use uniswap to buy tokens back and send to staking platform using (addresses.staking)
+
+        @param tokenAddress {address} - Token to buy from uniswap
+        @param amountOutMin {uint256} - Slippage tolerance for router
+        @param amount {uint256} - Min amount expected
+        @param deadline {uint256} - Deadline for trade (used for uniswap router)
+     */
     function _swapEthForToken(
         address tokenAddress,
         uint256 amountOutMin,
@@ -166,6 +181,13 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             }(amountOutMin, path, addresses.staking, deadline)[1];
     }
 
+    /**
+        Bid function which routes to either venture bid or bid internal
+
+        @param amountOutMin {uint256[]} - Slippage tolerance for uniswap router 
+        @param deadline {uint256} - Deadline for trade (used for uniswap router)
+        @param ref {address} - Referrer Address to get % axion from bid
+     */
     function bid(
         uint256[] calldata amountOutMin,
         uint256 deadline,
@@ -181,6 +203,13 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         }
     }
 
+    /**
+        BidInternal - Buys back axion from uniswap router and sends to staking platform
+
+        @param amountOutMin {uint256} - Slippage tolerance for uniswap router 
+        @param deadline {uint256} - Deadline for trade (used for uniswap router)
+        @param ref {address} - Referrer Address to get % axion from bid
+     */
     function bidInternal(
         uint256 amountOutMin,
         uint256 deadline,
@@ -189,11 +218,14 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _saveAuctionData();
         _updatePrice();
 
+        /** Can not refer self */
         require(_msgSender() != ref, 'msg.sender == ref');
 
+        /** Get percentage for recipient and uniswap (Extra function really unnecessary) */
         (uint256 toRecipient, uint256 toUniswap) =
             _calculateRecipientAndUniswapAmountsToSend();
 
+        /** Buy back tokens from uniswap and send to staking contract */
         _swapEthForToken(
             addresses.mainToken,
             amountOutMin,
@@ -201,20 +233,31 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             deadline
         );
 
-        uint256 stepsFromStart = calculateStepsFromStart();
+        /** Get Auction ID */
+        uint256 auctionId = getCurrentAuctionId();
 
         /** If referralsOn is true allow to set ref */
         if (options.referralsOn == true) {
-            auctionBidOf[stepsFromStart][_msgSender()].ref = ref;
+            auctionBidOf[auctionId][_msgSender()].ref = ref;
         }
 
-        bidCommon(stepsFromStart);
+        /** Run common shared functionality between VCA and Normal */
+        bidCommon(auctionId);
 
+        /** Transfer any eithereum in contract to recipient address */
         addresses.recipient.transfer(toRecipient);
 
-        emit Bid(msg.sender, msg.value, stepsFromStart, now);
+        /** Send event to blockchain */
+        emit Bid(msg.sender, msg.value, auctionId, now);
     }
 
+    /**
+        BidInternal - Buys back axion from uniswap router and sends to staking platform
+
+        @param amountOutMin {uint256[]} - Slippage tolerance for uniswap router 
+        @param deadline {uint256} - Deadline for trade (used for uniswap router)
+        @param currentDay {uint256} - currentAuctionId
+     */
     function ventureBid(
         uint256[] memory amountOutMin,
         uint256 deadline,
@@ -223,16 +266,19 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _saveAuctionData();
         _updatePrice();
 
+        /** Get the token(s) of the day */
         VentureToken[] storage tokens = auctions[currentDay].tokens;
-
+        /** Create array to determine amount bought for each token */
         address[] memory coinsBought = new address[](tokens.length);
         uint256[] memory amountsBought = new uint256[](tokens.length);
 
+        /** Loop over tokens to purchase */
         for (uint8 i = 0; i < tokens.length; i++) {
+            /** Determine amount to purchase based on ethereum bid */
             uint256 amountBought;
-
             uint256 amountToBuy = msg.value.mul(tokens[i].percentage).div(100);
 
+            /** If token is 0xFFfFfF... we buy no token and just distribute the bidded ethereum */
             if (
                 tokens[i].coin !=
                 address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
@@ -255,43 +301,51 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
                 IStaking(addresses.staking).updateTokenPricePerShare{
                     value: amountToBuy
-                }(msg.sender, addresses.recipient, tokens[i].coin, amountToBuy);
+                }(msg.sender, addresses.recipient, tokens[i].coin, amountToBuy); // Payable amount
             }
 
             coinsBought[i] = tokens[i].coin;
             amountsBought[i] = amountBought;
         }
 
-        uint256 stepsFromStart = calculateStepsFromStart();
-        bidCommon(stepsFromStart);
+        uint256 currentAuctionId = getCurrentAuctionId();
+        bidCommon(currentAuctionId);
 
         emit VentureBid(
             msg.sender,
             msg.value,
-            stepsFromStart,
+            currentAuctionId,
             now,
             coinsBought,
             amountsBought
         );
     }
 
-    function bidCommon(uint256 stepsFromStart) internal {
-        auctionBidOf[stepsFromStart][_msgSender()].eth = auctionBidOf[
-            stepsFromStart
-        ][_msgSender()]
+    /**
+        Bid Common - Set common values for bid
+
+        @param auctionId (uint256) - ID of auction
+     */
+    function bidCommon(uint256 auctionId) internal {
+        /** Set auctionBid for bidder */
+        auctionBidOf[auctionId][_msgSender()].eth = auctionBidOf[auctionId][
+            _msgSender()
+        ]
             .eth
             .add(msg.value);
 
-        if (!existAuctionsOf[stepsFromStart][_msgSender()]) {
-            auctionsOf[_msgSender()].push(stepsFromStart);
-            existAuctionsOf[stepsFromStart][_msgSender()] = true;
+        /** Set existsOf in order to include all auction bids for current user into one */
+        if (!existAuctionsOf[auctionId][_msgSender()]) {
+            auctionsOf[_msgSender()].push(auctionId);
+            existAuctionsOf[auctionId][_msgSender()] = true;
         }
 
-        reservesOf[stepsFromStart].eth = reservesOf[stepsFromStart].eth.add(
-            msg.value
-        );
+        reservesOf[auctionId].eth = reservesOf[auctionId].eth.add(msg.value);
     }
 
+    /**
+        getUniswapLastPrice - Use uniswap router to determine current price based on ethereum
+    */
     function getUniswapLastPrice() internal view returns (uint256) {
         address[] memory path = new address[](2);
 
@@ -304,10 +358,14 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         return price;
     }
 
+    /**
+        getUniswapMiddlePriceForDays
+            Use the "last known price" for the last {middlePriceDays} days to determine middle price by taking an average
+     */
     function getUniswapMiddlePriceForDays() internal view returns (uint256) {
-        uint256 stepsFromStart = calculateStepsFromStart();
+        uint256 currentAuctionId = getCurrentAuctionId();
 
-        uint256 index = stepsFromStart;
+        uint256 index = currentAuctionId;
         uint256 sum;
         uint256 points;
 
@@ -326,12 +384,18 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         else return sum.div(points);
     }
 
+    /**
+        withdraw - Withdraws an auction bid and stakes axion in staking contract
+
+        @param auctionId {uint256} - Auction to withdraw from
+        @param stakeDays {uint256} - # of days to stake in portal
+     */
     function withdraw(uint256 auctionId, uint256 stakeDays) external {
         _saveAuctionData();
         _updatePrice();
 
+        /** Require the # of days staking > options */
         uint8 auctionMode = auctions[auctionId.mod(7)].mode;
-
         if (auctionMode == 0) {
             require(
                 stakeDays >= options.autoStakeDays,
@@ -344,47 +408,57 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             );
         }
 
+        /** Require # of staking days < 5556 */
         require(stakeDays <= 5555, 'Auction: stakeDays > 5555');
 
-        uint256 stepsFromStart = calculateStepsFromStart();
-
+        uint256 currentAuctionId = getCurrentAuctionId();
         UserBid storage userBid = auctionBidOf[auctionId][_msgSender()];
 
-        require(stepsFromStart > auctionId, 'Auction: Auction is active');
+        /** Ensure auctionId of withdraw is not todays auction, and user bid has not been withdrawn and eth > 0 */
+        require(currentAuctionId > auctionId, 'Auction: Auction is active');
         require(
             userBid.eth > 0 && userBid.withdrawn == false,
             'Auction: Zero bid or withdrawn'
         );
 
+        /** Set Withdrawn to true */
         userBid.withdrawn = true;
 
+        /** Call common withdraw functions */
         withdrawInternal(
             userBid.ref,
             userBid.eth,
             auctionId,
-            stepsFromStart,
+            currentAuctionId,
             stakeDays
         );
     }
 
+    /**
+        withdraw - Withdraws an auction bid and stakes axion in staking contract
+
+        @param auctionId {uint256} - Auction to withdraw from
+        @param stakeDays {uint256} - # of days to stake in portal
+        NOTE: No longer needed, as there is most likely not more bids from v1 that have not been withdraw 
+     */
     function withdrawV1(uint256 auctionId, uint256 stakeDays) external {
         _saveAuctionData();
         _updatePrice();
 
-        // CHECK LAST ID HERE
+        // Backward compatability with v1 auction
         require(
             auctionId <= lastAuctionEventIdV1,
             'Auction: Invalid auction id'
         );
-
+        /** Ensure stake days > options  */
         require(
             stakeDays >= options.autoStakeDays,
             'Auction: stakeDays < minimum days'
         );
         require(stakeDays <= 5555, 'Auction: stakeDays > 5555');
 
-        uint256 stepsFromStart = calculateStepsFromStart();
-        require(stepsFromStart > auctionId, 'Auction: Auction is active');
+        uint256 currentAuctionId = getCurrentAuctionId();
+        require(currentAuctionId > auctionId, 'Auction: Auction is active');
 
         /** This stops a user from using WithdrawV1 twice, since the bid is put into memory at the end */
         UserBid storage userBid = auctionBidOf[auctionId][_msgSender()];
@@ -397,8 +471,10 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             auctionV1.auctionBetOf(auctionId, _msgSender());
         require(eth > 0, 'Auction: Zero balance in auction/invalid auction ID');
 
-        withdrawInternal(ref, eth, auctionId, stepsFromStart, stakeDays);
+        /** Common withdraw functionality */
+        withdrawInternal(ref, eth, auctionId, currentAuctionId, stakeDays);
 
+        /** Bring v1 auction bid to v2 */
         auctionBidOf[auctionId][_msgSender()] = UserBid({
             eth: eth,
             ref: ref,
@@ -412,14 +488,15 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         address ref,
         uint256 eth,
         uint256 auctionId,
-        uint256 stepsFromStart,
+        uint256 currentAuctionId,
         uint256 stakeDays
     ) internal {
+        /** Calculate payout for bidder */
         uint256 payout = _calculatePayout(auctionId, eth);
-
         uint256 uniswapPayoutWithPercent =
             _calculatePayoutWithUniswap(auctionId, eth, payout);
 
+        /** If auction is undersold, send overage to weekly auction */
         if (payout > uniswapPayoutWithPercent) {
             uint256 nextWeeklyAuction = calculateNearestWeeklyAuction();
 
@@ -430,51 +507,71 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             payout = uniswapPayoutWithPercent;
         }
 
+        /** If referrer is empty simple task */
         if (address(ref) == address(0)) {
+            /** Burn tokens and then call external stake on staking contract */
             IToken(addresses.mainToken).burn(address(this), payout);
-
             IStaking(addresses.staking).externalStake(
                 payout,
                 stakeDays,
                 _msgSender()
             );
 
-            emit Withdraval(msg.sender, payout, stepsFromStart, now, stakeDays);
+            emit Withdraval(
+                msg.sender,
+                payout,
+                currentAuctionId,
+                now,
+                stakeDays
+            );
         } else {
+            /** Burn tokens and determine referral amount */
             IToken(addresses.mainToken).burn(address(this), payout);
-
             (uint256 toRefMintAmount, uint256 toUserMintAmount) =
                 _calculateRefAndUserAmountsToMint(payout);
 
+            /** Add referral % to payout */
             payout = payout.add(toUserMintAmount);
 
+            /** Call external stake for referrer and bidder */
             IStaking(addresses.staking).externalStake(
                 payout,
                 stakeDays,
                 _msgSender()
             );
-
-            emit Withdraval(msg.sender, payout, stepsFromStart, now, stakeDays);
-
             IStaking(addresses.staking).externalStake(toRefMintAmount, 14, ref);
+
+            emit Withdraval(
+                msg.sender,
+                payout,
+                currentAuctionId,
+                now,
+                stakeDays
+            );
         }
     }
 
-    /** External Contract Caller functions */
+    /** External Contract Caller functions 
+        @param amount {uint256} - amount to add to next dailyAuction
+    */
     function callIncomeDailyTokensTrigger(uint256 amount)
         external
         override
         onlyCaller
     {
         // Adds a specified amount of axion to tomorrows auction
-        uint256 stepsFromStart = calculateStepsFromStart();
-        uint256 nextAuctionId = stepsFromStart + 1;
+        uint256 currentAuctionId = getCurrentAuctionId();
+        uint256 nextAuctionId = currentAuctionId + 1;
 
         reservesOf[nextAuctionId].token = reservesOf[nextAuctionId].token.add(
             amount
         );
     }
 
+    /** Add Reserves to specified Auction
+        @param daysInFuture {uint256} - CurrentAuctionId + daysInFuture to send Axion to
+        @param amount {uint256} - Amount of axion to add to auction
+     */
     function addReservesToAuction(uint256 daysInFuture, uint256 amount)
         external
         override
@@ -487,14 +584,17 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             'AUCTION: Days in future can not be greater then 365'
         );
 
-        uint256 stepsFromStart = calculateStepsFromStart();
-        uint256 auctionId = stepsFromStart + daysInFuture;
+        uint256 currentAuctionId = getCurrentAuctionId();
+        uint256 auctionId = currentAuctionId + daysInFuture;
 
         reservesOf[auctionId].token = reservesOf[auctionId].token.add(amount);
 
         return auctionId;
     }
 
+    /** Add reserves to next weekly auction
+        @param amount {uint256} - Amount of axion to add to auction
+     */
     function callIncomeWeeklyTokensTrigger(uint256 amount)
         external
         override
@@ -512,31 +612,37 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
 
     /** Calculate functions */
     function calculateNearestWeeklyAuction() public view returns (uint256) {
-        uint256 stepsFromStart = calculateStepsFromStart();
-        return stepsFromStart.add(uint256(7).sub(stepsFromStart.mod(7)));
+        uint256 currentAuctionId = getCurrentAuctionId();
+        return currentAuctionId.add(uint256(7).sub(currentAuctionId.mod(7)));
     }
 
-    /**
-     * @dev
-     * friday = 0, saturday = 1, sunday = 2 etc...
+    /** Get current day of week
+     * EX: friday = 0, saturday = 1, sunday = 2 etc...
      */
     function getCurrentDay() internal view returns (uint256) {
-        uint256 stepsFromStart = calculateStepsFromStart();
-        return stepsFromStart.mod(7);
+        uint256 currentAuctionId = getCurrentAuctionId();
+        return currentAuctionId.mod(7);
     }
 
-    function calculateStepsFromStart() public view returns (uint256) {
+    function getCurrentAuctionId() public view returns (uint256) {
         return now.sub(start).div(stepTimestamp);
     }
 
+    /** Determine payout and overage
+        @param auctionId {uint256} - Auction id to calculate price from
+        @param amount {uint256} - Amount to use to determine overage
+        @param payout {uint256} - payout
+     */
     function _calculatePayoutWithUniswap(
         uint256 auctionId,
         uint256 amount,
         uint256 payout
     ) internal view returns (uint256) {
+        // Get payout for user
         uint256 uniswapPayout =
             reservesOf[auctionId].uniswapMiddlePrice.mul(amount).div(1e18);
 
+        // Get payout with percentage based on discount, premium
         uint256 uniswapPayoutWithPercent =
             uniswapPayout
                 .add(uniswapPayout.mul(options.discountPercent).div(100))
@@ -549,6 +655,10 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         }
     }
 
+    /** Determine payout based on amount of token and ethereum
+        @param auctionId {uint256} - auction to determine payout of
+        @param amount {uint256} - amount of axion
+     */
     function _calculatePayout(uint256 auctionId, uint256 amount)
         internal
         view
@@ -560,6 +670,7 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
             );
     }
 
+    /** Get Percentages for recipient and uniswap for ethereum bid Unnecessary function */
     function _calculateRecipientAndUniswapAmountsToSend()
         private
         returns (uint256, uint256)
@@ -570,6 +681,11 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         return (toRecipient, toUniswap);
     }
 
+    /** Determine amount of axion to mint for referrer based on amount
+        @param amount {uint256} - amount of axion
+
+        @return (uint256, uint256)
+     */
     function _calculateRefAndUserAmountsToMint(uint256 amount)
         private
         view
@@ -581,18 +697,20 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         return (toRefMintAmount, toUserMintAmount);
     }
 
-    /** Storage Functions */
+    /** Save auction data
+        Determines if auction is over. If auction is over set lastAuctionId to currentAuctionId
+    */
     function _saveAuctionData() internal {
-        uint256 stepsFromStart = calculateStepsFromStart();
+        uint256 currentAuctionId = getCurrentAuctionId();
         AuctionReserves memory reserves = reservesOf[lastAuctionEventId];
 
-        if (lastAuctionEventId < stepsFromStart) {
+        if (lastAuctionEventId < currentAuctionId) {
             emit AuctionIsOver(
                 reserves.eth,
                 reserves.token,
                 lastAuctionEventId
             );
-            lastAuctionEventId = stepsFromStart;
+            lastAuctionEventId = currentAuctionId;
         }
     }
 
@@ -646,10 +764,20 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         _setupRole(role, account);
     }
 
+    /** VCA Setters */
+    /**
+        @param _day {uint8} 0 - 6 value. 0 represents Saturday, 6 Represents Friday
+        @param _mode {uint8} 0 or 1. 1 VCA, 0 Normal
+     */
     function setAuctionMode(uint8 _day, uint8 _mode) external onlyManager {
         auctions[_day].mode = _mode;
     }
 
+    /**
+        @param day {uint8} 0 - 6 value. 0 represents Saturday, 6 Represents Friday
+        @param coins {address[]} - Addresses to buy from uniswap
+        @param percentages {uint8[]} - % of coin to buy, must add up to 100%
+     */
     function setTokensOfDay(
         uint8 day,
         address[] calldata coins,
@@ -658,15 +786,12 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         AuctionData storage auction = auctions[day];
 
         auction.mode = 1;
-
         delete auction.tokens;
 
         uint8 percent = 0;
         for (uint8 i; i < coins.length; i++) {
             auction.tokens.push(VentureToken(coins[i], percentages[i]));
-
             percent = percentages[i] + percent;
-
             IStaking(addresses.staking).addDivToken(coins[i]);
         }
 
