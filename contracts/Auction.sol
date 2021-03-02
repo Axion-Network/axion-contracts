@@ -628,6 +628,10 @@ contract Auction is IAuction, Initializable, AccessControlUpgradeable {
         return now.sub(start).div(stepTimestamp);
     }
 
+    function calculateStepsFromStart() public view returns (uint256) {
+        return now.sub(start).div(stepTimestamp);
+    }
+
     /** Determine payout and overage
         @param auctionId {uint256} - Auction id to calculate price from
         @param amount {uint256} - Amount to use to determine overage

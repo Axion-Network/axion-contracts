@@ -6,8 +6,8 @@ import { ContractFactory } from '../libs/ContractFactory';
 import { AuctionManager } from '../typechain';
 import fs from 'fs';
 import path from 'path';
+import { getDeployedContracts } from './utils/get_deployed_contracts';
 const ADDRESSES = require('../deployed-addresses/addresses.json');
-
 /**
  * Deploy auction manager contract
  * */
@@ -28,26 +28,31 @@ const main = async () => {
 
     const managerAddress = MANAGER_ADDRESS ?? manager.address;
 
+    const { auction, token, bpd } = await getDeployedContracts(networkName);
+
     const auctionManager = (await upgrades.deployProxy(
       await ContractFactory.getAuctionManagerFactory(),
-      [
-        managerAddress,
-        ADDRESSES.TOKEN_ADDRESS,
-        ADDRESSES.AUCTION_ADDRESS,
-        ADDRESSES.BPD_ADDRESS,
-      ],
+      [managerAddress, token.address, auction.address, bpd.address],
       { unsafeAllowCustomTypes: true, unsafeAllowLinkedLibraries: true }
     )) as AuctionManager;
     console.log('Deployed: Auction Manager', auctionManager.address);
 
-    const auction = await ContractFactory.getAuctionAt(ADDRESSES.AUCTION_ADDRESS);
-    const token = await ContractFactory.getTokenAt(ADDRESSES.TOKEN_ADDRESS);
+    const callerRole =
+      '0x843c3a00fa95510a35f425371231fd3fe4642e719cb4595160763d6d02594b50';
+    const minterRole =
+      '0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6';
+    const swapperRole =
+      '0x499b8dbdbe4f7b12284c4a222a9951ce4488b43af4d09f42655d67f73b612fe1';
 
-    const callerRole = await auction.CALLER_ROLE();
-    const minterRole = await token.getMinterRole();
-
-    await auction.setupRole(callerRole, auctionManager.address);
-    await token.setupRole(minterRole, auctionManager.address);
+    const s1 = await auction.setupRole(callerRole, auctionManager.address);
+    await s1.wait();
+    console.log('Setup role 1');
+    const s2 = await token.setupRole(minterRole, auctionManager.address);
+    await s2.wait();
+    console.log('Setup role 2');
+    const s3 = await bpd.setupRole(swapperRole, auctionManager.address);
+    await s3.wait();
+    console.log('Setup role 3');
 
     const addressFilePath = path.join(
       __dirname,
