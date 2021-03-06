@@ -298,7 +298,7 @@ describe('Staking', async () => {
     expect(interest).to.equal(previousInterest);
   });
 
-  it.only('should not add any penalty for late stakes : This is temporary', async () => {
+  it('should not add any penalty for late stakes : This is temporary', async () => {
     const stakingDays = 2;
     const amount = ethers.utils.parseEther('10');
 
