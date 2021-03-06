@@ -815,6 +815,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 tokenInterestEarned =
             getTokenInterestEarnedInternal(msg.sender, tokenAddress);
 
+        // after divdents are paid we need to set the deductBalance of that token to current token price * total shares of the account
+        deductBalances[msg.sender][tokenAddress] = totalSharesOf[msg.sender]
+            .mul(tokenPricePerShare[tokenAddress]);
+
         /** 0xFF... is our ethereum placeholder address */
         if (
             tokenAddress != address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
@@ -826,10 +830,6 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         } else {
             msg.sender.transfer(tokenInterestEarned);
         }
-
-        //after divdents are paid we need to set the deductBalance of that token to current token price * total shares of the account
-        deductBalances[msg.sender][tokenAddress] = totalSharesOf[msg.sender]
-            .mul(tokenPricePerShare[tokenAddress]);
 
         emit WithdrawLiquidDiv(msg.sender, tokenAddress, tokenInterestEarned);
     }
