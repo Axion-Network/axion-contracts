@@ -336,7 +336,7 @@ describe('Staking', async () => {
     expect(result[1].toString()).to.be.equal('0');
   });
 
-  xit('should calculate amount out and penalty correctly', async () => {
+  it('should calculate amount out and penalty correctly', async () => {
     const stakingDays = 2;
     const amount = ethers.utils.parseEther('10');
 
