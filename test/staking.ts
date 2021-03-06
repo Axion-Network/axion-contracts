@@ -298,7 +298,45 @@ describe('Staking', async () => {
     expect(interest).to.equal(previousInterest);
   });
 
-  it('should calculate amount out and penalty correctly', async () => {
+  it.only('should not add any penalty for late stakes : This is temporary', async () => {
+    const stakingDays = 2;
+    const amount = ethers.utils.parseEther('10');
+
+    await token.connect(_staker).approve(staking.address, amount);
+
+    await staking.connect(_staker).stake(amount, stakingDays);
+
+    const sessionId = await staking.sessionsOf(_staker.address, 0);
+
+    const sessionData = await staking.sessionDataOf(_staker.address, sessionId);
+
+    await TestUtil.increaseTime(SECONDS_IN_DAY);
+
+    await staking.makePayout();
+
+    await TestUtil.increaseTime(SECONDS_IN_DAY * 14);
+    await staking.makePayout();
+    await staking.makePayout();
+    await staking.makePayout();
+    await staking.makePayout();
+
+    const stakingInterest = await staking.calculateStakingInterest(
+      sessionData.firstPayout,
+      sessionData.lastPayout,
+      sessionData.shares
+    );
+
+    const result = await staking.getAmountOutAndPenalty(
+      sessionData.amount,
+      sessionData.start,
+      sessionData.end,
+      stakingInterest
+    );
+
+    expect(result[1].toString()).to.be.equal('0');
+  });
+
+  xit('should calculate amount out and penalty correctly', async () => {
     const stakingDays = 2;
     const amount = ethers.utils.parseEther('10');
 

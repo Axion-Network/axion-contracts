@@ -14,6 +14,8 @@ import './interfaces/IStaking.sol';
 import './interfaces/ISubBalances.sol';
 import './interfaces/IStakingV1.sol';
 
+import 'hardhat/console.sol';
+
 contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     using SafeMathUpgradeable for uint256;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
@@ -372,6 +374,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 daysStaked = secondsStaked.div(stepTimestamp);
         uint256 amountAndInterest = amount.add(stakingInterest);
 
+        console.log('Staking Days: %s', stakingDays);
+        console.log('Days Staked: %s', daysStaked);
         // Early
         if (stakingDays > daysStaked) {
             uint256 payOutAmount =
