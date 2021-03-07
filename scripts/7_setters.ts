@@ -37,7 +37,6 @@ const main = async () => {
       STAKING_V1_ADDRESS,
       SUB_BALANCES_V1_ADDRESS,
       STAKE_PERIOD,
-      MINE_MANAGER2,
     } = process.env as any;
 
     if (!TEST_NETWORKS.includes(networkName)) {
@@ -52,16 +51,17 @@ const main = async () => {
         STAKING_V1_ADDRESS,
         SUB_BALANCES_V1_ADDRESS,
         STAKE_PERIOD,
-        MINE_MANAGER2,
       ].forEach((value) => {
         if (!value) {
-          throw new Error('Please set the value in .env file');
+          throw new Error(`Please set the value ${value} in .env file`);
         }
       });
     }
 
     // const { bpdRestorable } = await getRestorableDeployedContracts(networkName);
     const { auctionManager } = await getDeployedContracts(networkName);
+    const { auction, token, bpd } = await getDeployedContracts(networkName);
+    // auction.hasRole('0x843c3a00fa95510a35f425371231fd3fe4642e719cb4595160763d6d02594b50', auctionManager.address);
     // const r = await bpdRestorable.setupRole(
     //   `0x843c3a00fa95510a35f425371231fd3fe4642e719cb4595160763d6d02594b50`,
     //   '0x5be5e5a2c372Ff794a0788066d6c2D649E2EE245'
@@ -70,7 +70,34 @@ const main = async () => {
     // console.log('HAS ROLE', hasRole);
     // const bpdAddressForAM = await auctionManager?.addresses();
     // console.log(bpdAddressForAM);
-    await auctionManager?.sendToBPD('50000000000');
+
+    const roleId = await bpd.SWAP_ROLE();
+    console.log(roleId);
+    // const swapperRole =
+    //   '0x499b8dbdbe4f7b12284c4a222a9951ce4488b43af4d09f42655d67f73b612fe1';
+    const s3 = await bpd.setupRole(roleId, auctionManager?.address ?? '0x00');
+    console.log(s3);
+    await s3.wait();
+    // const send = await auctionManager?.sendToAuctions(
+    //   [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
+    //   [
+    //     '500000000',
+    //     '500000000',
+    //     '500000000',
+    //     '500000000',
+    //     '500000000',
+    //     '500000000',
+    //     '500000000',
+    //     '500000000',
+    //     '500000000',
+    //     '500000000',
+    //     '500000000',
+    //   ]
+    // );
+    const send = await auctionManager?.sendToBPD('5000000000');
+    console.log(send);
+    await send?.wait();
+    console.log(send);
 
     console.log(
       `============================ ${SCRIPT_NAME}: DONE ===============================`
