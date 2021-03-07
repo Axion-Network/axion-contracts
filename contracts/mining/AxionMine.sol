@@ -85,12 +85,12 @@ contract AxionMine is Initializable, Manageable {
         uint256 reward = handleNFT(accReward.sub(miner.accReward));
 
         require(reward != 0, 'NOTHING_TO_WITHDRAW');
+        
+        miner.accReward = accReward;
 
         safeRewardTransfer(reward);
 
         emit WithdrawReward(msg.sender, reward);
-
-        miner.accReward = accReward;
     }
 
     function depositLPTokens(uint256 _amount) external mineUpdater {
@@ -124,6 +124,9 @@ contract AxionMine is Initializable, Manageable {
 
         uint256 reward = getReward(miner);
 
+        miner.lpDeposit = miner.lpDeposit.sub(_amount);
+        miner.accReward = getAccReward(miner.lpDeposit);
+
         if (reward != 0) {
             safeRewardTransfer(reward);
             emit WithdrawReward(msg.sender, reward);
@@ -131,9 +134,6 @@ contract AxionMine is Initializable, Manageable {
 
         mineInfo.lpToken.safeTransfer(address(msg.sender), _amount);
         emit Withdraw(msg.sender, _amount);
-
-        miner.lpDeposit = miner.lpDeposit.sub(_amount);
-        miner.accReward = getAccReward(miner.lpDeposit);
     }
 
     function withdrawAll() external mineUpdater {
@@ -142,17 +142,19 @@ contract AxionMine is Initializable, Manageable {
         require(miner.lpDeposit != 0, 'NOTHING_TO_WITHDRAW');
 
         uint256 reward = getReward(miner);
+        uint256 userLpDeposit = miner.lpDeposit;
+        miner.lpDeposit = 0;
+        miner.accReward = 0;
 
         if (reward != 0) {
             safeRewardTransfer(reward);
             emit WithdrawReward(msg.sender, reward);
         }
 
-        mineInfo.lpToken.safeTransfer(address(msg.sender), miner.lpDeposit);
-        emit Withdraw(msg.sender, miner.lpDeposit);
+        mineInfo.lpToken.safeTransfer(address(msg.sender), userLpDeposit);
+        emit Withdraw(msg.sender, userLpDeposit);
 
-        miner.lpDeposit = 0;
-        miner.accReward = 0;
+
     }
 
     function safeRewardTransfer(uint256 _amount) internal {
