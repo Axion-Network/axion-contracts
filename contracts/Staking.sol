@@ -819,7 +819,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         uint256 tokenInterestEarned =
             getTokenInterestEarnedInternal(msg.sender, tokenAddress);
 
-        // after divdents are paid we need to set the deductBalance of that token to current token price * total shares of the account
+        // after dividents are paid we need to set the deductBalance of that token to current token price * total shares of the account
         deductBalances[msg.sender][tokenAddress] = totalSharesOf[msg.sender]
             .mul(tokenPricePerShare[tokenAddress]);
 
@@ -858,7 +858,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             totalSharesOf[accountAddress]
                 .mul(tokenPricePerShare[tokenAddress])
                 .sub(deductBalances[accountAddress][tokenAddress])
-                .div(10**36); //we divide since we muliplied the price by 10**36 for precision
+                .div(10**36); //we divide since we multiplied the price by 10**36 for precision
     }
 
     //the rebalance function recalculates the deductBalances of an user after the total number of shares changes as a result of a stake/unstake
@@ -871,13 +871,16 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                     deductBalances[staker][divTokens.at(i)]
                 );
 
-            if (totalSharesOf[staker].mul(tokenPricePerShare[divTokens.at(i)]) > deductBalances[staker][divTokens.at(i)]) {
+            if (
+                totalSharesOf[staker].mul(tokenPricePerShare[divTokens.at(i)]) >
+                deductBalances[staker][divTokens.at(i)]
+            ) {
                 withdrawDivTokenInternal(divTokens.at(i));
+            } else {
+                deductBalances[staker][divTokens.at(i)] = totalSharesOf[staker]
+                    .mul(tokenPricePerShare[divTokens.at(i)])
+                    .sub(tokenInterestEarned);
             }
-
-            deductBalances[staker][divTokens.at(i)] = totalSharesOf[staker]
-                .mul(tokenPricePerShare[divTokens.at(i)])
-                .sub(tokenInterestEarned);
         }
     }
 
