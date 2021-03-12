@@ -872,8 +872,8 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 );
 
             if (
-                totalSharesOf[staker].mul(tokenPricePerShare[divTokens.at(i)]) >
-                deductBalances[staker][divTokens.at(i)]
+                totalSharesOf[staker].mul(tokenPricePerShare[divTokens.at(i)]) <
+                tokenInterestEarned
             ) {
                 withdrawDivTokenInternal(divTokens.at(i));
             } else {
