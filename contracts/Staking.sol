@@ -812,6 +812,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     //function to withdraw the dividends earned for a specific token
     // @param tokenAddress {address} - address of the dividend token
     function withdrawDivToken(address tokenAddress) external {
+        withdrawDivTokenInternal(tokenAddress);
+    }
+
+    function withdrawDivTokenInternal(address tokenAddress) internal {
         uint256 tokenInterestEarned =
             getTokenInterestEarnedInternal(msg.sender, tokenAddress);
 
@@ -866,6 +870,10 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 oldTotalSharesOf.mul(tokenPricePerShare[divTokens.at(i)]).sub(
                     deductBalances[staker][divTokens.at(i)]
                 );
+
+            if (totalSharesOf[staker].mul(tokenPricePerShare[divTokens.at(i)]) > deductBalances[staker][divTokens.at(i)]) {
+                withdrawDivTokenInternal(divTokens.at(i));
+            }
 
             deductBalances[staker][divTokens.at(i)] = totalSharesOf[staker]
                 .mul(tokenPricePerShare[divTokens.at(i)])
