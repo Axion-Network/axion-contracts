@@ -820,7 +820,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
             getTokenInterestEarnedInternal(msg.sender, tokenAddress, _totalSharesOf);
 
         // after dividents are paid we need to set the deductBalance of that token to current token price * total shares of the account
-        deductBalances[msg.sender][tokenAddress] = _totalSharesOf
+        deductBalances[msg.sender][tokenAddress] = totalSharesOf[msg.sender]
             .mul(tokenPricePerShare[tokenAddress]);
 
         /** 0xFF... is our ethereum placeholder address */
