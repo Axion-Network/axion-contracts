@@ -812,15 +812,15 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
     //function to withdraw the dividends earned for a specific token
     // @param tokenAddress {address} - address of the dividend token
     function withdrawDivToken(address tokenAddress) external {
-        withdrawDivTokenInternal(tokenAddress);
+        withdrawDivTokenInternal(tokenAddress, totalSharesOf[msg.sender]);
     }
 
-    function withdrawDivTokenInternal(address tokenAddress) internal {
+    function withdrawDivTokenInternal(address tokenAddress, uint _totalSharesOf) internal {
         uint256 tokenInterestEarned =
-            getTokenInterestEarnedInternal(msg.sender, tokenAddress);
+            getTokenInterestEarnedInternal(msg.sender, tokenAddress, _totalSharesOf);
 
         // after dividents are paid we need to set the deductBalance of that token to current token price * total shares of the account
-        deductBalances[msg.sender][tokenAddress] = totalSharesOf[msg.sender]
+        deductBalances[msg.sender][tokenAddress] = _totalSharesOf
             .mul(tokenPricePerShare[tokenAddress]);
 
         /** 0xFF... is our ethereum placeholder address */
@@ -845,17 +845,18 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
         address accountAddress,
         address tokenAddress
     ) external view returns (uint256) {
-        return getTokenInterestEarnedInternal(accountAddress, tokenAddress);
+        return getTokenInterestEarnedInternal(accountAddress, tokenAddress, totalSharesOf[accountAddress]);
     }
 
     // @param accountAddress {address} - address of account
     // @param tokenAddress {address} - address of the dividend token
     function getTokenInterestEarnedInternal(
         address accountAddress,
-        address tokenAddress
+        address tokenAddress,
+        uint _totalSharesOf
     ) internal view returns (uint256) {
         return
-            totalSharesOf[accountAddress]
+            _totalSharesOf
                 .mul(tokenPricePerShare[tokenAddress])
                 .sub(deductBalances[accountAddress][tokenAddress])
                 .div(10**36); //we divide since we multiplied the price by 10**36 for precision
@@ -875,7 +876,7 @@ contract Staking is IStaking, Initializable, AccessControlUpgradeable {
                 totalSharesOf[staker].mul(tokenPricePerShare[divTokens.at(i)]) <
                 tokenInterestEarned
             ) {
-                withdrawDivTokenInternal(divTokens.at(i));
+                withdrawDivTokenInternal(divTokens.at(i), oldTotalSharesOf);
             } else {
                 deductBalances[staker][divTokens.at(i)] = totalSharesOf[staker]
                     .mul(tokenPricePerShare[divTokens.at(i)])
